@@ -1,12 +1,14 @@
 IF !DEF(FONT_INC)
 FONT_INC SET 1
 
+; Constants
 FontPatternStart EQU 64
 
+; Variables 
 GLOBAL FontTiles
 
-GLOBAL LoadFont_Full
-
-GLOBAL LoadFont_Numbers
+; Procedures
+GLOBAL Font_LoadFull
+GLOBAL Font_LoadNumbers
 
 ENDC 

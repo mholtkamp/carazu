@@ -1,7 +1,9 @@
 [Objects]
 obj/main.obj
+obj/player.obj 
 obj/rect.obj 
 obj/font.obj 
+obj/input.obj
 obj/bg_tiles.obj
 obj/sprite_tiles.obj
 obj/bg_map.obj

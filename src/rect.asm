@@ -1,3 +1,5 @@
+	INCLUDE "include/constants.inc"
+
 VRAM_Map0 EQU $9800 
 VRAM_Map1 EQU $9C00
 

@@ -1,3 +1,5 @@
+INCLUDE "include/font.inc"
+
 SECTION "FontTiles", HOME
 
 FullFontVRAMAddress EQU $9400		; 64 characters 
@@ -73,7 +75,7 @@ DB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $FE, $FE, $00, $0
 
 
 
-LoadFont_Full::
+Font_LoadFull::
 
 ld bc, FullFontVRAMAddress
 ld hl, FontTiles
