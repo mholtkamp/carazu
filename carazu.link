@@ -1,0 +1,11 @@
+[Objects]
+obj/main.obj
+obj/rect.obj 
+obj/font.obj 
+obj/bg_tiles.obj
+obj/sprite_tiles.obj
+obj/bg_map.obj
+
+
+[Output]
+rom/carazu.gb
