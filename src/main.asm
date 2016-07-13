@@ -22,6 +22,7 @@
 	INCLUDE "include/player.inc"
 	INCLUDE "include/constants.inc"
 	INCLUDE "include/globals.inc"
+	INCLUDE "include/level.inc"
 	
 ;****************************************************************************************************************************************************
 ;*	user data (constants)
@@ -180,13 +181,17 @@ Start::
 	; Initialize graphics
 	call CLEAR_MAP
 	call ClearOAM
-	call LOAD_BG_TILES
-	call LOAD_MAP
+	;call LOAD_BG_TILES
+	;call LOAD_MAP
 	call LOAD_SPRITE_TILES
 	call Font_LoadFull
 	
 	; Initialize BSS data
 	call Player_Initialize
+	call Level_Initialize 
+	
+	; Load First Level 
+	call Level_Load 
 	
 	ld a, %11100100 ;load normal palette of colors
 	ldh [rBGP], a
@@ -276,50 +281,6 @@ ClearOAM::
 	ret
 	
 CLEAR_MAP::
-	ret
-	
-LOAD_BG_TILES::
-	ld hl, AlphaBgTiles ; address of tile data
-	ld de, TILE_BANK_1  ; address of tile memory in VRAM
-	ld c, 34            ; 34 tiles to load 
-
-.loop_all_tiles
-	ld b, 16			; 16 bytes to load
-	
-.loop_single_tile
-	ld a, [hl] 			; load the src tile data into a
-	ld [de], a			; store the tile data into dst
-	inc hl
-	inc de
-	dec b
-	ld a, b
-	cp 0
-	jr nz, .loop_single_tile
-	
-	dec c               ; decrement tile counter
-	ld a, c				; transfer to accumulator
-	cp 0				; if 0 then we are doing transferring tiles
-	jr nz, .loop_all_tiles  ; if not zero, work on transferring next tile
-	
-	ret
-	
-LOAD_MAP::
-	ld hl, BgMap                     ; address of map data on ROM
-	ld de, $9800                     ; first map data in VRAM
-	ld bc, BgMapHeight * BgMapWidth   ; 32*32 iterations
-
-.loop
-	ld a, [hl]
-	ld [de], a 
-	inc hl
-	inc de
-	dec bc
-	ld a, b
-	cp 0
-	jr nz, .loop
-	ld a, c
-	cp 0
-	jr nz, .loop
 	ret
 	
 LOAD_SPRITE_TILES::

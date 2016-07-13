@@ -3,6 +3,7 @@ INCLUDE "include/constants.inc"
 INCLUDE "include/globals.inc"
 INCLUDE "include/rect.inc"
 INCLUDE "include/input.inc"
+INCLUDE "include/player.inc"
 
 ; Constants
 PLAYER_HORI_SPEED EQU $0100
@@ -231,4 +232,11 @@ Player_UpdateLocalOAM::
 	ld c, a  
 	push bc 					; param5 = 0, flip flags 
 	call UpdateOAMFromRect_Fixed
+	ret 
+	
+Player_SetPosition::
+	ld a, b 
+	ld [PlayerRect], a 
+	ld a, c 
+	ld [PlayerRect + 2], a 
 	ret 

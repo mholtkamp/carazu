@@ -4,9 +4,12 @@ obj/player.obj
 obj/rect.obj 
 obj/font.obj 
 obj/input.obj
-obj/bg_tiles.obj
+obj/level.obj 
+
+obj/bg_tiles_0.obj
 obj/sprite_tiles.obj
-obj/bg_map.obj
+
+obj/level0.obj
 
 
 [Output]
