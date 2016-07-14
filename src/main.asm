@@ -12,9 +12,7 @@
 	; system includes
 
 	; project includes
-	INCLUDE "tiles/bg_tiles.inc"
 	INCLUDE "tiles/sprite_tiles.inc"
-	INCLUDE "maps/bg_map.inc"
 	
 	INCLUDE "include/rect.inc"
 	INCLUDE "include/font.inc"

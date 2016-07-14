@@ -4,6 +4,7 @@ INCLUDE "include/globals.inc"
 INCLUDE "include/rect.inc"
 INCLUDE "include/input.inc"
 INCLUDE "include/player.inc"
+INCLUDE "include/level.inc"
 
 ; Constants
 PLAYER_HORI_SPEED EQU $0100
@@ -181,7 +182,7 @@ Player_Update::
 
 
 .move_player_rect
-	ld a, 8
+	ld a, [LevelColThresh]
 	ld hl, PlayerRect
 	call MoveRect_Fixed
 	bit BIT_COLLIDED_DOWN, a 
