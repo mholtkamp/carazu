@@ -217,7 +217,8 @@ Main_Game_Loop::
 	nop
 	
 	; Graphics
-	call TransferOAM 
+	call _Level_LoadLeft
+	;call TransferOAM 
 	call DrawLY
 
 	jp Main_Game_Loop

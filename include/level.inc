@@ -19,11 +19,15 @@ GLOBAL MapOriginX
 GLOBAL MapOriginY
 GLOBAL MapOriginIndex
 GLOBAL MapOriginPlus
+GLOBAL MapAddress
 
 ; Procedures 
 GLOBAL Level_Initialize
 GLOBAL Level_Reset 
 GLOBAL Level_Load 
 GLOBAL Level_Update
+
+;TEST DELETE
+GLOBAL _Level_LoadLeft
 
 ENDC 

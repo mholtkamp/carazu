@@ -46,6 +46,13 @@ MapOriginPlus:
 DS 2 
 
 
+MapAddress:
+DS 2
+
+; Private
+Scratch:
+DS 1 
+
 
 
 	SECTION "LevelCode", HOME 
@@ -110,7 +117,7 @@ Level_Load::
 	ld c, Level0SpawnY 
 	call Player_SetPosition
 	
-	;call _Level_LoadBorders
+	call _Level_LoadBorders
 	
 	ret 
 	
@@ -159,6 +166,12 @@ _Level_LoadAttributes1::
 ; _Level_LoadMap 
 ; hl = map data address (beginning of entire map)
 _Level_LoadMap::
+	; save map address 
+	ld a, h
+	ld [MapAddress], a 
+	ld a, l 
+	ld [MapAddress + 1], a 
+	
 	ld a, [MapOriginIndex]
 	ld d, a 
 	ld a, [MapOriginIndex + 1]
@@ -245,3 +258,122 @@ _Level_LoadTileSet::
 	jp nz, .copy
 	ret 
 	
+
+_Level_LoadBorders::
+	call _Level_LoadLeft
+	call _Level_LoadRight
+	call _Level_LoadTop
+	call _Level_LoadBottom 
+	ret
+	
+_Level_LoadLeft::
+	; Find VRAM address first 
+	ld a, [BGFocusY]
+	sub 1 
+	jp nc, .get_y_addr 
+	add a, 32  
+.get_y_addr 
+	ld b, a 			; b = y block num
+	
+	ld h, b  			; prepare to mult the y coord by 32 
+	ld l, b 
+	
+	srl h 
+	srl h 
+	srl h 
+	
+	sla l 
+	sla l 
+	sla l 
+	sla l 
+	sla l
+
+	ld de, MAP_0
+	add hl, de 
+	
+	ld a, [BGFocusX]
+	sub 1 
+	jp nc, .get_x_addr 
+	add a, 32 
+.get_x_addr
+	ld e, a 
+	ld d, 0 
+	
+	add hl, de 		; hl = absolute vram address of 
+	
+	push hl
+	
+	ld a, [MapOriginIndex]
+	ld h, a 
+	ld a, [MapOriginIndex + 1]
+	ld l, a 
+	
+	; subtract the map width to get upper row 
+	ld a, [MapWidth]
+	ld e, a 
+	ld a, l 
+	sub e 
+	ld l, a 
+	ld a, h
+	sbc a, 0 
+	ld h, a 
+	
+	; subtract 1 to get the left column 
+	ld de, $ffff 
+	add hl, de  
+	
+	; add start address of rom map 
+	ld a, [MapAddress]
+	ld d, a 
+	ld a, [MapAddress + 1]
+	ld e, a  
+	add hl, de 			; hl = absolute rom address of first tile to stream
+	
+	pop de 				; de = restored absolute vram address of first tile to write 
+	
+	ld a, 20  			; 18 tiles in column + 2 for diagonal tiles 
+	ld [Scratch], a 	; scratch holds counter 
+	
+.loop 
+	ld a, [hl]
+	ld [de], a 
+	
+	; increment addresses 
+	ld a, [MapWidth]
+	ld c, a 
+	ld b, 0 
+	add hl, bc 			; rom map pointing at next row now 
+	
+	
+	ld a, e 
+	add a, 32 
+	ld e, a 
+	ld a, d 
+	adc a, 0 
+	ld d, a 			; vram pointer is pointing at next row now 
+	
+	; check if vram map pointer is still in MAP_0
+	cp $9C				; a holds high byte of vram address. 9C is start of MAP_1 
+	jp c, .dec_counter
+	
+	; fix vram pointer 
+	sub 4 
+	ld d, a 
+	
+.dec_counter
+
+	ld a, [Scratch]
+	dec a 
+	ld [Scratch], a
+	jp nz, .loop
+	ret 
+	
+	
+_Level_LoadRight::
+	ret
+_Level_LoadTop::
+	ret 
+_Level_LoadBottom::
+	ret 
+
+
