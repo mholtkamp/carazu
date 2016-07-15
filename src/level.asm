@@ -30,6 +30,9 @@ DS 1
 MapHeight:
 DS 1 
 
+MapWidthShift:
+DS 1 
+
 MapOriginX:
 DS 1 
 MapOriginY:
@@ -101,6 +104,7 @@ Level_Load::
 	ld c, Level0MapHeight
 	ld d, Level0MapOriginX 
 	ld e, Level0MapOriginY
+	ld h, Level0MapWidthShift
 	call _Level_LoadAttributes0
 	
 	ld de, Level0MapOriginIndex
@@ -131,6 +135,7 @@ Level_Load::
 ;  c = map height
 ;  d = map origin X
 ;  e = map origin Y
+;  h = map width shift
 _Level_LoadAttributes0::
 
 	ld a, b 
@@ -142,6 +147,9 @@ _Level_LoadAttributes0::
 	ld [MapOriginX], a 			; save origin x-coord 
 	ld a, e 
 	ld [MapOriginY], a 			; save origin y-coord 
+	
+	ld a, h
+	ld [MapWidthShift], a 		; save map width shift 
 	
 	ret 
 	
@@ -334,16 +342,16 @@ _Level_LoadLeft::
 	ld a, 20  			; 18 tiles in column + 2 for diagonal tiles 
 	ld [Scratch], a 	; scratch holds counter 
 	
+	ld a, [MapWidth]
+	ld c, a 
+	ld b, 0 			; load map width in bc 
+	
 .loop 
 	ld a, [hl]
 	ld [de], a 
 	
 	; increment addresses 
-	ld a, [MapWidth]
-	ld c, a 
-	ld b, 0 
 	add hl, bc 			; rom map pointing at next row now 
-	
 	
 	ld a, e 
 	add a, 32 

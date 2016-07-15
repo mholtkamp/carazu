@@ -15,6 +15,7 @@ GLOBAL LevelColThresh
 GLOBAL LevelNum
 GLOBAL MapWidth
 GLOBAL MapHeight
+GLOBAL MapWidthShift
 GLOBAL MapOriginX
 GLOBAL MapOriginY
 GLOBAL MapOriginIndex

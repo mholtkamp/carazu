@@ -1,7 +1,5 @@
 	INCLUDE "include/constants.inc"
-
-VRAM_Map0 EQU $9800 
-VRAM_Map1 EQU $9C00
+	INCLUDE "include/level.inc"
 
 COLLIDED_LEFT      EQU $01
 COLLIDED_RIGHT     EQU $02 
@@ -127,7 +125,10 @@ MoveRect_Integer::
 	add hl, bc
 	ld a, c 				; save the x-tile offset for later 
 	ld [Scratch + 2], a 
-	ld bc, VRAM_Map0        ; VRAM map 0 
+	ld a, [MapAddress]
+	ld b, a 
+	ld a, [MapAddress + 1]
+	ld c, a 
 	add hl, bc          ; Get address of specific tile in vram
 	
 	; set counter variable in d 
@@ -188,7 +189,10 @@ MoveRect_Integer::
 	ld  b, h 
 	ld  c, l   			; bc now has x+y tile offset 
 	
-	ld hl, VRAM_Map0
+	ld a, [MapAddress]
+	ld h, a 
+	ld a, [MapAddress + 1]
+	ld l, a 
 	add hl, bc 		; get the absolute memory location of tile 
 	
 	ld a, [CollisionThreshold]
@@ -275,7 +279,10 @@ MoveRect_Integer::
 	sla c 
 	
 	; prepare for looping collision check 
-	ld hl, VRAM_Map0 	; hl = address of map 0 in vram 
+	ld a, [MapAddress]
+	ld h, a 
+	ld a, [MapAddress + 1]
+	ld l, a 
 	add hl, bc 			; hl = address of row to examine 
 	
 	; save row address for later 
@@ -492,21 +499,10 @@ MoveRect_Fixed::
 	
 	; Retrieve the rect's y position (for indexing VRAM)
 	ld a, [fRectY] 	; a = rect.y (integer) 
-	ld b, a 		; b = rect.y 
 	
-	; Multiply the y coord by 4 (divide by 8 and then mult by 32)
-	; to get the VRAM row address 
-	and $f8 ;zero out last 3 digits
-	ld h, b			
-	ld l, a
-	srl h
-	srl h
-	srl h
-	srl h
-	srl h
-	srl h
-	sla l 
-	sla l 
+	; Multiply the y coord by MapWidthShift-3 (divide by 8 and then mult by MapWidth)
+	; to get the Map row address 
+	call _MultMapWidth
 	
 	; Add the x tile index to get the specific map entry we need 
 	; Divide by 8 to get x tile coord 
@@ -517,8 +513,18 @@ MoveRect_Fixed::
 	add hl, bc
 	ld a, c 				; save the x-tile offset for later 
 	ld [Scratch + 2], a 
-	ld bc, VRAM_Map0        ; VRAM map 0 
-	add hl, bc          ; Get address of specific tile in vram
+	ld a, [MapAddress]
+	ld b, a 
+	ld a, [MapAddress + 1]
+	ld c, a 
+	add hl, bc          
+
+	; add origin index to get absolute map entry address 
+	ld a, [MapOriginIndex]
+	ld b, a 
+	ld a, [MapOriginIndex + 1]
+	ld c, a 
+	add hl, bc 				; absolute tile addess in rom memory
 	
 	; set counter variable in d 
 	ld a, [RectHeight]
@@ -542,8 +548,10 @@ MoveRect_Fixed::
 	sub 8 				; decrement loop variable 
 	jp c, .check_y_plus_height 
 	ld d, a 			; save loop var 
-	ld bc, 32
-	add hl, bc  		; add 32 to hl to get next tile to check (1 row = 32 tiles)
+	ld b, 0
+	ld a, [MapWidth]
+	ld c, a 
+	add hl, bc  		; add MapWidth to hl to get next tile to check (1 row = MapWidth)
 	jp .loop0
 	
 .check_y_plus_height
@@ -557,29 +565,28 @@ MoveRect_Fixed::
 	add a, b 			; a = rect.y + rect.height - 1 
 	
 	;mult by 4 to get tile index 
-	ld b, a
-	and a, $f8   ;zero out least sig 3 digits 
-	ld c, a
-	srl b 
-	srl b 
-	srl b 
-	srl b 
-	srl b 
-	srl b 
-	
-	sla c  
-	sla c 
+	call _MultMapWidth
 
 	ld a, [Scratch + 2]		; retrieve that x-tile coord from earlier
-	ld h, 0 
-	ld l, a 			; hl = x-tile coord 
+	ld b, 0 
+	ld c, a 			; bc = x-tile coord 
 
 	add hl, bc 
 	ld  b, h 
 	ld  c, l   			; bc now has x+y tile offset 
 	
-	ld hl, VRAM_Map0
-	add hl, bc 		; get the absolute memory location of tile 
+	ld a, [MapAddress]
+	ld h, a 
+	ld a, [MapAddress + 1]
+	ld l, a 
+	add hl, bc 		
+	
+	; add origin index to get absolute map entry address 
+	ld a, [MapOriginIndex]
+	ld b, a 
+	ld a, [MapOriginIndex + 1]
+	ld c, a 
+	add hl, bc 				; absolute tile addess in rom memory
 	
 	ld a, [CollisionThreshold]
 	ld b, a
@@ -666,22 +673,13 @@ MoveRect_Fixed::
 	
 	; mask and multiply by 4 to get VRAM index 
 	ld a, c 	; a = y-coord of interest 
-	and $f8 	; zero out lower three bits 
-	ld b, c 	; b = y-coord of interest 
-	ld c, a 	; c = y-coord of interest (with bit 0,1,2 zeroed)
-	
-	; mult by 4 
-	srl b 
-	srl b 
-	srl b 
-	srl b 
-	srl b 
-	srl b 
-	sla c 
-	sla c 
+	call _MultMapWidth
 	
 	; prepare for looping collision check 
-	ld hl, VRAM_Map0 	; hl = address of map 0 in vram 
+	ld a, [MapAddress]
+	ld b, a 
+	ld a, [MapAddress + 1]
+	ld c, a 
 	add hl, bc 			; hl = address of row to examine 
 	
 	; save row address for later 
@@ -698,6 +696,13 @@ MoveRect_Fixed::
 	srl c
 	srl c 				; divide rect.x by 8 to get x tile-coord (column num)
 	add hl, bc 			; add x tile coord to hl to get address of tile under inspection
+	
+	; add origin index to get absolute map entry address 
+	ld a, [MapOriginIndex]
+	ld b, a 
+	ld a, [MapOriginIndex + 1]
+	ld c, a 
+	add hl, bc 				; absolute tile addess in rom memory
 	
 	; get rect width to determine how many times to loop 
 	ld a, [RectWidth]
@@ -835,20 +840,21 @@ CheckRectGrounded_Fixed::
 	ld b, a 
 	ld a, [RectHeight]
 	add a, b 				; a = y-pixel coord to examine (do not sub height by 1 as we need to get the pixel just below the rect)
-	and $f8 				;zero out 3 least sig bits 
-	ld b, a 
-	ld c, a 
-	srl b 
-	srl b
-	srl b 
-	srl b 
-	srl b 
-	srl b
-	sla c 
-	sla c 
+
+	call _MultMapWidth
 	
-	ld hl, VRAM_Map0 
+	ld a, [MapAddress]
+	ld b, a 
+	ld a, [MapAddress + 1]
+	ld c, a 
 	add hl, bc 					; hl = row address 
+	
+	; add origin index to get absolute map entry address 
+	ld a, [MapOriginIndex]
+	ld b, a 
+	ld a, [MapOriginIndex + 1]
+	ld c, a 
+	add hl, bc 				
 	
 	; find the end tile x tile-coords
 	ld a, [RectX]
@@ -1336,3 +1342,71 @@ UpdateOAMFromRect_Fixed::
 	pop bc 
 	jp nz, .loop_flip_x_y	; not finished yet. update next row of OBJs
 	ret ;finished updating the sprite's OBJs 
+	
+	
+;	a = y-block 	
+; a/b/h/l are overwritten 
+_MultMapWidth::
+	ld b, a 
+	and $f8 
+	ld h, b 
+	ld l, a 
+	
+	ld a, [MapWidth]
+	
+	bit 5, a 
+	jp nz, .mult_32
+	bit 6, a 
+	jp nz, .mult_64
+	bit 7, a 
+	jp nz, .mult_128
+	; else treat map as 256 width (max width)
+	jp nz, .mult_256
+	
+.mult_32 
+	;shift left 2 
+	srl h 
+	srl h 
+	srl h 
+	srl h 
+	srl h 
+	srl h 
+	sla l 
+	sla l 
+	ret 
+	
+.mult_64 
+	;shift left 3  
+	srl h 
+	srl h 
+	srl h 
+	srl h 
+	srl h 
+	sla l 
+	sla l 
+	sla l 
+	ret 
+	
+.mult_128 
+	;shift left 4  
+	srl h 
+	srl h 
+	srl h 
+	srl h 
+	sla l  
+	sla l 
+	sla l 
+	sla l 
+	ret 
+	
+.mult_256 
+	; shift left 5 
+	srl h 
+	srl h 
+	srl h 
+	sla l  
+	sla l  
+	sla l 
+	sla l 
+	sla l 
+	ret 

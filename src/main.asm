@@ -30,7 +30,7 @@
 ;*	equates
 ;****************************************************************************************************************************************************
 
-
+HandleVBLInt EQU $ff80 
 
 
 ;****************************************************************************************************************************************************
@@ -46,6 +46,9 @@ DS 8
 
 LYValue:
 DS 2   
+
+VBLANK_Flag:
+DS 1 
 
 
 ;****************************************************************************************************************************************************
@@ -86,6 +89,7 @@ RST_38:
 
 	SECTION	"V-Blank IRQ Vector",HOME[$40]
 VBL_VECT:
+	jp HandleVBLInt
 	reti
 	
 	SECTION	"LCD IRQ Vector",HOME[$48]
@@ -169,7 +173,7 @@ JOYPAD_VECT:
 	SECTION "Program Start",HOME[$0150]
 Start::
 	di ;disable interrupts
-	ld sp, $ffff ; setting stack pointer to the fast-ram area.
+	ld sp, $e000 ; setting stack pointer to the fast-ram area.
 	
 	call WaitVBLANK ; wait until we are in the vblank region of the screen refresh
 	
@@ -198,7 +202,16 @@ Start::
 	ld a, %10000011 ; turn on LCD, OBJ, BG
 	ld [rLCDC], a
 
-	ld hl, 0 
+	
+	; Copy the DMA subroutine into HRAM 
+	call CopyVBLInt
+	
+	; Enable VBLANK interrupt 
+	ld hl, $ffff
+	set 0, [hl]
+	
+	ei 
+	
 	
 Main_Game_Loop::
 	; Game Logic Updates
@@ -212,7 +225,8 @@ Main_Game_Loop::
 	call RecordLY
 	
 	; Wait for VBLANK interval 
-	call WaitVBLANK
+	call WaitVBLANK_Flag
+	;call WaitVBLANK
 	nop
 	nop
 	
@@ -223,6 +237,14 @@ Main_Game_Loop::
 
 	jp Main_Game_Loop
 	
+	
+WaitVBLANK_Flag::
+	ld a, [VBLANK_Flag]
+	cp 1 
+	jr nz, WaitVBLANK_Flag
+	ld a, 0 
+	ld [VBLANK_Flag], a 	; clear flag 
+	ret 
 	
 ;***************************************************************
 ;* Subroutines
@@ -405,5 +427,41 @@ DrawLY::
 	ld a, [LYValue + 1]
 	ld [hl], a 
 	ret 
+	
+CopyVBLInt::
+	ld hl, HandleVBLInt_Code 
+	ld de, $ff80 
+	
+.loop 
+	ld a, [hl+]
+	ld [de], a 
+	inc de 
+	ld a, h 
+	cp HandleVBLInt_Code_End >> 8 
+	jr nz, .loop 
+	ld a, l 
+	cp HandleVBLInt_Code_End & $00ff 
+	jr nz, .loop 
+	ret 
+	
+HandleVBLInt_Code::
+	push af 
+	
+	ld a, 1 
+	ld [VBLANK_Flag], a 		; set vblank flag 
+	
+	ld a, LocalOAM >> 8 
+	ld [$ff46], a 
+	ld a, $28 
+	
+.wait
+	dec a 
+	jr nz, .wait 
+	pop af 
+	reti 
+	
+HandleVBLInt_Code_End::
+	nop 
+
 
 ;*** End Of File ***

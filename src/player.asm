@@ -10,7 +10,6 @@ INCLUDE "include/level.inc"
 PLAYER_HORI_SPEED EQU $0100
 GRAVITY EQU $0010
 JUMP_SPEED EQU $FD80
-COLLISION_TILE_CAP EQU 8 
 
 PLAYER_ANIM_AIR_PATTERN EQU 8 
 PLAYER_ANIM_IDLE_PATTERN EQU 12 
@@ -107,7 +106,7 @@ Player_Update::
 	; player is marked as grounded, but check if grounded 
 	; in case the player has moved off a platform 
 	ld hl, PlayerRect
-	ld a, COLLISION_TILE_CAP
+	ld a, [LevelColThresh]
 	push bc
 	push de 
 	call CheckRectGrounded_Fixed
