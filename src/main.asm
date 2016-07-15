@@ -232,6 +232,7 @@ Main_Game_Loop::
 	
 	; Graphics
 	call _Level_LoadLeft
+	;call _Level_LoadTop
 	;call TransferOAM 
 	call DrawLY
 

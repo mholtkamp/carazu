@@ -19,7 +19,7 @@ GLOBAL MapWidthShift
 GLOBAL MapOriginX
 GLOBAL MapOriginY
 GLOBAL MapOriginIndex
-GLOBAL MapOriginPlus
+GLOBAL MapOriginIndexPlus
 GLOBAL MapAddress
 
 ; Procedures 
@@ -30,5 +30,6 @@ GLOBAL Level_Update
 
 ;TEST DELETE
 GLOBAL _Level_LoadLeft
+GLOBAL _Level_LoadTop
 
 ENDC 

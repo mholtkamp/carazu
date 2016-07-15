@@ -45,7 +45,7 @@ DS 1
 
 MapOriginIndex:
 DS 2 
-MapOriginPlus:
+MapOriginIndexPlus:
 DS 2 
 
 
@@ -108,7 +108,7 @@ Level_Load::
 	call _Level_LoadAttributes0
 	
 	ld de, Level0MapOriginIndex
-	ld hl, Level0MapWidth * VRAM_MAP_HEIGHT
+	ld hl, Level0MapOriginIndex + Level0MapWidth * VRAM_MAP_HEIGHT
 	call _Level_LoadAttributes1
 	
 	ld a, Level0TileSet
@@ -165,9 +165,9 @@ _Level_LoadAttributes1::
 	ld [MapOriginIndex + 1], a 
 	
 	ld a, h 
-	ld [MapOriginPlus], a 
+	ld [MapOriginIndexPlus], a 
 	ld a, l 
-	ld [MapOriginPlus + 1], a
+	ld [MapOriginIndexPlus + 1], a
 	
 	ret 
 	
@@ -378,10 +378,288 @@ _Level_LoadLeft::
 	
 	
 _Level_LoadRight::
-	ret
-_Level_LoadTop::
+	; Find VRAM address first 
+	ld a, [BGFocusY]
+	sub 1 
+	jp nc, .get_y_addr 
+	add a, 32  
+.get_y_addr 
+	ld b, a 			; b = y block num
+	
+	ld h, b  			; prepare to mult the y coord by 32 
+	ld l, b 
+	
+	srl h 
+	srl h 
+	srl h 
+	
+	sla l 
+	sla l 
+	sla l 
+	sla l 
+	sla l
+
+	ld de, MAP_0
+	add hl, de 
+	
+	ld a, [BGFocusX]
+	add a, 20			; 20 = screen width in blocks 
+	cp 31
+	jp c, .get_x_addr 
+	sub 32 
+.get_x_addr
+	ld e, a 
+	ld d, 0 
+	
+	add hl, de 		; hl = absolute vram address of 
+	
+	push hl
+	
+	ld a, [MapOriginIndex]
+	ld h, a 
+	ld a, [MapOriginIndex + 1]
+	ld l, a 
+	
+	; subtract the map width to get upper row 
+	ld a, [MapWidth]
+	ld e, a 
+	ld a, l 
+	sub e 
+	ld l, a 
+	ld a, h
+	sbc a, 0 
+	ld h, a 
+	
+	; add 20 to get right column  
+	ld de, 20
+	add hl, de  
+	
+	; add start address of rom map 
+	ld a, [MapAddress]
+	ld d, a 
+	ld a, [MapAddress + 1]
+	ld e, a  
+	add hl, de 			; hl = absolute rom address of first tile to stream
+	
+	pop de 				; de = restored absolute vram address of first tile to write 
+	
+	ld a, 20  			; 18 tiles in column + 2 for diagonal tiles 
+	ld [Scratch], a 	; scratch holds counter 
+	
+	ld a, [MapWidth]
+	ld c, a 
+	ld b, 0 			; load map width in bc 
+	
+.loop 
+	ld a, [hl]
+	ld [de], a 
+	
+	; increment addresses 
+	add hl, bc 			; rom map pointing at next row now 
+	
+	ld a, e 
+	add a, 32 
+	ld e, a 
+	ld a, d 
+	adc a, 0 
+	ld d, a 			; vram pointer is pointing at next row now 
+	
+	; check if vram map pointer is still in MAP_0
+	cp $9C				; a holds high byte of vram address. 9C is start of MAP_1 
+	jp c, .dec_counter
+	
+	; fix vram pointer 
+	sub 4 
+	ld d, a 
+	
+.dec_counter
+
+	ld a, [Scratch]
+	dec a 
+	ld [Scratch], a
+	jp nz, .loop
 	ret 
+	
+	
+_Level_LoadTop::
+	; Find VRAM address first 
+	ld a, [BGFocusY]
+	sub 1 
+	jp nc, .get_y_addr 
+	add a, 32  
+.get_y_addr 
+	ld b, a 			; b = y block num
+	
+	ld h, b  			; prepare to mult the y coord by 32 
+	ld l, b 
+	
+	srl h 
+	srl h 
+	srl h 
+	
+	sla l 
+	sla l 
+	sla l 
+	sla l 
+	sla l
+
+	ld de, MAP_0
+	add hl, de 
+	
+	ld a, [BGFocusX]
+	sub 1 
+	jp nc, .get_x_addr 
+	add a, 32 
+.get_x_addr
+	ld e, a 
+	ld d, 0 
+	
+	add hl, de 		; hl = absolute vram address of 
+	
+	push hl
+	
+	ld a, [MapOriginIndex]
+	ld h, a 
+	ld a, [MapOriginIndex + 1]
+	ld l, a 
+	
+	; subtract the map width to get upper row 
+	ld a, [MapWidth]
+	ld e, a 
+	ld a, l 
+	sub e 
+	ld l, a 
+	ld a, h
+	sbc a, 0 
+	ld h, a 
+	
+	; subtract 1 to get the left column 
+	ld de, $ffff 
+	add hl, de  
+	
+	; add start address of rom map 
+	ld a, [MapAddress]
+	ld d, a 
+	ld a, [MapAddress + 1]
+	ld e, a  
+	add hl, de 			; hl = absolute rom address of first tile to stream
+	
+	pop de 				; de = restored absolute vram address of first tile to write 
+	
+	ld a, 22  			; 20 tiles in row + 2 for diagonal tiles 
+	ld [Scratch], a 	; scratch holds counter 
+	
+.loop 
+	ld a, [hl+]
+	ld [de], a 
+	inc de 
+	
+	ld a, e 
+	and $1f 
+	; check if vram map pointer is still in MAP_0
+	jp nz, .dec_counter
+	
+	; fix vram pointer 
+	ld a, e 
+	sub 32 
+	ld e, a 
+	ld a, d 
+	sbc 0 
+	ld d, a 
+	
+.dec_counter
+
+	ld a, [Scratch]
+	dec a 
+	ld [Scratch], a
+	jp nz, .loop
+	ret 
+	
+	
 _Level_LoadBottom::
+	; Find VRAM address first 
+	ld a, [BGFocusY]
+	add a, 18			; 18 = height of screen 
+	cp 32 
+	jp c, .get_y_addr 
+	sub 32  
+.get_y_addr 
+	ld b, a 			; b = y block num
+	
+	ld h, b  			; prepare to mult the y coord by 32 
+	ld l, b 
+	
+	srl h 
+	srl h 
+	srl h 
+	
+	sla l 
+	sla l 
+	sla l 
+	sla l 
+	sla l
+
+	ld de, MAP_0
+	add hl, de 
+	
+	ld a, [BGFocusX]
+	sub 1 
+	jp nc, .get_x_addr 
+	add a, 32 
+.get_x_addr
+	ld e, a 
+	ld d, 0 
+	
+	add hl, de 		; hl = absolute vram address of 
+	
+	push hl
+	
+	; MapOriginIndexPlus stores maporiginindex + mapwidth*18 
+	ld a, [MapOriginIndexPlus]
+	ld h, a 
+	ld a, [MapOriginIndexPlus + 1]
+	ld l, a 
+	
+	; subtract 1 to get the left column 
+	ld de, $ffff 
+	add hl, de  
+	
+	; add start address of rom map 
+	ld a, [MapAddress]
+	ld d, a 
+	ld a, [MapAddress + 1]
+	ld e, a  
+	add hl, de 			; hl = absolute rom address of first tile to stream
+	
+	pop de 				; de = restored absolute vram address of first tile to write 
+	
+	ld a, 22  			; 20 tiles in row + 2 for diagonal tiles 
+	ld [Scratch], a 	; scratch holds counter 
+	
+.loop 
+	ld a, [hl+]
+	ld [de], a 
+	inc de 
+	
+	ld a, e 
+	and $1f 
+	; check if vram map pointer is still in MAP_0
+	jp nz, .dec_counter
+	
+	; fix vram pointer 
+	ld a, e 
+	sub 32 
+	ld e, a 
+	ld a, d 
+	sbc 0 
+	ld d, a 
+	
+.dec_counter
+
+	ld a, [Scratch]
+	dec a 
+	ld [Scratch], a
+	jp nz, .loop
 	ret 
 
 

@@ -24,7 +24,7 @@ Level0MapBank   EQU 1
 Level0TileSet EQU 0 
 
 ; Map positioning
-Level0MapOriginX EQU 30
+Level0MapOriginX EQU 4 
 Level0MapOriginY EQU 12 
 Level0MapOriginIndex EQU Level0MapOriginY*Level0MapWidth + Level0MapOriginX
 
