@@ -217,6 +217,7 @@ Main_Game_Loop::
 	; Game Logic Updates
 	call Input_Update
 	call Player_Update
+	call Level_Update
 	
 	; Local OAM Updates 
 	call Player_UpdateLocalOAM
@@ -234,6 +235,10 @@ Main_Game_Loop::
 	call _Level_LoadLeft
 	;call _Level_LoadTop
 	;call TransferOAM 
+	ld a, [BGScrollX]
+	ld [$ff43], a 
+	ld a, [BGScrollY]
+	ld [$ff42], a
 	call DrawLY
 
 	jp Main_Game_Loop

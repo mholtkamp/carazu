@@ -8,6 +8,11 @@ INCLUDE "levels/level0.inc"
 ; Tile Set includes
 INCLUDE "tiles/bg_tiles_0.inc"
 
+CameraAnchorLeft EQU 32 
+CameraAnchorRight EQU 64
+CameraAnchorTop EQU 40
+CameraAnchorBottom EQU 104 
+
 	SECTION "LevelData", BSS 
 	
 ; Public 
@@ -17,6 +22,12 @@ DS 1
 
 BGScrollY:
 DS 1
+
+BGScrollXPrev:
+DS 1 
+
+BGScrollYPrev:
+DS 1 
 
 LevelColThresh:
 DS 1 
@@ -43,6 +54,11 @@ DS 1
 BGFocusY:
 DS 1 
 
+BGFocusPixelsX: 
+DS 1 
+BGFocusPixelsY:
+DS 1 
+
 MapOriginIndex:
 DS 2 
 MapOriginIndexPlus:
@@ -65,6 +81,10 @@ Level_Initialize::
 	ld a, 0 
 	ld [BGScrollX], a 
 	ld [BGScrollY], a 
+	ld [BGScrollXPrev], a 
+	ld [BGScrollYPrev], a 
+	ld [BGFocusPixelsX], a 
+	ld [BGFocusPixelsY], a 
 	ld [LevelNum], a 
 	
 	ret 
@@ -73,6 +93,10 @@ Level_Reset::
 	ld a, 0 
 	ld [BGScrollX], a 
 	ld [BGScrollY], a 
+	ld [BGScrollXPrev], a 
+	ld [BGScrollYPrev], a 
+	ld [BGFocusPixelsX], a 
+	ld [BGFocusPixelsY], a 
 	ld [BGFocusX], a 
 	ld [BGFocusY], a 
 	ret 
@@ -662,4 +686,113 @@ _Level_LoadBottom::
 	jp nz, .loop
 	ret 
 
-
+Level_Update::
+	call _Level_Scroll
+	ret 
+	
+_Level_Scroll::
+	
+	; Record prev scroll 
+	ld a, [BGScrollX]
+	ld [BGScrollXPrev], a 
+	ld a, [BGScrollY]
+	ld [BGScrollYPrev], a 
+	
+	; Check Left Camera Anchor 
+.check_x_anchors
+	ld a, [PlayerRect]
+	cp CameraAnchorLeft 
+	jp c, .attempt_left 
+	cp CameraAnchorRight
+	jp nc, .attempt_right
+	
+.check_y_anchors 
+	ld a, [PlayerRect + 2]
+	cp CameraAnchorTop
+	jp c, .attempt_top 
+	cp CameraAnchorBottom 
+	jp nc, .attempt_bottom 
+	
+.return 
+	; Before returning, update the player rect position in case scroll changed 
+	ld a, [BGScrollX]
+	ld b, a 
+	ld a, [BGScrollXPrev]
+	sub b 
+	ld b, a 
+	ld a, [PlayerRect]
+	add a, b 
+	ld [PlayerRect], a 			; Update shifted X posititon
+	
+	ld a, [BGScrollY]
+	ld b, a 
+	ld a, [BGScrollYPrev]
+	sub b 
+	ld b, a 
+	ld a, [PlayerRect + 2]
+	add a, b 
+	ld [PlayerRect + 2], a 
+	
+	ret 
+	
+.attempt_left 
+	ld b, a 		; b = player x coord 
+	ld a, CameraAnchorLeft
+	sub b 
+	cp MAX_SPEED+1
+	jp c, .attempt_left_sub_pixels
+	ld a, MAX_SPEED 		; cap the amount of pixels we can scroll 
+.attempt_left_sub_pixels 
+	ld b, a					; b = number of pixels to scroll 
+	ld a, [BGFocusPixelsX]
+	sub b 
+	jp c, .attempt_left_change_focus 
+	ld [BGFocusPixelsX], a 		; no change in focus, load the new PixelsX and BGScrollX
+	ld a, [BGScrollX]
+	sub b 
+	ld [BGScrollX], a 
+	jp .check_y_anchors 
+.attempt_left_change_focus
+	add a, 8 					; reset the FocusPixelsX back into 0-7 range 
+	ld c, a 					; c = new FocusPixelsX (possibly)
+	ld a, [MapOriginX]
+	cp 0 
+	jp nz, .attempt_left_exe_change_focus 
+	ld a, [BGFocusPixelsX]
+	ld b, a 
+	ld a, [BGScrollX]
+	sub b 						; sub tract the prev pixels to push camera to leftmost of map 
+	ld [BGScrollX], a 
+	ld a, 0 
+	ld [BGFocusPixelsX], a 		; load pixelsX with 0 because map is at leftmost side 	
+	jp .check_y_anchors
+.attempt_left_exe_change_focus
+	; Origin and Focus can be shifted left since OriginX isnt 0 (yet)
+	sub 1 			; shift focus left 
+	ld [MapOriginX], a 			; save shifted MapOriginX 
+	ld a, [MapOriginIndex]
+	sub 1 
+	ld [MapOriginIndex], a 		; save shifted MapOriginIndex
+	ld a, [MapOriginIndexPlus]
+	sub 1 
+	ld [MapOriginIndexPlus], a 	; save shifted MapOriginIndexPlus 
+	ld a, c 
+	ld [BGFocusPixelsX], a 		; save the new BGFocusPixelsX 
+	ld a, [BGFocusX]
+	sub 1 
+	and $1f 					; keep focus in range 0 - 31 
+	ld [BGFocusX], a 			; save the new BGFocusX 
+	ld a, [BGScrollX]
+	sub b 
+	ld [BGScrollX], a			; shift scroll x val over (b should contain pixels moved left ) 
+	jp .check_y_anchors 
+	
+.attempt_right
+	jp .check_y_anchors
+	
+.attempt_top
+	jp .return 
+	
+.attempt_bottom 
+	jp .return 
+	
