@@ -33,5 +33,6 @@ GLOBAL Level_Update
 ;TEST DELETE
 GLOBAL _Level_LoadLeft
 GLOBAL _Level_LoadTop
+GLOBAL _Level_LoadRight
 
 ENDC 

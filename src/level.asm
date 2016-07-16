@@ -428,7 +428,7 @@ _Level_LoadRight::
 	
 	ld a, [BGFocusX]
 	add a, 20			; 20 = screen width in blocks 
-	cp 31
+	cp 32
 	jp c, .get_x_addr 
 	sub 32 
 .get_x_addr
@@ -703,7 +703,7 @@ _Level_Scroll::
 	ld a, [PlayerRect]
 	cp CameraAnchorLeft 
 	jp c, .attempt_left 
-	cp CameraAnchorRight
+	cp CameraAnchorRight+1
 	jp nc, .attempt_right
 	
 .check_y_anchors 
@@ -796,8 +796,98 @@ _Level_Scroll::
 	ld [BGScrollX], a			; shift scroll x val over (b should contain pixels moved left ) 
 	jp .check_y_anchors 
 	
-.attempt_right
+.attempt_right 
+	ld b, a 		; b = player x coord 
+	
+	ld a, [MapWidth]
+	sub 20					; 21 = screen width in tiles  
+	ld c, a 
+	ld a, [MapOriginX]
+	cp c 
+	jp z, .check_y_anchors		; origin is as far right as it can go. do not move anything
+	
+	ld a, CameraAnchorRight
+	ld c, a 
+	ld a, b 
+	sub c 					; a = number of pixels moved to right  
+	cp MAX_SPEED+1
+	jp c, .attempt_right_sub_pixels
+	ld a, MAX_SPEED 		; cap the amount of pixels we can scroll 
+.attempt_right_sub_pixels 
+	ld b, a					; b = number of pixels to scroll 
+	ld a, [BGFocusPixelsX]
+	add a, b 
+	cp 8
+	jp nc, .attempt_right_change_focus 
+	ld [BGFocusPixelsX], a 		; no change in focus, load the new PixelsX and BGScrollX
+	ld a, [BGScrollX]
+	add a, b 
+	ld [BGScrollX], a 
+	jp .check_y_anchors 
+.attempt_right_change_focus
+	sub 8 					; reset the FocusPixelsX back into 0-7 range 
+	ld c, a 					; c = new FocusPixelsX (possibly)
+	ld a, [MapWidth]
+	sub 20					; 20 = screen width in tiles   
+	ld d, a 				
+	ld a, [MapOriginX] 
+	cp d 
+	jp nz, .attempt_right_exe_change_focus 
+	;ld a, [BGFocusPixelsX]
+	;ld b, a 
+	;ld a, [BGScrollX]
+	;sub b 						; sub tract the prev pixels to push camera to rightmost of map 
+	;ld [BGScrollX], a 
+	;ld a, 0 
+	;ld [BGFocusPixelsX], a 		; load pixelsX with 0 because map is at rightmost side 	
 	jp .check_y_anchors
+.attempt_right_exe_change_focus
+	; Origin and Focus can be shifted right since OriginX isnt 0 (yet)
+	add a, 1 					; shift focus right 
+	ld [MapOriginX], a 			; save shifted MapOriginX 
+	
+	ld a, [MapOriginIndex + 1]
+	add a, 1 
+	ld [MapOriginIndex + 1], a 
+	ld a, [MapOriginIndex]
+	adc a, 0 
+	ld [MapOriginIndex], a 
+
+	ld a, [MapOriginIndexPlus + 1]
+	add a, 1 
+	ld [MapOriginIndexPlus + 1], a 
+	ld a, [MapOriginIndexPlus]
+	adc a, 0  
+	ld [MapOriginIndexPlus], a 
+	
+	ld a, [BGFocusX]
+	add a, 1 
+	and $1f 					; keep focus in range 0 - 31 
+	ld [BGFocusX], a 			; save the new BGFocusX 
+	
+	; check if maporigin x is as far right as it can go 
+	ld a, [MapOriginX]
+	cp d 
+	jp nz, .attempt_right_not_rightmost
+	ld a, [BGFocusPixelsX]	; get previous pixelsX 
+	ld c, a 
+	ld a, 8 
+	sub c 					
+	ld c, a 				; c = # of pixels to scroll bgscrollx
+	ld a, 0  
+	ld [BGFocusPixelsX], a 	; focus x will be 0 on far right 
+	ld a, [BGScrollX]
+	add a, c 
+	ld [BGScrollX], a 
+	jp .check_y_anchors
+.attempt_right_not_rightmost 
+	ld a, c 
+	ld [BGFocusPixelsX], a 		; save the new BGFocusPixelsX 
+
+	ld a, [BGScrollX]
+	add b 
+	ld [BGScrollX], a			; shift scroll x val over (b should contain pixels moved right ) 
+	jp .check_y_anchors 
 	
 .attempt_top
 	jp .return 
