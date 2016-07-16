@@ -486,6 +486,11 @@ MoveRect_Fixed::
 	ld a, l 
 	ld [fRectX + 1], a ;store fractional part of new x-position 
 	
+	; Offset the xposition used in collision to match BG scroll 
+	ld a, [BGFocusPixelsX]
+	add a, c 
+	ld c, a 		; c = new rect x position (with scroll offset)
+	
 	; If moving right, then add rect.width to the x coord 
 	ld a, [fXDisp]	; a = integer part of xdisp
 	bit 7, a 		; is x-disp negative?

@@ -11,6 +11,8 @@ GLOBAL BGScrollX
 GLOBAL BGScrollY 
 GLOBAL BGFocusX
 GLOBAL BGFocusY
+GLOBAL BGFocusPixelsX
+GLOBAL BGFocusPixelsY
 GLOBAL LevelColThresh
 GLOBAL LevelNum
 GLOBAL MapWidth

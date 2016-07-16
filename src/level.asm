@@ -770,12 +770,21 @@ _Level_Scroll::
 	; Origin and Focus can be shifted left since OriginX isnt 0 (yet)
 	sub 1 			; shift focus left 
 	ld [MapOriginX], a 			; save shifted MapOriginX 
+	
+	ld a, [MapOriginIndex + 1]
+	sub 1 
+	ld [MapOriginIndex + 1], a 
 	ld a, [MapOriginIndex]
+	sbc 0 
+	ld [MapOriginIndex], a 
+
+	ld a, [MapOriginIndexPlus + 1]
 	sub 1 
-	ld [MapOriginIndex], a 		; save shifted MapOriginIndex
+	ld [MapOriginIndexPlus + 1], a 
 	ld a, [MapOriginIndexPlus]
-	sub 1 
-	ld [MapOriginIndexPlus], a 	; save shifted MapOriginIndexPlus 
+	sbc 0 
+	ld [MapOriginIndexPlus], a 
+	
 	ld a, c 
 	ld [BGFocusPixelsX], a 		; save the new BGFocusPixelsX 
 	ld a, [BGFocusX]
