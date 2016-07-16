@@ -504,6 +504,9 @@ MoveRect_Fixed::
 	
 	; Retrieve the rect's y position (for indexing VRAM)
 	ld a, [fRectY] 	; a = rect.y (integer) 
+	ld b, a 
+	ld a, [BGFocusPixelsY]
+	add a, b 				; a = rect.y + pixelsY  
 	
 	; Multiply the y coord by MapWidthShift-3 (divide by 8 and then mult by MapWidth)
 	; to get the Map row address 
@@ -568,6 +571,9 @@ MoveRect_Fixed::
 	ld a, [fRectY]		; a = rect.y (integer)
 
 	add a, b 			; a = rect.y + rect.height - 1 
+	ld b, a 
+	ld a, [BGFocusPixelsY]
+	add a, b 			; a = rect.y + rect.height - 1 + pixelsY  
 	
 	;mult by 4 to get tile index 
 	call _MultMapWidth
@@ -613,8 +619,13 @@ MoveRect_Fixed::
 	or COLLIDED_LEFT
 	ld [CollisionBitfield], a 	; update output bitfield
 	ld a, [fRectX]			; Get the rect.x coord (where it is colliding)
+	ld b, a 
+	ld a, [BGFocusPixelsX]
+	ld d, a 
+	add a, b 			; a = rect.x + focuspixelsX
 	add a, 8			; add 8 to the rect x position (cancel out movement to left)
 	and $f8  			; zero out lower 3 bits to snap it to the tile 
+	sub d 				; subtract the pixels scroll 
 	ld [fRectX], a
 	ld a, 0 
 	ld [fRectX + 1], a  ; zero-out fractional part 
@@ -630,9 +641,14 @@ MoveRect_Fixed::
 	ld a, [fRectX]       ; a = rect.x (integer)
 
 	add a, b 			; a = rect.width + rect.x 
+	ld c, a 			; c = rect.width + rect.x 
+	ld a, [BGFocusPixelsX]
+	ld d, a 			; d = focuspixelsx
+	add a, c 			; a = rect.width + rect.x + focuspixelsX 
 	and $f8				; snap to the tile boundary
 	sub 1 				; push back one pixel from the collided tile 
 	sub b				; subtract result by rect.width to get the resolved x position 
+	sub d 
 	ld [fRectX], a 		; save the resolved x coord 
 	ld a, 0 
 	ld [fRectX + 1], a 	; zero out fractional part 
@@ -677,7 +693,8 @@ MoveRect_Fixed::
 .use_y_pos
 	
 	; mask and multiply by 4 to get VRAM index 
-	ld a, c 	; a = y-coord of interest 
+	ld a, [BGFocusPixelsY]
+	add a, c 
 	call _MultMapWidth
 	
 	; prepare for looping collision check 
@@ -687,6 +704,13 @@ MoveRect_Fixed::
 	ld c, a 
 	add hl, bc 			; hl = address of row to examine 
 	
+	; add origin index to get absolute map entry address 
+	ld a, [MapOriginIndex]
+	ld b, a 
+	ld a, [MapOriginIndex + 1]
+	ld c, a 
+	add hl, bc 				; absolute tile addess in rom memory
+	
 	; save row address for later 
 	ld a, h 
 	ld [Scratch], a 
@@ -695,19 +719,17 @@ MoveRect_Fixed::
 	
 	ld a, [fRectX]		
 	ld c, a 			; c = rect. x
+	
+	; Offset the xposition used in collision to match BG scroll 
+	ld a, [BGFocusPixelsX]
+	add a, c 
+	ld c, a 		; c = new rect x position (with scroll offset)
 	ld b, 0 			
 	
 	srl c 
 	srl c
 	srl c 				; divide rect.x by 8 to get x tile-coord (column num)
 	add hl, bc 			; add x tile coord to hl to get address of tile under inspection
-	
-	; add origin index to get absolute map entry address 
-	ld a, [MapOriginIndex]
-	ld b, a 
-	ld a, [MapOriginIndex + 1]
-	ld c, a 
-	add hl, bc 				; absolute tile addess in rom memory
 	
 	; get rect width to determine how many times to loop 
 	ld a, [RectWidth]
@@ -735,8 +757,13 @@ MoveRect_Fixed::
 	sub 1 
 	ld b, a 		; b = rect.width -  1
 	ld a, [fRectX]	; a = rect.x 
-
 	add a, b 	; a = rect.x + rect.width - 1 
+	ld b, a 	; b = rect.x + rect.width - 1 
+	
+	; Offset the xposition used in collision to match BG scroll 
+	ld a, [BGFocusPixelsX]
+	add a, b 
+	
 	srl a
 	srl a
 	srl a		; divide x coord by 8 to get tile coord
@@ -771,8 +798,13 @@ MoveRect_Fixed::
 	or COLLIDED_UP
 	ld [CollisionBitfield], a 	; update output bitfield
 	ld a, [fRectY]		; a = rect.y 
+	ld b, a 
+	ld a, [BGFocusPixelsY]
+	ld c, a 
+	add a, b 
 	add a, 8 		; move down 1 tile 
 	and $f8			; snap to the new tile 
+	sub c 			; subtract pixelsY
 	ld [fRectY], a 	; save rectified position 
 	ld a, 0 
 	ld [fRectY + 1], a ;zero out fractional part 
@@ -786,11 +818,16 @@ MoveRect_Fixed::
 	sub 1 
 	ld b, a 			; b = rect.height - 1 
 	ld a, [fRectY] 		; a = rect.y 	
-
 	add a, b 		; a = rect.y + rect.height - 1 (position of interest)
+	ld c, a 
+	ld a, [BGFocusPixelsY]
+	ld d, a 		; d = pixelsY 
+	add a, c 		; a =  rect.y + rect.height - 1 + pixelsY 
+	
 	and $f8			; snap to the collision tile 
 	sub 1 			; move up one pixel (to be in a non-colliding tile)
-	sub b			; subtract height to get resolved y-coord 
+	sub b			; subtract height - 1 
+	sub d 			; subtract pixelsY to get resolved y-coord 
 	ld [fRectY], a 	; save new y coord 
 	ld a, 0 
 	ld [fRectY + 1], a ;zero-out fractional component
@@ -845,6 +882,9 @@ CheckRectGrounded_Fixed::
 	ld b, a 
 	ld a, [RectHeight]
 	add a, b 				; a = y-pixel coord to examine (do not sub height by 1 as we need to get the pixel just below the rect)
+	ld b, a 
+	ld a, [BGFocusPixelsY]
+	add a, b 
 
 	call _MultMapWidth
 	
@@ -866,8 +906,11 @@ CheckRectGrounded_Fixed::
 	ld c, a 
 	ld a, [RectWidth]
 	sub 1				
-	add a, c 			 
+	add a, c 			
 	ld c, a			    ; c = end pixel coords
+	ld a, [BGFocusPixelsX]
+	add a, c 
+	ld c, a 
 	srl c 
 	srl c 
 	srl c 				; c = end x tile coord
@@ -875,6 +918,9 @@ CheckRectGrounded_Fixed::
 	; find first tile coords 
 	ld a, [RectX]
 	ld b, a 			; b = start pixel coords
+	ld a, [BGFocusPixelsX]
+	add a, b 
+	ld b, a 
 	srl b 
 	srl b 
 	srl b 				; b = start x tile coord
