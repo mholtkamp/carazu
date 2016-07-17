@@ -833,13 +833,6 @@ _Level_Scroll::
 	ld a, [MapOriginX] 
 	cp d 
 	jp nz, .attempt_right_exe_change_focus 
-	;ld a, [BGFocusPixelsX]
-	;ld b, a 
-	;ld a, [BGScrollX]
-	;sub b 						; sub tract the prev pixels to push camera to rightmost of map 
-	;ld [BGScrollX], a 
-	;ld a, 0 
-	;ld [BGFocusPixelsX], a 		; load pixelsX with 0 because map is at rightmost side 	
 	jp .check_y_anchors
 .attempt_right_exe_change_focus
 	; Origin and Focus can be shifted right since OriginX isnt 0 (yet)
@@ -890,6 +883,68 @@ _Level_Scroll::
 	jp .check_y_anchors 
 	
 .attempt_top
+	ld b, a 		; b = player y coord 
+	ld a, CameraAnchorTop
+	sub b 
+	cp MAX_SPEED+1
+	jp c, .attempt_top_sub_pixels
+	ld a, MAX_SPEED 		; cap the amount of pixels we can scroll 
+.attempt_top_sub_pixels 
+	ld b, a					; b = number of pixels to scroll 
+	ld a, [BGFocusPixelsY]
+	sub b 
+	jp c, .attempt_top_change_focus 
+	ld [BGFocusPixelsY], a 		; no change in focus, load the new PixelsY and BGScrollY
+	ld a, [BGScrollY]
+	sub b 
+	ld [BGScrollY], a 
+	jp .return 
+.attempt_top_change_focus
+	add a, 8 					; reset the FocusPixelsY back into 0-7 range 
+	ld c, a 					; c = new FocusPixelsY (possibly)
+	ld a, [MapOriginY]
+	cp 0 
+	jp nz, .attempt_top_exe_change_focus 
+	ld a, [BGFocusPixelsY]
+	ld b, a 
+	ld a, [BGScrollY]
+	sub b 						; sub tract the prev pixels to push camera to topmost of map 
+	ld [BGScrollY], a 
+	ld a, 0 
+	ld [BGFocusPixelsY], a 		; load pixelsY with 0 because map is at topmost side 	
+	jp .return
+.attempt_top_exe_change_focus
+	; Origin and Focus can be shifted up since OriginY isnt 0 (yet)
+	sub 1 			; shift focus up 
+	ld [MapOriginY], a 			; save shifted MapOriginX 
+	
+	; to shift map up, subtract map width 
+	ld a, [MapWidth]
+	ld d, a 
+	
+	ld a, [MapOriginIndex + 1]
+	sub d 
+	ld [MapOriginIndex + 1], a 
+	ld a, [MapOriginIndex]
+	sbc 0 
+	ld [MapOriginIndex], a 
+
+	ld a, [MapOriginIndexPlus + 1]
+	sub d 
+	ld [MapOriginIndexPlus + 1], a 
+	ld a, [MapOriginIndexPlus]
+	sbc 0 
+	ld [MapOriginIndexPlus], a 
+	
+	ld a, c 
+	ld [BGFocusPixelsY], a 		; save the new BGFocusPixelsY 
+	ld a, [BGFocusY]
+	sub 1 
+	and $1f 					; keep focus in range 0 - 31 
+	ld [BGFocusY], a 			; save the new BGFocusX 
+	ld a, [BGScrollY]
+	sub b 
+	ld [BGScrollY], a			; shift scroll x val over (b should contain pixels moved top ) 
 	jp .return 
 	
 .attempt_bottom 

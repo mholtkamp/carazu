@@ -233,8 +233,8 @@ Main_Game_Loop::
 	
 	; Graphics
 	;call _Level_LoadLeft
-	;call _Level_LoadTop
-	call _Level_LoadRight
+	call _Level_LoadTop
+	;call _Level_LoadRight
 	;call TransferOAM 
 	ld a, [BGScrollX]
 	ld [$ff43], a 
