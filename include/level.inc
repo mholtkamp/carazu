@@ -23,6 +23,7 @@ GLOBAL MapOriginY
 GLOBAL MapOriginIndex
 GLOBAL MapOriginIndexPlus
 GLOBAL MapAddress
+GLOBAL MapStreamDir
 
 ; Procedures 
 GLOBAL Level_Initialize

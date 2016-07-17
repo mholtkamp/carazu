@@ -1,6 +1,7 @@
 INCLUDE "include/level.inc"
 INCLUDE "include/player.inc"
 INCLUDE "include/constants.inc"
+INCLUDE "include/globals.inc"
 
 ; Level includes 
 INCLUDE "levels/level0.inc"
@@ -68,7 +69,16 @@ DS 2
 MapAddress:
 DS 2
 
+MapStreamDir:
+DS 1 
+
 ; Private
+LoadFlags:
+DS 1 
+
+LastLoad:
+DS 1 
+
 Scratch:
 DS 1 
 
@@ -86,6 +96,9 @@ Level_Initialize::
 	ld [BGFocusPixelsX], a 
 	ld [BGFocusPixelsY], a 
 	ld [LevelNum], a 
+	ld [LoadFlags], a 
+	ld [LastLoad], a 
+	ld [MapStreamDir], a 
 	
 	ret 
 	
@@ -99,6 +112,10 @@ Level_Reset::
 	ld [BGFocusPixelsY], a 
 	ld [BGFocusX], a 
 	ld [BGFocusY], a 
+	ld [LoadFlags], a 
+	ld [LastLoad], a 
+	ld [MapStreamDir], a 
+	
 	ret 
 	
 Level_Load:: 
@@ -600,7 +617,7 @@ _Level_LoadTop::
 	ret 
 	
 	
-_Level_LoadBottom::
+_Level_LoadBottom::	
 	; Find VRAM address first 
 	ld a, [BGFocusY]
 	add a, 18			; 18 = height of screen 
@@ -688,6 +705,8 @@ _Level_LoadBottom::
 
 Level_Update::
 	call _Level_Scroll
+	call _Level_SetMapStream 
+	
 	ret 
 	
 _Level_Scroll::
@@ -771,6 +790,11 @@ _Level_Scroll::
 	sub 1 			; shift focus left 
 	ld [MapOriginX], a 			; save shifted MapOriginX 
 	
+	; Focus is shifting, set load flag 
+	ld a, [LoadFlags]
+	or LOAD_LEFT 
+	ld [LoadFlags], a 
+	
 	ld a, [MapOriginIndex + 1]
 	sub 1 
 	ld [MapOriginIndex + 1], a 
@@ -835,9 +859,15 @@ _Level_Scroll::
 	jp nz, .attempt_right_exe_change_focus 
 	jp .check_y_anchors
 .attempt_right_exe_change_focus
+	
 	; Origin and Focus can be shifted right since OriginX isnt 0 (yet)
 	add a, 1 					; shift focus right 
 	ld [MapOriginX], a 			; save shifted MapOriginX 
+	
+	; Focus is shifting, set load flag 
+	ld a, [LoadFlags]
+	or LOAD_RIGHT
+	ld [LoadFlags], a 
 	
 	ld a, [MapOriginIndex + 1]
 	add a, 1 
@@ -918,6 +948,11 @@ _Level_Scroll::
 	sub 1 			; shift focus up 
 	ld [MapOriginY], a 			; save shifted MapOriginX 
 	
+	; Focus is shifting, set load flag 
+	ld a, [LoadFlags]
+	or LOAD_TOP
+	ld [LoadFlags], a 
+	
 	; to shift map up, subtract map width 
 	ld a, [MapWidth]
 	ld d, a 
@@ -990,6 +1025,11 @@ _Level_Scroll::
 	add a, 1 					; shift focus down 
 	ld [MapOriginY], a 			; save shifted MapOriginY
 	
+	; Focus is shifting, set load flag 
+	ld a, [LoadFlags]
+	or LOAD_BOTTOM
+	ld [LoadFlags], a 
+	
 	; to shift map up, subtract map width 
 	ld a, [MapWidth]
 	ld e, a 
@@ -1037,3 +1077,76 @@ _Level_Scroll::
 	ld [BGScrollY], a			; shift scroll x val over (b should contain pixels moved bottom ) 
 	jp .return 
 	
+_Level_SetMapStream::
+	ld a, [LoadFlags]
+	ld b, a 			; b = load flags 
+	
+	bit LOAD_LEFT_BIT, a 
+	jp nz, .set_left 
+	bit LOAD_RIGHT_BIT, a 
+	jp nz, .set_right 
+	
+.check_y_loads
+	bit LOAD_TOP_BIT, a 
+	jp nz, .set_top 
+	bit LOAD_BOTTOM_BIT, a 
+	jp nz, .set_bottom
+	
+	ld a, 0					; no streaming
+	ld [MapStreamDir], a 
+	ld [LastLoad], a 
+	
+	ret 
+	
+.set_left 
+	and $0C			; bit 2 and 3 are the y load flags 
+	jp z, .set_left_exe 
+	ld a, [LastLoad]
+	cp LAST_LOAD_X
+	jp z, .check_y_loads
+.set_left_exe 
+	ld a, LOAD_LEFT 
+	ld [MapStreamDir], a 
+	ld a, b
+	and ~LOAD_LEFT 
+	ld [LoadFlags], a 
+	ld a, LAST_LOAD_X 
+	ld [LastLoad], a 
+	
+	ret 
+	
+.set_right 
+	and $0C			; bit 2 and 3 are the y load flags 
+	jp z, .set_right_exe 
+	ld a, [LastLoad]
+	cp LAST_LOAD_X
+	jp z, .check_y_loads
+.set_right_exe 
+	ld a, LOAD_RIGHT
+	ld [MapStreamDir], a 
+	ld a, b
+	and ~LOAD_RIGHT 
+	ld [LoadFlags], a 
+	ld a, LAST_LOAD_X 
+	ld [LastLoad], a 
+	ret 
+	
+.set_top 
+	ld a, LOAD_TOP
+	ld [MapStreamDir], a 
+	ld a, b
+	and ~LOAD_TOP 
+	ld [LoadFlags], a 
+	ld a, LAST_LOAD_Y 
+	ld [LastLoad], a
+	ret 
+	
+.set_bottom
+	ld a, LOAD_BOTTOM  
+	ld [MapStreamDir], a 
+	ld a, b
+	and ~LOAD_BOTTOM 
+	ld [LoadFlags], a 
+	ld a, LAST_LOAD_Y 
+	ld [LastLoad], a
+	ret 

@@ -51,6 +51,7 @@ VBLANK_Flag:
 DS 1 
 
 
+
 ;****************************************************************************************************************************************************
 ;*	cartridge header
 ;****************************************************************************************************************************************************
@@ -232,16 +233,35 @@ Main_Game_Loop::
 	nop
 	
 	; Graphics
-	;call _Level_LoadLeft
-	;call _Level_LoadTop
-	;call _Level_LoadRight
+	ld a, [MapStreamDir]
+	cp LOAD_LEFT
+	jp nz, .right
+	call _Level_LoadLeft
+	jp .cont
+.right 
+	cp LOAD_RIGHT
+	jp nz, .top 
+	call _Level_LoadRight
+	jp .cont
+.top 
+	cp LOAD_TOP
+	jp nz, .bottom 
+	call _Level_LoadTop
+	jp .cont
+.bottom
+	cp LOAD_BOTTOM
+	jp nz, .cont 
 	call _Level_LoadBottom
-	;call TransferOAM 
+.cont 
+	
+	; update scroll 
 	ld a, [BGScrollX]
 	ld [$ff43], a 
 	ld a, [BGScrollY]
 	ld [$ff42], a
-	call DrawLY
+	
+	; draw performance counter if debugging
+	;call DrawLY
 
 	jp Main_Game_Loop
 	
@@ -351,82 +371,6 @@ RecordLY::
 	
 	ret 
 	
-	
-TransferOAM::
-	; TODO: Replace this with proper sprite DMA 
-	; Transfer Player data (4 OBJ sprites)
-	
-	ld a, 4 		; player is 4 obj sprites
-	; TODO: add number of active sprites to this value
-	ld b, a 		; e = loop counter. quit loop when == 0 
-	
-	ld hl, LocalOAM
-	ld de, $fe00 
-	
-.loop
-	push bc 		 ; save counter 
-	ld bc, $0001	 ; use instead of inc operations because of OAM bug 
-	
-	ld a, [hl]
-	ld [de], a       ; byte 1
-	add hl, bc 
-	push hl 
-	;ld hl, de 
-	ld h, d
-	ld l, e 
-	add hl, bc 
-	;ld de, hl
-	ld d, h 
-	ld e, l 
-	pop hl 
-	
-	ld a, [hl]
-	ld [de], a       ; byte 2 
-	add hl, bc
-	push hl 
-	;ld hl, de 
-	ld h, d
-	ld l, e 
-	add hl, bc 
-	;ld de, hl
-	ld d, h 
-	ld e, l 
-	pop hl 
-	
-	ld a, [hl]
-	ld [de], a       ; byte 3 
-	add hl, bc
-	push hl 
-	;ld hl, de 
-	ld h, d
-	ld l, e 
-	add hl, bc 
-	;ld de, hl
-	ld d, h 
-	ld e, l 
-	pop hl 
-	
-	ld a, [hl]
-	ld [de], a       ; byte 4 
-	add hl, bc
-	push hl 
-	;ld hl, de 
-	ld h, d
-	ld l, e 
-	add hl, bc 
-	;ld de, hl
-	ld d, h 
-	ld e, l 
-	pop hl 
-	
-	pop bc 		; restore counter 
-	ld a, b
-	sub 1 
-	ld b, a 	; save that counter 
-	cp 0 
-	jp nz, .loop	; counter isnt zero yet. more data to transter 
-	
-	ret
 
 DrawLY::
 	ld hl, $9831 
