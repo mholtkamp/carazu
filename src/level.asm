@@ -948,5 +948,92 @@ _Level_Scroll::
 	jp .return 
 	
 .attempt_bottom 
+	ld b, a 		; b = player y coord 
+	
+	ld a, [MapHeight]
+	sub 18					; 18 = screen height in tiles  
+	ld c, a 				; c =  map height 
+	ld a, [MapOriginY]
+	cp c 
+	jp z, .return		; origin is as far bottom  as it can go. do not move anything
+	
+	ld a, CameraAnchorBottom
+	ld c, a 				; c = camera anchor bottom 
+	ld a, b 				
+	sub c 					; a = number of pixels moved to down   
+	cp MAX_SPEED+1
+	jp c, .attempt_bottom_sub_pixels
+	ld a, MAX_SPEED 		; cap the amount of pixels we can scroll 
+.attempt_bottom_sub_pixels 
+	ld b, a					; b = number of pixels to scroll 
+	ld a, [BGFocusPixelsY]
+	add a, b 
+	cp 8
+	jp nc, .attempt_bottom_change_focus 
+	ld [BGFocusPixelsY], a 		; no change in focus, load the new PixelsY and BGScrollY
+	ld a, [BGScrollY]
+	add a, b 
+	ld [BGScrollY], a 
+	jp .return  
+.attempt_bottom_change_focus
+	sub 8 					; reset the FocusPixelsY back into 0-7 range 
+	ld c, a 					; c = new FocusPixelsY (possibly)
+	ld a, [MapHeight]
+	sub 18					; 18 = screen height in tiles   
+	ld d, a 				
+	ld a, [MapOriginY] 
+	cp d 
+	jp nz, .attempt_bottom_exe_change_focus 
+	jp .return 
+.attempt_bottom_exe_change_focus
+	; Origin and Focus can be shifted down since OriginY isnt 0 (yet)
+	add a, 1 					; shift focus down 
+	ld [MapOriginY], a 			; save shifted MapOriginY
+	
+	; to shift map up, subtract map width 
+	ld a, [MapWidth]
+	ld e, a 
+	
+	ld a, [MapOriginIndex + 1]
+	add a, e 
+	ld [MapOriginIndex + 1], a 
+	ld a, [MapOriginIndex]
+	adc a, 0 
+	ld [MapOriginIndex], a 
+
+	ld a, [MapOriginIndexPlus + 1]
+	add a, e 
+	ld [MapOriginIndexPlus + 1], a 
+	ld a, [MapOriginIndexPlus]
+	adc a, 0  
+	ld [MapOriginIndexPlus], a 
+	
+	ld a, [BGFocusY]
+	add a, 1 
+	and $1f 					; keep focus in range 0 - 31 
+	ld [BGFocusY], a 			; save the new BGFocusY 
+	
+	; check if maporigin y is as far bottom as it can go 
+	ld a, [MapOriginY]
+	cp d 
+	jp nz, .attempt_bottom_not_bottommost
+	ld a, [BGFocusPixelsY]	; get previous pixelsY
+	ld c, a 
+	ld a, 8 
+	sub c 					
+	ld c, a 				; c = # of pixels to scroll bgscrollY
+	ld a, 0  
+	ld [BGFocusPixelsY], a 	; focuspixels y will be 0 on far bottom 
+	ld a, [BGScrollY]
+	add a, c 
+	ld [BGScrollY], a 
+	jp .return 
+.attempt_bottom_not_bottommost 
+	ld a, c 
+	ld [BGFocusPixelsY], a 		; save the new BGFocusPixelsY 
+
+	ld a, [BGScrollY]
+	add b 
+	ld [BGScrollY], a			; shift scroll x val over (b should contain pixels moved bottom ) 
 	jp .return 
 	

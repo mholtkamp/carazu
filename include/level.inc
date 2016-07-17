@@ -34,5 +34,6 @@ GLOBAL Level_Update
 GLOBAL _Level_LoadLeft
 GLOBAL _Level_LoadTop
 GLOBAL _Level_LoadRight
+GLOBAL _Level_LoadBottom
 
 ENDC 
