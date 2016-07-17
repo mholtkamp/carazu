@@ -233,32 +233,35 @@ Main_Game_Loop::
 	nop
 	
 	; Graphics
-	ld a, [MapStreamDir]
-	cp LOAD_LEFT
-	jp nz, .right
-	call _Level_LoadLeft
-	jp .cont
-.right 
-	cp LOAD_RIGHT
-	jp nz, .top 
-	call _Level_LoadRight
-	jp .cont
-.top 
-	cp LOAD_TOP
-	jp nz, .bottom 
-	call _Level_LoadTop
-	jp .cont
-.bottom
-	cp LOAD_BOTTOM
-	jp nz, .cont 
-	call _Level_LoadBottom
-.cont 
 	
 	; update scroll 
 	ld a, [BGScrollX]
 	ld [$ff43], a 
 	ld a, [BGScrollY]
 	ld [$ff42], a
+	
+	; stream new tiles 
+	ld a, [MapStreamDir]
+	cp LOAD_LEFT
+	jp nz, .right
+	call _Level_LoadLeft
+	jp Main_Game_Loop
+.right 
+	cp LOAD_RIGHT
+	jp nz, .top 
+	call _Level_LoadRight
+	jp Main_Game_Loop
+.top 
+	cp LOAD_TOP
+	jp nz, .bottom 
+	call _Level_LoadTop
+	jp Main_Game_Loop
+.bottom
+	cp LOAD_BOTTOM
+	jp nz, Main_Game_Loop
+	call _Level_LoadBottom
+	
+
 	
 	; draw performance counter if debugging
 	;call DrawLY
