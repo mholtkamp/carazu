@@ -5,6 +5,7 @@ obj/rect.obj
 obj/font.obj 
 obj/input.obj
 obj/level.obj 
+obj/sound.obj 
 
 obj/bg_tiles_0.obj
 obj/sprite_tiles.obj

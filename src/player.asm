@@ -5,6 +5,7 @@ INCLUDE "include/rect.inc"
 INCLUDE "include/input.inc"
 INCLUDE "include/player.inc"
 INCLUDE "include/level.inc"
+INCLUDE "include/sound.inc"
 
 ; Constants
 PLAYER_HORI_SPEED EQU $0100
@@ -122,6 +123,17 @@ Player_Update::
 	ld a, [InputsHeld]					; player is not grounded, so check for jump
 	and BUTTON_A
 	jp z, .update_player_animation 			; y-vel is already zeroed so go to move call 
+	
+	; play jump sound 
+	push bc 
+	ld a, $30 | SWEEP_INC | $05
+	ld b, DUTY_50 | 0 
+	ld c, $40 | VOL_INC |  0 
+	ld de, FREQ_A4
+	call PlaySound_0
+	pop bc 
+	
+	; Adjust veloctiy
 	ld hl, JUMP_SPEED
 	ld d, h
 	ld e, l 							; set yvel param for move rect subroutine call 

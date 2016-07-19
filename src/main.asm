@@ -21,6 +21,7 @@
 	INCLUDE "include/constants.inc"
 	INCLUDE "include/globals.inc"
 	INCLUDE "include/level.inc"
+	INCLUDE "include/sound.inc"
 	
 ;****************************************************************************************************************************************************
 ;*	user data (constants)
@@ -188,6 +189,9 @@ Start::
 	;call LOAD_MAP
 	call LOAD_SPRITE_TILES
 	call Font_LoadFull
+	
+	; Initialize sound
+	call Initialize_Sound
 	
 	; Initialize BSS data
 	call Player_Initialize
