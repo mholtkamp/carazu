@@ -1,3 +1,6 @@
+if not exist "obj/" mkdir obj
+if not exist "rom/" mkdir rom
+
 rgbasm -oobj/main.obj src/main.asm
 rgbasm -oobj/rect.obj src/rect.asm
 rgbasm -oobj/font.obj src/font.asm
