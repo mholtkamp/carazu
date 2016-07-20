@@ -38,6 +38,7 @@ Initialize_Sound::
 ; b = duty/length 
 ; c = volume env
 ; de = frequency 
+; h = loop/count
 PlaySound_1::
 
 	ld [rNR10],a 
@@ -48,7 +49,8 @@ PlaySound_1::
 	ld a, e 
 	ld [rNR13], a 
 	ld a, d 
-	or $c0
+	or h 
+	or RESTART_SOUND
 	ld [rNR14], a 
 	
 	ret 
@@ -57,6 +59,7 @@ PlaySound_1::
 ; b = duty/length 
 ; c = volume env
 ; de = frequency 
+; h = loop/count 
 PlaySound_2::
 
 	ld a, b 
@@ -66,7 +69,8 @@ PlaySound_2::
 	ld a, e 
 	ld [rNR23], a 
 	ld a, d 
-	or $c0
+	or h 
+	or RESTART_SOUND
 	ld [rNR24], a 
 	
 	ret 
@@ -75,6 +79,7 @@ PlaySound_2::
 ; b = length 
 ; c = volume 
 ; de = frequency
+; h = loop/count 
 PlaySound_3::
 
 	ld a, $80 
@@ -86,7 +91,62 @@ PlaySound_3::
 	ld a, e 
 	ld [rNR33], a 
 	ld a, d
-	or $c0 
+	or h 
+	or RESTART_SOUND
 	ld [rNR34], a 
 
 	ret 
+
+; PlaySound_4
+; b = length 
+; c = volume envelope 
+; d = poly counter 
+; e = loop/count 
+PlaySound_4::
+
+	ld a, b 
+	ld [rNR41], a 
+	ld a, c 
+	ld [rNR42], a 
+	ld a, d 
+	ld [rNR43], a 
+	ld a, e 
+	or RESTART_SOUND
+	ld [rNR44], a 
+	
+	ret 
+	
+StopSound_1::
+
+	ld a, $00 
+	ld [rNR12], a 
+	ld a, RESTART_SOUND | COUNT_SOUND
+	ld [rNR14], a 
+	ret 
+	
+StopSound_2::
+
+	ld a, $00 
+	ld [rNR22], a 
+	ld a, RESTART_SOUND | COUNT_SOUND
+	ld [rNR24], a 
+	ret 
+	
+StopSound_3::
+
+	ld a, WAVE_VOL_MUTE
+	ld [rNR32], a 
+	ld a, RESTART_SOUND | COUNT_SOUND
+	ld [rNR34], a 
+	ret 
+	
+StopSound_4
+
+	ld a, $00 
+	ld [rNR42], a 
+	ld a, RESTART_SOUND | COUNT_SOUND
+	ld [rNR44], a 
+	ret 
+	
+	
+	
