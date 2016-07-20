@@ -130,7 +130,12 @@ Player_Update::
 	ld b, DUTY_50 | 0 
 	ld c, $40 | VOL_INC |  0 
 	ld de, FREQ_A4
-	call PlaySound_0
+	call PlaySound_1 
+	
+	;ld b, 196
+	;ld c, WAVE_VOL_100
+	;ld de, FREQ_A4
+	;call PlaySound_3
 	pop bc 
 	
 	; Adjust veloctiy
