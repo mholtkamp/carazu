@@ -462,9 +462,272 @@ AdvanceCursors::
 	
 	
 .channel_2 
+	ld hl, ActiveChannels
+	bit CHANNEL_2_BIT, [hl]
+	jp z, .channel_3 
 	
+	ld a, [ChainCursor_2]
+	ld l, a 
+	ld a, [ChainCursor_2 + 1]
+	ld h, a 
+	inc hl 
+	inc hl 			; chain cursor pointing to next phrase address 
+	
+	ld a, l  
+	ld [ChainCursor_2], a 
+	ld a, h 
+	ld [ChainCursor_2 + 1], a 	; save the new chain cursor 
+	
+	ld a, [hl+]
+	ld e, a 
+	ld a, [hl]
+	ld d, a 		; de = next phrase address 
+	
+	or e 			
+	jp z, .channel_2_next_chain
+	
+	
+.channel_2_next_phrase 
+	; DE = NEXT_PHRASE_ADDRESS 
+	; chain cursor is pointing at next phrase, and it's not END_CHAIN 
+	; so update the phrase pointer 
+	ld a, e 
+	ld [Phrase_2], a 
+	ld a, d 
+	ld [Phrase_2 + 1], a 
+	
+	jp .channel_3 
+
+.channel_2_next_chain 
+	ld a, [SongCursor_2]
+	ld e, a 
+	ld a, [SongCursor_2 + 1]
+	ld d, a 					; de = song cursor 
+	
+	inc de 
+	inc de 						; de = next chain in song 
+	
+	ld a, e 
+	ld [SongCursor_2], a 
+	ld a, d 
+	ld [SongCursor_2 + 1], a 
+	
+	ld a, [de]
+	ld c, a 
+	inc de 
+	ld a, [de]
+	or c 						; [SongCursor_2] == 0? Is the chain END_SONG?
+	jp z, .channel_2_reset_song
+	
+	dec de ; decrement to make sure this is pointing at next chain 
+	
+.channel_2_next_chain_save
+	; DE = SONG_CURSOR 
+	ld a, [de]
+	ld l, a 
+	ld [ChainCursor_2], a 
+	inc de 
+	ld a, [de]
+	ld h, a 
+	ld [ChainCursor_2 + 1], a 
+	
+	; save next phrase in de 
+	ld a, [hl+]
+	ld e, a 
+	ld a, [hl]
+	ld d, a 
+	jp .channel_2_next_phrase
+	
+.channel_2_reset_song
+	
+	; just set song cursor to song start. make sure de = new song cursor 
+	ld a, [Song_2]
+	ld e, a 
+	ld [SongCursor_2], a 
+	ld a, [Song_2 + 1]
+	ld d, a 
+	ld [SongCursor_2 + 1], a 
+	
+	jp .channel_2_next_chain_save 
+	
+.channel_3 
+	ld hl, ActiveChannels
+	bit CHANNEL_3_BIT, [hl]
+	jp z, .channel_4 
+	
+	ld a, [ChainCursor_3]
+	ld l, a 
+	ld a, [ChainCursor_3 + 1]
+	ld h, a 
+	inc hl 
+	inc hl 			; chain cursor pointing to next phrase address 
+	
+	ld a, l  
+	ld [ChainCursor_3], a 
+	ld a, h 
+	ld [ChainCursor_3 + 1], a 	; save the new chain cursor 
+	
+	ld a, [hl+]
+	ld e, a 
+	ld a, [hl]
+	ld d, a 		; de = next phrase address 
+	
+	or e 			
+	jp z, .channel_3_next_chain
+	
+	
+.channel_3_next_phrase 
+	; DE = NEXT_PHRASE_ADDRESS 
+	; chain cursor is pointing at next phrase, and it's not END_CHAIN 
+	; so update the phrase pointer 
+	ld a, e 
+	ld [Phrase_3], a 
+	ld a, d 
+	ld [Phrase_3 + 1], a 
+	
+	jp .channel_4
+
+.channel_3_next_chain 
+	ld a, [SongCursor_3]
+	ld e, a 
+	ld a, [SongCursor_3 + 1]
+	ld d, a 					; de = song cursor 
+	
+	inc de 
+	inc de 						; de = next chain in song 
+	
+	ld a, e 
+	ld [SongCursor_3], a 
+	ld a, d 
+	ld [SongCursor_3 + 1], a 
+	
+	ld a, [de]
+	ld c, a 
+	inc de 
+	ld a, [de]
+	or c 						; [SongCursor_3] == 0? Is the chain END_SONG?
+	jp z, .channel_3_reset_song
+	
+	dec de ; decrement to make sure this is pointing at next chain 
+	
+.channel_3_next_chain_save
+	; DE = SONG_CURSOR 
+	ld a, [de]
+	ld l, a 
+	ld [ChainCursor_3], a 
+	inc de 
+	ld a, [de]
+	ld h, a 
+	ld [ChainCursor_3 + 1], a 
+	
+	; save next phrase in de 
+	ld a, [hl+]
+	ld e, a 
+	ld a, [hl]
+	ld d, a 
+	jp .channel_3_next_phrase
+	
+.channel_3_reset_song
+	
+	; just set song cursor to song start. make sure de = new song cursor 
+	ld a, [Song_3]
+	ld e, a 
+	ld [SongCursor_3], a 
+	ld a, [Song_3 + 1]
+	ld d, a 
+	ld [SongCursor_3 + 1], a 
+	
+	jp .channel_3_next_chain_save 	
+	
+.channel_4 
+	ld hl, ActiveChannels
+	bit CHANNEL_4_BIT, [hl]
+	ret 
+	
+	ld a, [ChainCursor_4]
+	ld l, a 
+	ld a, [ChainCursor_4 + 1]
+	ld h, a 
+	inc hl 
+	inc hl 			; chain cursor pointing to next phrase address 
+	
+	ld a, l  
+	ld [ChainCursor_4], a 
+	ld a, h 
+	ld [ChainCursor_4 + 1], a 	; save the new chain cursor 
+	
+	ld a, [hl+]
+	ld e, a 
+	ld a, [hl]
+	ld d, a 		; de = next phrase address 
+	
+	or e 			
+	jp z, .channel_4_next_chain
+	
+	
+.channel_4_next_phrase 
+	; DE = NEXT_PHRASE_ADDRESS 
+	; chain cursor is pointing at next phrase, and it's not END_CHAIN 
+	; so update the phrase pointer 
+	ld a, e 
+	ld [Phrase_4], a 
+	ld a, d 
+	ld [Phrase_4 + 1], a 
 	
 	ret 
+
+.channel_4_next_chain 
+	ld a, [SongCursor_4]
+	ld e, a 
+	ld a, [SongCursor_4 + 1]
+	ld d, a 					; de = song cursor 
+	
+	inc de 
+	inc de 						; de = next chain in song 
+	
+	ld a, e 
+	ld [SongCursor_4], a 
+	ld a, d 
+	ld [SongCursor_4 + 1], a 
+	
+	ld a, [de]
+	ld c, a 
+	inc de 
+	ld a, [de]
+	or c 						; [SongCursor_4] == 0? Is the chain END_SONG?
+	jp z, .channel_4_reset_song
+	
+	dec de ; decrement to make sure this is pointing at next chain 
+	
+.channel_4_next_chain_save
+	; DE = SONG_CURSOR 
+	ld a, [de]
+	ld l, a 
+	ld [ChainCursor_4], a 
+	inc de 
+	ld a, [de]
+	ld h, a 
+	ld [ChainCursor_4 + 1], a 
+	
+	; save next phrase in de 
+	ld a, [hl+]
+	ld e, a 
+	ld a, [hl]
+	ld d, a 
+	jp .channel_4_next_phrase
+	
+.channel_4_reset_song
+	
+	; just set song cursor to song start. make sure de = new song cursor 
+	ld a, [Song_4]
+	ld e, a 
+	ld [SongCursor_4], a 
+	ld a, [Song_4 + 1]
+	ld d, a 
+	ld [SongCursor_4 + 1], a 
+	
+	jp .channel_4_next_chain_save 
+	
 	
 	
 PlayNote::
@@ -536,6 +799,137 @@ PlayNote::
 	jp .channel_2 
 	
 .channel_2 
+
+	ld a, [ActiveChannels]
+	bit CHANNEL_2_BIT, a 
+	jp z, .channel_3 
+	
+	ld a, [Instrument_2]
+	ld l, a 
+	ld a, [Instrument_2 + 1]
+	ld h, a 
+	
+	ld a, [hl+]
+	ld [rNR21], a 
+	ld a, [hl+]
+	ld [rNR22], a 
+	ld a, [hl]
+	ld [Scratch], a 		; Scratch saves last instrument data (hold/count)
+	
+	; get note from phrase 
+	ld a, [Phrase_2]
+	ld l, a 
+	ld a, [Phrase_2 + 1]
+	ld h, a 
+	
+	ld b, 0 
+	ld a, [Tick]
+	ld c, a 
+	
+	add hl, bc 		; hl = address of current note 
+	
+	ld a, [hl]		; 
+	ld c, a 		; c = note enum val 
+	
+	cp REST
+	jp z, .channel_2_play_rest
+	
+	cp HOLD 
+	jp z, .channel_3 	; nothing to do, hold note
+	
+	; look up note 
+	ld hl, NoteTable
+	sla c 			; shift note enum value by 2 to get table index (table contains words, not bytes)
+	add hl, bc 		; bc should have note enum value in it 
+	ld a, [hl+]
+	ld e, a 
+	ld a, [hl]
+	ld d, a 		; de = should have frequency X-Value 
+	
+	ld a, e 
+	ld [rNR23], a  ; store low frequency 
+	
+	ld a, [Scratch] ; get hold/count value 
+	or d 			; get frequency high + hold/count
+	ld [rNR24], a 	; store high frequency + hold/count 
+	
+	jp .channel_3
+	
+.channel_2_play_rest 
+	ld a, 0 
+	ld [rNR22], a 
+	ld a, $80
+	ld [rNR24], a 
+	jp .channel_3
+	
+	
+.channel_3 
+
+	ld a, [ActiveChannels]
+	bit CHANNEL_3_BIT, a 
+	jp z, .channel_4  
+	
+	ld a, [Instrument_3]
+	ld l, a 
+	ld a, [Instrument_3 + 1]
+	ld h, a 
+	
+	ld a, [hl+]
+	ld [rNR30], a 
+	ld a, [hl+]
+	ld [rNR31], a 
+	ld a, [hl+]
+	ld [rNR32], a 
+	ld a, [hl]
+	ld [Scratch], a 		; Scratch saves last instrument data (hold/count)
+	
+	; get note from phrase 
+	ld a, [Phrase_3]
+	ld l, a 
+	ld a, [Phrase_3 + 1]
+	ld h, a 
+	
+	ld b, 0 
+	ld a, [Tick]
+	ld c, a 
+	
+	add hl, bc 		; hl = address of current note 
+	
+	ld a, [hl]		; 
+	ld c, a 		; c = note enum val 
+	
+	cp REST
+	jp z, .channel_3_play_rest
+	
+	cp HOLD 
+	jp z, .channel_4 	; nothing to do, hold note
+	
+	; look up note 
+	ld hl, NoteTable
+	sla c 			; shift note enum value by 2 to get table index (table contains words, not bytes)
+	add hl, bc 		; bc should have note enum value in it 
+	ld a, [hl+]
+	ld e, a 
+	ld a, [hl]
+	ld d, a 		; de = should have frequency X-Value 
+	
+	ld a, e 
+	ld [rNR33], a  ; store low frequency 
+	
+	ld a, [Scratch] ; get hold/count value 
+	or d 			; get frequency high + hold/count
+	ld [rNR34], a 	; store high frequency + hold/count 
+	
+	jp .channel_4 
+	
+.channel_3_play_rest 
+	ld a, 0 
+	ld [rNR32], a 
+	ld a, $80
+	ld [rNR34], a 
+	jp .channel_4 
+	
+.channel_4 
 
 	ret 
 	
