@@ -1,0 +1,6 @@
+IF !DEF(NOTES_INC)
+NOTES_INC SET 1 
+
+
+
+ENDC

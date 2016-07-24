@@ -6,12 +6,14 @@ obj/font.obj
 obj/input.obj
 obj/level.obj 
 obj/sound.obj 
+obj/music.obj 
 
 obj/bg_tiles_0.obj
 obj/sprite_tiles.obj
 
 obj/level0.obj
 
+obj/song0.obj 
 
 [Output]
 rom/carazu.gb

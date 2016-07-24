@@ -22,6 +22,7 @@
 	INCLUDE "include/globals.inc"
 	INCLUDE "include/level.inc"
 	INCLUDE "include/sound.inc"
+	INCLUDE "include/music.inc"
 	
 ;****************************************************************************************************************************************************
 ;*	user data (constants)
@@ -200,6 +201,10 @@ Start::
 	; Load First Level 
 	call Level_Load 
 	
+	; Load song 
+	ld c, 0 
+	call LoadSong
+	
 	ld a, %11100100 ;load normal palette of colors
 	ldh [rBGP], a
 	ldh [rOBP0], a 
@@ -226,6 +231,9 @@ Main_Game_Loop::
 	
 	; Local OAM Updates 
 	call Player_UpdateLocalOAM
+	
+	; Update music 
+	call UpdateSong
 	
 	; Performance Measurement
 	call RecordLY
