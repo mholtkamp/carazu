@@ -421,8 +421,14 @@ AdvanceCursors::
 	ld a, d 
 	ld [SongCursor_1 + 1], a 
 	
-	or e 						; de == 0? aka END_SONG 
+	ld a, [de]
+	ld c, a 
+	inc de 
+	ld a, [de]
+	or c 						; [SongCursor_1] == 0? Is the chain END_SONG?
 	jp z, .channel_1_reset_song
+	
+	dec de ; decrement to make sure this is pointing at next chain 
 	
 .channel_1_next_chain_save
 	; DE = SONG_CURSOR 
