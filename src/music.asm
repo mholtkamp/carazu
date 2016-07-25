@@ -924,7 +924,7 @@ PlayNote::
 	
 .channel_3_play_rest 
 	ld a, 0 
-	ld [rNR32], a 
+	ld [rNR30], a 
 	ld a, $80
 	ld [rNR34], a 
 	jp .channel_4 

@@ -5,21 +5,21 @@ INCLUDE "include/music.inc" ; Include for note equates
 	
 	
 Song0_Instrument1:
-	DB $00
-	DB $80
-	DB $f0
-	DB $80
+	DB $00			; sweep 
+	DB $10			; duty/length
+	DB $70			; volume
+	DB $80			; loop/count
 	
 Song0_Instrument2:
-	DB $80 
-	DB $f0
-	DB $80 
+	DB $80 			; duty/length
+	DB $70			; volume 
+	DB $80 			; loop/count
 	
 Song0_Instrument3:
-	DB $80 
-	DB $00 
-	DB $20
-	DB $80 
+	DB $80 			; enable
+	DB $00 			; length 
+	DB $20			; volume (bit 5/6)
+	DB $80 			; loop/count
 	
 	
 Song0_Channel1:
@@ -27,6 +27,8 @@ Song0_Channel1:
 	DW Chain_1_1 
 	DW Chain_1_0
 	DW Chain_1_1 
+	DW Chain_1_0
+	DW Chain_1_2
 	DW END_SONG 
 	
 Song0_Channel2:
@@ -34,18 +36,41 @@ Song0_Channel2:
 	DW Chain_2_1 
 	DW Chain_2_0
 	DW Chain_2_1 
+	DW Chain_2_0
+	DW Chain_2_2
 	DW END_SONG
 	
 Song0_Channel3:
 	DW Chain_3_0
 	DW Chain_3_1
 	DW Chain_3_0
-	DW Chain_3_1 
+	DW Chain_3_2
+	DW Chain_3_0
+	DW Chain_3_3
 	DW END_SONG 
 	
 	
-	
-	
+RestPhrase:
+	DB REST
+	DB REST
+	DB REST
+	DB REST
+
+	DB REST
+	DB REST
+	DB REST
+	DB REST
+
+	DB REST
+	DB REST
+	DB REST
+	DB REST
+
+	DB REST
+	DB REST
+	DB REST
+	DB REST	
+
 	
 Chain_1_0:
 	DW Phrase_1_0
@@ -185,6 +210,187 @@ Phrase_1_5:
 	DB REST 
 	DB REST 
 	
+Chain_1_2:
+	DW Phrase_1_6
+	DW Phrase_1_7 
+	DW Phrase_1_8 
+	DW Phrase_1_9 
+	DW Phrase_1_10 
+	DW Phrase_1_11
+	DW Phrase_1_12 
+	DW Phrase_1_13
+	DW END_CHAIN
+	
+Phrase_1_6:
+	DB A3
+	DB HOLD 
+	DB HOLD 
+	DB HOLD 
+	
+	DB REST 
+	DB A3 
+	DB HOLD 
+	DB HOLD 
+	
+	DB HOLD 
+	DB HOLD 
+	DB REST 
+	DB REST 
+	
+	DB C4 
+	DB HOLD 
+	DB HOLD 
+	DB HOLD 
+	
+Phrase_1_7:
+	DB REST 
+	DB B3 
+	DB HOLD 
+	DB HOLD 
+	
+	DB HOLD 
+	DB HOLD 
+	DB HOLD 
+	DB REST 
+	
+	DB F#4 
+	DB HOLD 
+	DB HOLD 
+	DB HOLD 
+	
+	DB HOLD 
+	DB HOLD 
+	DB HOLD 
+	DB HOLD 
+	
+Phrase_1_8:
+	DB HOLD 
+	DB HOLD 
+	DB HOLD 
+	DB HOLD 
+	
+	DB HOLD 
+	DB HOLD 
+	DB HOLD 
+	DB HOLD 
+	
+	DB HOLD 
+	DB HOLD 
+	DB HOLD 
+	DB HOLD 
+	
+	DB HOLD 
+	DB HOLD 
+	DB REST 
+	DB REST 
+	
+Phrase_1_9:
+	DB REST
+	DB REST
+	DB REST
+	DB REST
+	
+	DB REST
+	DB REST
+	DB REST
+	DB REST
+	
+	DB REST
+	DB REST
+	DB REST
+	DB REST
+	
+	DB REST
+	DB REST
+	DB B3 
+	DB HOLD 
+	
+Phrase_1_10:
+	DB HOLD
+	DB HOLD
+	DB HOLD
+	DB HOLD
+	
+	DB HOLD
+	DB HOLD
+	DB HOLD
+	DB HOLD
+	
+	DB REST
+	DB REST 
+	DB REST 
+	DB REST 
+	
+	DB REST 
+	DB REST 
+	DB REST 
+	DB REST 
+	
+Phrase_1_11:
+	DB REST 
+	DB REST 
+	DB REST 
+	DB F#4 
+	
+	DB HOLD
+	DB HOLD
+	DB HOLD
+	DB REST 
+	
+	DB D4 
+	DB HOLD
+	DB HOLD
+	DB HOLD
+	
+	DB HOLD
+	DB HOLD
+	DB HOLD
+	DB HOLD
+	
+Phrase_1_12:
+	DB REST 
+	DB REST 
+	DB REST 
+	DB REST 
+	
+	DB REST 
+	DB REST 
+	DB REST 
+	DB REST 
+	
+	DB REST 
+	DB REST 
+	DB B3 
+	DB HOLD
+
+	DB HOLD
+	DB HOLD
+	DB HOLD
+	DB HOLD
+	
+Phrase_1_13:
+	DB HOLD
+	DB HOLD
+	DB HOLD
+	DB HOLD
+	
+	DB HOLD
+	DB HOLD
+	DB HOLD
+	DB HOLD
+	
+	DB HOLD
+	DB HOLD
+	DB HOLD
+	DB HOLD
+	
+	DB HOLD
+	DB HOLD
+	DB REST 
+	DB REST 
+	
+
+
 Chain_2_0:
 	DW Phrase_2_0
 	DW Phrase_2_1 
@@ -323,18 +529,39 @@ Phrase_2_5:
 	DB REST 
 	DB REST 
 	
-Chain_3_0:
-	DW Phrase_3_0
-	DW Phrase_3_1 
-	DW Phrase_3_2 
-	DW END_CHAIN 
+Chain_2_2:
+	DW Phrase_2_6
+	DW Phrase_2_7 
+	DW Phrase_2_8 
+	DW Phrase_2_9
+	DW Phrase_2_10
+	DW Phrase_2_11 
+	DW Phrase_2_12 
+	DW Phrase_2_13
+	DW END_CHAIN
 	
-Phrase_3_0:
-	DB D4
+Phrase_2_6:
+	DB F3
 	DB HOLD 
 	DB HOLD 
 	DB HOLD 
 	
+	DB REST 
+	DB F3 
+	DB HOLD 
+	DB HOLD 
+	
+	DB HOLD 
+	DB HOLD 
+	DB REST 
+	DB REST 
+	
+	DB E4 
+	DB HOLD 
+	DB HOLD 
+	DB HOLD 
+	
+Phrase_2_7:
 	DB REST 
 	DB D4 
 	DB HOLD 
@@ -342,6 +569,167 @@ Phrase_3_0:
 	
 	DB HOLD 
 	DB HOLD 
+	DB HOLD 
+	DB REST 
+	
+	DB A4 
+	DB HOLD 
+	DB HOLD 
+	DB HOLD 
+	
+	DB HOLD 
+	DB HOLD 
+	DB HOLD 
+	DB HOLD 
+	
+Phrase_2_8:
+	DB HOLD 
+	DB HOLD 
+	DB HOLD 
+	DB HOLD 
+	
+	DB HOLD 
+	DB HOLD 
+	DB HOLD 
+	DB HOLD 
+	
+	DB HOLD 
+	DB HOLD 
+	DB HOLD 
+	DB HOLD 
+	
+	DB HOLD 
+	DB HOLD 
+	DB REST 
+	DB REST 
+	
+Phrase_2_9:
+	DB REST
+	DB REST
+	DB REST
+	DB REST
+	
+	DB REST
+	DB REST
+	DB REST
+	DB REST
+	
+	DB REST
+	DB REST
+	DB REST
+	DB REST
+	
+	DB REST
+	DB REST
+	DB D4 
+	DB HOLD 
+	
+Phrase_2_10:
+	DB HOLD
+	DB HOLD
+	DB HOLD
+	DB HOLD
+	
+	DB HOLD
+	DB HOLD
+	DB HOLD
+	DB HOLD
+	
+	DB REST
+	DB REST 
+	DB REST 
+	DB REST 
+	
+	DB REST 
+	DB REST 
+	DB REST 
+	DB REST 
+	
+Phrase_2_11:
+	DB REST 
+	DB REST 
+	DB REST 
+	DB A4 
+	
+	DB HOLD
+	DB HOLD
+	DB HOLD
+	DB REST 
+	
+	DB F#4
+	DB HOLD
+	DB HOLD
+	DB HOLD
+	
+	DB HOLD
+	DB HOLD
+	DB HOLD
+	DB HOLD
+	
+Phrase_2_12:
+	DB REST 
+	DB REST 
+	DB REST 
+	DB REST 
+	
+	DB REST 
+	DB REST 
+	DB REST 
+	DB REST 
+	
+	DB REST 
+	DB REST 
+	DB D4 
+	DB HOLD
+
+	DB HOLD
+	DB HOLD
+	DB HOLD
+	DB HOLD
+	
+Phrase_2_13:
+	DB HOLD
+	DB HOLD
+	DB HOLD
+	DB HOLD
+	
+	DB HOLD
+	DB HOLD
+	DB HOLD
+	DB HOLD
+	
+	DB HOLD
+	DB HOLD
+	DB HOLD
+	DB HOLD
+	
+	DB HOLD
+	DB HOLD
+	DB REST 
+	DB REST 
+	
+	
+	
+	
+Chain_3_0:
+	DW Phrase_3_0
+	DW Phrase_3_1 
+	DW Phrase_3_2 
+	DW END_CHAIN 
+	
+Phrase_3_0:
+	DB REST
+	DB REST 
+	DB REST 
+	DB REST 
+	
+	DB REST 
+	DB REST 
+	DB REST 
+	DB REST 
+	
+	DB REST 
+	DB REST 
 	DB REST 
 	DB REST 
 	
@@ -361,19 +749,19 @@ Phrase_3_1:
 	DB HOLD 
 	DB REST 
 	
-	DB D4
-	DB HOLD 
-	DB HOLD 
-	DB HOLD 
+	DB REST
+	DB REST 
+	DB REST 
+	DB REST 
 	
 	DB REST 
-	DB D4 
-	DB HOLD 
-	DB HOLD 
+	DB REST 
+	DB REST 
+	DB REST 
 	
 Phrase_3_2:
-	DB HOLD 
-	DB HOLD 
+	DB REST 
+	DB REST 
 	DB REST 
 	DB REST 
 	
@@ -399,18 +787,18 @@ Chain_3_1:
 	DW END_CHAIN 
 	
 Phrase_3_3:
-	DB C4 
-	DB HOLD 
-	DB HOLD 
-	DB HOLD 
+	DB REST 
+	DB REST 
+	DB REST 
+	DB REST 
 	
 	DB REST 
-	DB C4 
-	DB HOLD 
-	DB HOLD 
+	DB REST 
+	DB REST 
+	DB REST 
 	
-	DB HOLD 
-	DB HOLD 
+	DB REST 
+	DB REST 
 	DB REST 
 	DB REST 
 	
@@ -430,19 +818,19 @@ Phrase_3_4:
 	DB HOLD 
 	DB REST 
 	
-	DB C4 
-	DB HOLD 
-	DB HOLD 
-	DB HOLD 
+	DB REST 
+	DB REST 
+	DB REST 
+	DB REST 
 	
 	DB REST 
-	DB C4 
-	DB HOLD 
-	DB HOLD 
+	DB REST 
+	DB REST 
+	DB REST 
 	
 Phrase_3_5:
-	DB HOLD 
-	DB HOLD 
+	DB REST 
+	DB REST 
 	DB REST 
 	DB REST 
 	
@@ -461,3 +849,166 @@ Phrase_3_5:
 	DB HOLD 
 	DB REST 
 	
+Chain_3_2:
+	DW Phrase_3_6 
+	DW Phrase_3_7
+	DW Phrase_3_8 
+	DW END_CHAIN
+	
+Phrase_3_6:
+	DB REST 
+	DB REST 
+	DB REST 
+	DB REST 
+	
+	DB REST 
+	DB REST 
+	DB REST 
+	DB REST 
+	
+	DB REST 
+	DB REST 
+	DB REST 
+	DB REST 
+	
+	DB D4 
+	DB HOLD 
+	DB C4 
+	DB A3 
+	
+Phrase_3_7:
+	DB REST 
+	DB A3 
+	DB HOLD 
+	DB HOLD 
+	
+	DB HOLD 
+	DB HOLD
+	DB REST 
+	DB REST 
+	
+	DB REST 
+	DB REST 
+	DB REST 
+	DB REST 
+	
+	DB REST 
+	DB REST 
+	DB REST 
+	DB REST 
+	
+Phrase_3_8: 
+	DB REST 
+	DB REST 
+	DB REST 
+	DB REST 
+	
+	DB C4 
+	DB HOLD 
+	DB D4 
+	DB C4 
+	
+	DB HOLD 
+	DB E4 
+	DB F4
+	DB HOLD 
+	
+	DB E4 
+	DB C4 
+	DB HOLD 
+	DB REST 
+	
+Chain_3_3:
+	DW RestPhrase
+	DW RestPhrase 
+	DW RestPhrase
+	DW Phrase_3_9
+	DW Phrase_3_10 
+	DW Phrase_3_11 
+	DW Phrase_3_12 
+	DW RestPhrase
+	DW END_CHAIN
+	
+Phrase_3_9:
+	DB C5
+	DB HOLD 
+	DB HOLD 
+	DB B4 
+	
+	DB HOLD 
+	DB HOLD 
+	DB F#4 
+	DB HOLD 
+	
+	DB HOLD 
+	DB G4
+	DB HOLD 
+	DB HOLD 
+	
+	DB HOLD 
+	DB REST 
+	DB REST 
+	DB REST 
+	
+Phrase_3_10:
+	DB REST 
+	DB REST 
+	DB REST 
+	DB REST 
+	
+	DB REST 
+	DB REST 
+	DB REST 
+	DB REST 
+	
+	DB F#4
+	DB E4 
+	DB F4 
+	DB F#4 
+	
+	DB C5 
+	DB HOLD 
+	DB HOLD 
+	DB HOLD 
+	
+Phrase_3_11: 
+	DB B4 
+	DB HOLD 
+	DB REST
+	DB REST
+	
+	DB REST
+	DB REST
+	DB REST
+	DB REST
+	
+	DB REST
+	DB REST
+	DB REST
+	DB REST
+	
+	DB REST
+	DB REST
+	DB REST
+	DB REST
+	
+Phrase_3_12:
+	DB REST
+	DB E4
+	DB HOLD 
+	DB HOLD 
+	
+	DB G4 
+	DB HOLD 
+	DB HOLD 
+	DB F#4 
+	
+	DB HOLD 
+	DB HOLD 
+	DB REST 
+	DB REST
+	
+	DB REST
+	DB REST
+	DB REST
+	DB REST
