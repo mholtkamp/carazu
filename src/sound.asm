@@ -22,6 +22,11 @@ Initialize_Sound::
 	ld b, 0 
 	ld hl, DefaultWave
 	ld de, WAVE_PATTERN_RAM
+	
+	; Turn wave channel on 
+	ld a, $80
+	ld [rNR30], a 
+	
 .loop
 	ld a, [hl+]
 	ld [de], a 

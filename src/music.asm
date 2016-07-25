@@ -1,4 +1,5 @@
 INCLUDE "include/music.inc"
+INCLUDE "include/sound.inc"
 INCLUDE "include/constants.inc"
 
 ; Song Includes 
@@ -67,6 +68,9 @@ Song_4:
 DS 2 
 
 Scratch:
+DS 1 
+
+Channel3Playing:
 DS 1 
 
 	SECTION "MusicProcedures", HOME 
@@ -167,6 +171,7 @@ ResetSongData::
 	ld [Frame], a 
 	ld [ActiveChannels], a 
 	ld [PlayStatus], a 
+	ld [Channel3Playing], a 
 	
 	ld [Instrument_1], a 
 	ld [Instrument_1 + 1], a 
@@ -738,20 +743,6 @@ PlayNote::
 	bit CHANNEL_1_BIT, a 
 	jp z, .channel_2 
 	
-	ld a, [Instrument_1]
-	ld l, a 
-	ld a, [Instrument_1 + 1]
-	ld h, a 
-	
-	ld a, [hl+]
-	ld [rNR10], a 
-	ld a, [hl+]
-	ld [rNR11], a 
-	ld a, [hl+]
-	ld [rNR12], a 
-	ld a, [hl]
-	ld [Scratch], a 		; Scratch saves last instrument data (hold/count)
-	
 	; get note from phrase 
 	ld a, [Phrase_1]
 	ld l, a 
@@ -772,6 +763,20 @@ PlayNote::
 	
 	cp HOLD 
 	jp z, .channel_2 	; nothing to do, hold note
+	
+	ld a, [Instrument_1]
+	ld l, a 
+	ld a, [Instrument_1 + 1]
+	ld h, a 
+	
+	ld a, [hl+]
+	ld [rNR10], a 
+	ld a, [hl+]
+	ld [rNR11], a 
+	ld a, [hl+]
+	ld [rNR12], a 
+	ld a, [hl]
+	ld [Scratch], a 		; Scratch saves last instrument data (hold/count)
 	
 	; look up note 
 	ld hl, NoteTable
@@ -804,18 +809,6 @@ PlayNote::
 	bit CHANNEL_2_BIT, a 
 	jp z, .channel_3 
 	
-	ld a, [Instrument_2]
-	ld l, a 
-	ld a, [Instrument_2 + 1]
-	ld h, a 
-	
-	ld a, [hl+]
-	ld [rNR21], a 
-	ld a, [hl+]
-	ld [rNR22], a 
-	ld a, [hl]
-	ld [Scratch], a 		; Scratch saves last instrument data (hold/count)
-	
 	; get note from phrase 
 	ld a, [Phrase_2]
 	ld l, a 
@@ -836,6 +829,18 @@ PlayNote::
 	
 	cp HOLD 
 	jp z, .channel_3 	; nothing to do, hold note
+	
+	ld a, [Instrument_2]
+	ld l, a 
+	ld a, [Instrument_2 + 1]
+	ld h, a 
+	
+	ld a, [hl+]
+	ld [rNR21], a 
+	ld a, [hl+]
+	ld [rNR22], a 
+	ld a, [hl]
+	ld [Scratch], a 		; Scratch saves last instrument data (hold/count)
 	
 	; look up note 
 	ld hl, NoteTable
@@ -869,20 +874,6 @@ PlayNote::
 	bit CHANNEL_3_BIT, a 
 	jp z, .channel_4  
 	
-	ld a, [Instrument_3]
-	ld l, a 
-	ld a, [Instrument_3 + 1]
-	ld h, a 
-	
-	ld a, [hl+]
-	ld [rNR30], a 
-	ld a, [hl+]
-	ld [rNR31], a 
-	ld a, [hl+]
-	ld [rNR32], a 
-	ld a, [hl]
-	ld [Scratch], a 		; Scratch saves last instrument data (hold/count)
-	
 	; get note from phrase 
 	ld a, [Phrase_3]
 	ld l, a 
@@ -904,6 +895,20 @@ PlayNote::
 	cp HOLD 
 	jp z, .channel_4 	; nothing to do, hold note
 	
+	ld a, [Instrument_3]
+	ld l, a 
+	ld a, [Instrument_3 + 1]
+	ld h, a 
+	
+	ld a, [hl+]
+	ld [rNR30], a 
+	ld a, [hl+]
+	ld [rNR31], a 
+	ld a, [hl+]
+	ld [rNR32], a 
+	ld a, [hl]
+	ld [Scratch], a 		; Scratch saves last instrument data (hold/count)
+	
 	; look up note 
 	ld hl, NoteTable
 	sla c 			; shift note enum value by 2 to get table index (table contains words, not bytes)
@@ -920,13 +925,22 @@ PlayNote::
 	or d 			; get frequency high + hold/count
 	ld [rNR34], a 	; store high frequency + hold/count 
 	
+	ld a, 1
+	ld [Channel3Playing], a 
+	
 	jp .channel_4 
 	
 .channel_3_play_rest 
-	ld a, 0 
+	ld a, [Channel3Playing]
+	cp 0 
+	jp z, .channel_4 				; channel 3 is already resting so do not "rest" again 
+	ld a, $00 
 	ld [rNR30], a 
-	ld a, $80
+	ld a, $80 
 	ld [rNR34], a 
+	ld a, 0
+	ld [Channel3Playing], a 		; now that channel 3 is resting, set this to 0
+									; to avoid the nasty tick sound.
 	jp .channel_4 
 	
 .channel_4 
