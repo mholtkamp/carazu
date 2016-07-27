@@ -4,8 +4,12 @@ INCLUDE "include/util.inc"
 INCLUDE "include/globals.inc"
 INCLUDE "include/input.inc"
 INCLUDE "include/constants.inc"
+INCLUDE "include/level.inc"
 
 	SECTION "MenuVars", BSS 
+	
+MENU_OPTION_NEW_GAME EQU 0 
+MENU_OPTION_CONTINUE EQU 1 
 	
 MenuCursor:
 DS 1 
@@ -117,7 +121,7 @@ DB $00,$00,$00,$00,$00,$00,$00,$00
 
 MenuSpriteTiles::
 DB $00,$70,$30,$48,$38,$44,$3C,$42
-DB $3C,$42,$38,$44,$30,$48,$00,$70
+DB $38,$44,$30,$48,$00,$70,$00,$00
 
 	SECTION "MenuProcedures", HOME 
 	
@@ -219,10 +223,30 @@ Menu_Update::
 	ld a, [InputsHeld]
 	and BUTTON_DOWN 
 	and b 
-	jp z, .update_obj 
+	jp z, .check_a 
 	ld a, 1 
 	ld [MenuCursor], a 
+	
+.check_a
+	ld a, [InputsHeld]
+	and BUTTON_A 
+	jp z, .update_obj
+	ld a, [MenuCursor]
+	cp MENU_OPTION_NEW_GAME
+	jp z, .new_game
+	cp MENU_OPTION_CONTINUE
+	jp z, .continue
 	
 .update_obj
 	call Menu_UpdateCursorSprite
 	ret 
+
+.new_game
+	ld a, 0 
+	ld [LevelNum], a 	; set level to 0 since it is a new game 
+	ld b, STATE_GAME 
+	call SwitchState
+	ret 
+	
+.continue 
+	jp .update_obj

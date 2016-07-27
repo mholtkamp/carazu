@@ -12,8 +12,6 @@
 	; system includes
 
 	; project includes
-	INCLUDE "tiles/sprite_tiles.inc"
-	
 	INCLUDE "include/rect.inc"
 	INCLUDE "include/font.inc"
 	INCLUDE "include/input.inc"
@@ -189,8 +187,6 @@ Start::
 	; Initialize graphics
 	call CLEAR_MAP
 	call ClearOAM
-	call LOAD_SPRITE_TILES
-	call Font_LoadFull
 	
 	; Initialize Game State
 	ld a, STATE_MENU
@@ -203,13 +199,12 @@ Start::
 	call Player_Initialize
 	call Level_Initialize 
 	
-	; Load First Level 
-	;call Level_Load 
+	; Load Menu (don't use SwitchState because that waits for VBLANK)
 	call Menu_Load
 	
 	; Load song 
-	;ld c, 0 
-	;call LoadSong
+	ld c, 0 
+	call LoadSong
 	
 	ld a, %11100100 ;load normal palette of colors
 	ldh [rBGP], a
@@ -243,11 +238,22 @@ Main_Game_Loop::
 	jp z, .trans_out
 	cp STATE_TRANSITION_IN 
 	jp z, .trans_in 
+	cp STATE_PAUSE
+	jp z, .pause 
+	cp STATE_SPLASH
+	jp z, .splash
 	
 	jp Main_Game_Loop	; should only get here in error (infinite loop will occur)
 	
 .menu 
 	call Menu_Update
+	call UpdateSong
+	
+	; Wait for VBLANK interval 
+	call WaitVBLANK_Flag
+	nop
+	nop
+	
 	jp Main_Game_Loop
 	
 .game 
@@ -306,6 +312,8 @@ Main_Game_Loop::
 .finale
 .trans_out 
 .trans_in 
+.pause 
+.splash 
 	jp Main_Game_Loop
 	
 WaitVBLANK_Flag::
@@ -373,20 +381,6 @@ ClearOAM::
 	
 CLEAR_MAP::
 	ret
-	
-LOAD_SPRITE_TILES::
-	ld hl, SpriteTiles
-	ld de, $8000 
-	ld bc, 16 * 16  ; 1 sprite tile to load (16 bytes per tile)
-.loop 
-	ld a, [hl+]
-	ld [de], a 
-	inc de
-	dec bc 
-	ld a, b 
-	or c 
-	jr nz, .loop
-	ret 
 
 RecordLY::
 
@@ -456,6 +450,37 @@ HandleVBLInt_Code::
 	
 HandleVBLInt_Code_End::
 	nop 
+	
+; b = new state 
+SwitchState::
+	call WaitVBLANK_Flag
+	ld hl, rLCDC 
+	res 7 ,[hl]		; turn of lcd 
+	
+	ld a, b 
+	cp STATE_MENU 
+	jp z, .switch_menu
+	cp STATE_GAME 
+	jp z, .switch_game
 
+.switch_menu 
+	call Menu_Load
+	ld c, 0 
+	call LoadSong
+	ld a, STATE_MENU
+	ld [GameState], a 
+	jp .return 
+	
+.switch_game
+	call Player_LoadGraphics
+	call Level_Load 
+	ld a, STATE_GAME 
+	ld [GameState], a 
+	jp .return 
+	
+.return 
+	ld hl, rLCDC 
+	set 7, [hl]		; turn on lcd 
+	ret 
 
 ;*** End Of File ***

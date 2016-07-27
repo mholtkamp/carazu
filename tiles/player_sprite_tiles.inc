@@ -9,7 +9,7 @@
 ;   Format               : Gameboy 4 color.
 ;   Compression          : None.
 ;   Counter              : None.
-;   Tile size            : 16 x 16
+;   Tile size            : 8 x 8
 ;   Tiles                : 0 to 15
 ;
 ;   Palette colors       : None.
@@ -22,9 +22,9 @@
 
 
 ; Bank of tiles.
-SpriteTilesBank EQU 0
+PlayerSpriteTilesBank EQU 0
 
 ; Start of tile array.
- GLOBAL SpriteTiles
+ GLOBAL PlayerSpriteTiles
 
 ; End of SPRITE_TILES.INC

@@ -5,4 +5,9 @@ GLOBALS_INC SET 1
 GLOBAL LocalOAM 
 GLOBAL GameState
 
+; Functions 
+
+; b = new state 
+GLOBAL SwitchState
+
 ENDC 

@@ -13,7 +13,7 @@ rgbasm -oobj/menu.obj src/menu.asm
 rgbasm -oobj/util.obj src/util.asm
 
 rgbasm -oobj/bg_tiles_0.obj tiles/bg_tiles_0.asm
-rgbasm -oobj/sprite_tiles.obj tiles/sprite_tiles.asm
+rgbasm -oobj/player_sprite_tiles.obj tiles/player_sprite_tiles.asm
 
 rgbasm -oobj/level0.obj levels/level0.asm
 

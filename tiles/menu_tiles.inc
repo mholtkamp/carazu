@@ -10,7 +10,7 @@
 ;   Compression          : None.
 ;   Counter              : None.
 ;   Tile size            : 8 x 8
-;   Tiles                : 0 to 23
+;   Tiles                : 22 to 22
 ;
 ;   Palette colors       : None.
 ;   SGB Palette          : None.
@@ -23,11 +23,8 @@
 
 ; Bank of tiles.
 MenuTilesBank EQU 0
-MenuBGTileCount EQU 24 
-MenuSpriteTileCount EQU 1 
 
 ; Start of tile array.
- GLOBAL MenuBGTiles
- GLOBAL MenuSpriteTiles
+ GLOBAL MenuTiles
 
 ; End of MENU_TILES.INC

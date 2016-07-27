@@ -11,7 +11,7 @@ obj/menu.obj
 obj/util.obj 
 
 obj/bg_tiles_0.obj
-obj/sprite_tiles.obj
+obj/player_sprite_tiles.obj
 
 obj/level0.obj
 

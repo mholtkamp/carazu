@@ -26,4 +26,7 @@ GLOBAL Player_UpdateLocalOAM
 ; c = y 
 GLOBAL Player_SetPosition
 
+; Player_LoadGraphics
+GLOBAL Player_LoadGraphics 
+
 ENDC

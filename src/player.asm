@@ -6,6 +6,8 @@ INCLUDE "include/input.inc"
 INCLUDE "include/player.inc"
 INCLUDE "include/level.inc"
 INCLUDE "include/sound.inc"
+INCLUDE "include/util.inc"
+INCLUDE "tiles/player_sprite_tiles.inc"
 
 ; Constants
 PLAYER_HORI_SPEED EQU $0100
@@ -242,4 +244,14 @@ Player_SetPosition::
 	ld [PlayerRect], a 
 	ld a, c 
 	ld [PlayerRect + 2], a 
+	ret 
+	
+Player_LoadGraphics::
+	ld b, 0 			; load sprite tiles
+	ld c, 16 			; player needs 16 sprite tiles 
+	ld d, PlayerSpriteTilesBank		;rom bank 
+	ld e, 0 			; player sprite tiles start from index 0
+	ld hl, PlayerSpriteTiles 
+	call LoadTiles 
+	
 	ret 
