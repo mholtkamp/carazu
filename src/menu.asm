@@ -1,6 +1,9 @@
 INCLUDE "include/menu.inc"
 INCLUDE "include/font.inc"
 INCLUDE "include/util.inc"
+INCLUDE "include/globals.inc"
+INCLUDE "include/input.inc"
+INCLUDE "include/constants.inc"
 
 	SECTION "MenuVars", BSS 
 	
@@ -17,6 +20,12 @@ MenuBGMapBank   EQU 0
 MenuTilesBank EQU 0
 MenuBGTileCount EQU 24 
 MenuSpriteTileCount EQU 1 
+
+Str_NewGame:
+DB "NEW GAME",0
+
+Str_Continue:
+DB "CONTINUE",0
 
 MenuBGMap::
 DB $17,$17,$17,$17,$17,$17,$17,$17,$17,$17
@@ -112,8 +121,41 @@ DB $3C,$42,$38,$44,$30,$48,$00,$70
 
 	SECTION "MenuProcedures", HOME 
 	
+Menu_UpdateCursorSprite::
+	ld a, [MenuCursor]
+	cp 0 
+	jp z, .cursor_0
+	cp 1
+	jp z, .cursor_1
+	
+.cursor_0 
+	ld a, 96
+	ld [LocalOAM], a 
+	ld a, 46 
+	ld [LocalOAM+1], a 
+	ld a, 0 
+	ld [LocalOAM+2], a
+	ld a, $00
+	ld [LocalOAM+3], a 
+	ret 
+	
+.cursor_1 
+	ld a, 112
+	ld [LocalOAM], a 
+	ld a, 46 
+	ld [LocalOAM+1], a 
+	ld a, 0 
+	ld [LocalOAM+2], a
+	ld a, $00
+	ld [LocalOAM+3], a 
+	ret 
+	
 Menu_Load::
 
+	; Reset cursor position
+	ld a, 0
+	ld [MenuCursor], a 
+	
 	ld hl, MenuSpriteTiles
 	ld b, 0 	; load sprite tiles 
 	ld c,	MenuSpriteTileCount
@@ -128,11 +170,7 @@ Menu_Load::
 	ld e, 0 	; tile index 
 	call LoadTiles 
 	
-	
 	call Font_LoadFull 
-
-	
-	
 
 	ld b, MenuBGMapWidth
 	ld c, MenuBGMapHeight
@@ -143,10 +181,48 @@ Menu_Load::
 	ld d, 0 	; rom bank 0 
 	ld e, 0 	; BG map, not window 
 	call LoadMap
+
+	ld hl, Str_NewGame
+	ld b, 6		; x coord
+	ld c, 10	; y coord  
+	ld d, 0       ; BG 
+	call WriteText
+	
+	ld hl, Str_Continue
+	ld b, 6
+	ld c, 12 
+	ld d, 0 
+	call WriteText
+	
 	ret
-
-
+	
 Menu_Update::
 
-
+; Handle input 
+.check_up
+	ld a, [InputsPrev]
+	and BUTTON_UP
+	cpl 
+	ld b, a 
+	ld a, [InputsHeld]
+	and BUTTON_UP 
+	and b 
+	jp z, .check_down
+	ld a, 0 
+	ld [MenuCursor], a 
+	
+.check_down
+	ld a, [InputsPrev]
+	and BUTTON_DOWN 
+	cpl 
+	ld b, a 
+	ld a, [InputsHeld]
+	and BUTTON_DOWN 
+	and b 
+	jp z, .update_obj 
+	ld a, 1 
+	ld [MenuCursor], a 
+	
+.update_obj
+	call Menu_UpdateCursorSprite
 	ret 

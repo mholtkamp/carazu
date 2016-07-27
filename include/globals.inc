@@ -3,5 +3,6 @@ GLOBALS_INC SET 1
 
 ;Variables
 GLOBAL LocalOAM 
+GLOBAL GameState
 
 ENDC 

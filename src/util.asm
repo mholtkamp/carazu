@@ -92,10 +92,12 @@ LoadMap::
 	; next step is to figure out starting vram address 
 	ld a, e 
 	cp 0 
-	jp .use_bg_tile_bank
-	ld de, MAP_1 
-.use_bg_tile_bank
+	jp .use_bg_map
+	ld de, MAP_1
+	jp .get_vram_addr
+.use_bg_map
 	ld de, MAP_0
+.get_vram_addr
 	
 	push hl 		; save rom map address 
 	ld h, 0 
@@ -108,7 +110,6 @@ LoadMap::
 	sla c
 	sla c 
 	sla c 
-	sla c
 	sra b 
 	sra b 
 	sra b
@@ -161,3 +162,48 @@ LoadMap::
 	ld c, a 
 	push bc 
 	ret 
+	
+
+; hl = null-terminated text string 
+; b = x tile pos 
+; c = y tile pos 
+; d = 0: BG, 1: Window 
+WriteText::
+	ld a, d 
+	cp 0
+	jp z, .write_to_bg
+	ld de, MAP_1 
+	jp .get_vram_addr
+.write_to_bg
+	ld de, MAP_0 
+	
+.get_vram_addr
+	push hl 		; save string addr 
+	ld h, 0 
+	ld l, b
+	add hl, de		; add x offset contribution to dest address  
+	
+	ld b, c 
+	sla c 
+	sla c 
+	sla c
+	sla c 
+	sla c 
+	sra b 
+	sra b 
+	sra b
+	add hl, bc 		; add y offset contribution to dest address 
+	
+	pop de 			; restore string address 
+	
+	
+.loop 
+	ld a, [de]
+	cp 0 
+	ret z 
+	
+	add a, 32 			; map entry =  ascii val - ' ' + 64 
+	ld [hl+], a 
+	inc de 
+	jp .loop 
+	
