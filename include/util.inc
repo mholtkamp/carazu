@@ -1,0 +1,7 @@
+IF !DEF(UTIL_INC)
+UTIL_INC SET 1 
+
+GLOBAL LoadTiles
+GLOBAL LoadMap
+
+ENDC 

@@ -23,6 +23,7 @@
 	INCLUDE "include/level.inc"
 	INCLUDE "include/sound.inc"
 	INCLUDE "include/music.inc"
+	INCLUDE "include/menu.inc"
 	
 ;****************************************************************************************************************************************************
 ;*	user data (constants)
@@ -52,6 +53,8 @@ DS 2
 VBLANK_Flag:
 DS 1 
 
+GameState:
+DS 1 
 
 
 ;****************************************************************************************************************************************************
@@ -143,13 +146,13 @@ JOYPAD_VECT:
 	DB	$00	; $00 - GameBoy
 
 	; $0147 (Cartridge type - all Color GameBoy cartridges are at least $19)
-	DB	$19	; $19 - ROM + MBC5
+	DB	$02	; $19 - ROM + MBC5
 
 	; $0148 (ROM size)
 	DB	$01	; $01 - 512Kbit = 64Kbyte = 4 banks
 
 	; $0149 (RAM size)
-	DB	$00	; $00 - None
+	DB	$01	; $00 - None
 
 	; $014A (Destination code)
 	DB	$00	; $01 - All others
@@ -186,10 +189,12 @@ Start::
 	; Initialize graphics
 	call CLEAR_MAP
 	call ClearOAM
-	;call LOAD_BG_TILES
-	;call LOAD_MAP
 	call LOAD_SPRITE_TILES
 	call Font_LoadFull
+	
+	; Initialize Game State
+	ld a, STATE_MENU
+	ld [GameState], a 
 	
 	; Initialize sound
 	call Initialize_Sound
@@ -199,11 +204,12 @@ Start::
 	call Level_Initialize 
 	
 	; Load First Level 
-	call Level_Load 
+	;call Level_Load 
+	call Menu_Load
 	
 	; Load song 
-	ld c, 0 
-	call LoadSong
+	;ld c, 0 
+	;call LoadSong
 	
 	ld a, %11100100 ;load normal palette of colors
 	ldh [rBGP], a
@@ -224,8 +230,28 @@ Start::
 	
 	
 Main_Game_Loop::
-	; Game Logic Updates
 	call Input_Update
+	
+	ld a, [GameState]
+	cp STATE_MENU 
+	jp z, .menu 
+	cp STATE_GAME
+	jp z, .game 
+	cp STATE_FINALE
+	jp z, .finale 
+	cp STATE_TRANSITION_OUT
+	jp z, .trans_out
+	cp STATE_TRANSITION_IN 
+	jp z, .trans_in 
+	
+	jp Main_Game_Loop	; should only get here in error (infinite loop will occur)
+	
+.menu 
+	call Menu_Update
+	jp Main_Game_Loop
+	
+.game 
+	; Game Logic Updates
 	call Player_Update
 	call Level_Update
 	
@@ -240,7 +266,6 @@ Main_Game_Loop::
 	
 	; Wait for VBLANK interval 
 	call WaitVBLANK_Flag
-	;call WaitVBLANK
 	nop
 	nop
 	
@@ -272,14 +297,16 @@ Main_Game_Loop::
 	cp LOAD_BOTTOM
 	jp nz, Main_Game_Loop
 	call _Level_LoadBottom
-	
 
-	
 	; draw performance counter if debugging
 	;call DrawLY
 
 	jp Main_Game_Loop
 	
+.finale
+.trans_out 
+.trans_in 
+	jp Main_Game_Loop
 	
 WaitVBLANK_Flag::
 	ld a, [VBLANK_Flag]

@@ -9,6 +9,8 @@ rgbasm -oobj/player.obj src/player.asm
 rgbasm -oobj/level.obj src/level.asm
 rgbasm -oobj/sound.obj src/sound.asm 
 rgbasm -oobj/music.obj src/music.asm 
+rgbasm -oobj/menu.obj src/menu.asm 
+rgbasm -oobj/util.obj src/util.asm
 
 rgbasm -oobj/bg_tiles_0.obj tiles/bg_tiles_0.asm
 rgbasm -oobj/sprite_tiles.obj tiles/sprite_tiles.asm

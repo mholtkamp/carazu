@@ -1,0 +1,7 @@
+IF !DEF(MENU_INC)
+MENU_INC SET 1 
+
+GLOBAL Menu_Load 
+GLOBAL Menu_Update 
+
+ENDC
