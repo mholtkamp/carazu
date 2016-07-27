@@ -11,8 +11,16 @@ INCLUDE "tiles/player_sprite_tiles.inc"
 
 ; Constants
 PLAYER_HORI_SPEED EQU $0100
-GRAVITY EQU $0010
+GRAVITY EQU $0015
+GRAVITY_HOLD EQU $0010
 JUMP_SPEED EQU $FD80
+PLAYER_HORI_ACCEL EQU $0020
+PLAYER_MAX_HORI_SPEED EQU $0100 
+PLAYER_MIN_HORI_SPEED EQU $ff00 
+PLAYER_MAX_HORI_SPEED_ALLEGRO EQU $0200 
+PLAYER_MIN_HORI_SPEED_ALLEGRO EQU $fe00 
+PLAYER_MAX_VERT_SPEED EQU $0400
+PLAYER_MIN_VERT_SPEED EQU $0 - PLAYER_MAX_VERT_SPEED
 
 PLAYER_ANIM_AIR_PATTERN EQU 8 
 PLAYER_ANIM_IDLE_PATTERN EQU 12 
@@ -27,6 +35,8 @@ DS 6
 
 fYVelocity:
 DS 2 
+fXVelocity:
+DS 2 
 
 PlayerGrounded:
 DS 1 
@@ -39,6 +49,8 @@ DS 1
 
 PlayerSpritePattern:
 DS 1 
+
+
 
 
 	SECTION "PlayerCode", HOME 
@@ -62,6 +74,8 @@ Player_Initialize::
 	ld a, 0 
 	ld [fYVelocity], a 			; (integer)
 	ld [fYVelocity + 1], a 
+	ld [fXVelocity], a 			; (integer)
+	ld [fXVelocity + 1], a 
 	
 	ld a, 0 
 	ld [PlayerGrounded], a 
@@ -84,23 +98,86 @@ Player_Update::
 	ld bc, $0000 
 	ld de, $0000  
 	
-.check_left	
+.check_left			
 	ld a, [InputsHeld]
 	and BUTTON_LEFT
-	jp z, .check_right 
-	ld bc, $0 - PLAYER_HORI_SPEED
+	jp z, .check_right
+	ld a, [fXVelocity]
+	ld h, a 
+	ld a, [fXVelocity + 1]
+	ld l, a 
+	ld bc, $0 - PLAYER_HORI_ACCEL
+	add hl, bc 		; subtract hori accel
+	ld b, h 
+	ld c, l 		; bc = new hori speed 
+	ld a, b
+	ld [fXVelocity], a 
+	ld a, c 
+	ld [fXVelocity + 1], a ; save new x velocity 
 	ld a, %00000010 
 	ld [PlayerFlipX], a 
-	jp .check_grounded 
+	jp .check_grounded
 	
 .check_right 
 	ld a, [InputsHeld]
 	and BUTTON_RIGHT
-	jp z, .check_grounded 
+	jp z, .apply_drag 
+	ld a, [fXVelocity]
+	ld h, a 
+	ld a, [fXVelocity + 1]
+	ld l, a 
+	ld bc, PLAYER_HORI_ACCEL
+	add hl, bc 		; bc = new hori speed 
+	ld b, h 
+	ld c, l 		; bc = new hori speed 
+	ld a, b
+	ld [fXVelocity], a 
+	ld a, c 
+	ld [fXVelocity + 1], a ; save new x velocity 
 	ld a, 0 
 	ld [PlayerFlipX], a 
-	ld bc, PLAYER_HORI_SPEED 
-
+	jp .check_grounded
+	
+.apply_drag 
+	ld a, [fXVelocity]
+	ld b, a 
+	ld a, [fXVelocity + 1]
+	ld c, a 
+	
+	ld a, b 
+	and $80 
+	jp z, .apply_drag_right
+	ld hl, PLAYER_HORI_ACCEL
+	add hl, bc 
+	bit 7, h
+	jp z, .set_vel_0
+	ld b, h 
+	ld c, l 
+	ld a, b
+	ld [fXVelocity], a 
+	ld a, c 
+	ld [fXVelocity + 1], a ; save new x velocity 
+	jp .check_grounded
+.apply_drag_right 
+	ld hl, 0 - PLAYER_HORI_ACCEL
+	add hl, bc 
+	bit 7, h
+	jp nz, .set_vel_0
+	ld b, h 
+	ld c, l 
+	ld a, b
+	ld [fXVelocity], a 
+	ld a, c 
+	ld [fXVelocity + 1], a ; save new x velocity 
+	jp .check_grounded 
+.set_vel_0
+	ld bc, 0 
+	ld a, b
+	ld [fXVelocity], a 
+	ld a, c 
+	ld [fXVelocity + 1], a ; save new x velocity 
+	; jp .check_grounded
+	
 .check_grounded	
 	ld a, [PlayerGrounded]
 	cp 0 
@@ -143,7 +220,14 @@ Player_Update::
 	ld d, a 
 	ld a, [fYVelocity + 1]
 	ld e, a 
+	ld a, [InputsHeld]
+	and BUTTON_A 
+	jp z, .use_default_gravity
+	ld hl, GRAVITY_HOLD
+	jp .add_gravity
+.use_default_gravity
 	ld hl, GRAVITY
+.add_gravity
 	add hl, de 
 	ld d, h
 	ld e, l 							; set resulting yvel for move rect subroutine 
@@ -169,21 +253,43 @@ Player_Update::
 	jp z, .set_anim_walk1
 	ld a, PLAYER_ANIM_WALK0_PATTERN
 	ld [PlayerSpritePattern], a 		; set anim pattern walk0
-	jp .move_player_rect
+	jp .clamp_velocity
 	
 .set_anim_air 
 	ld a, PLAYER_ANIM_AIR_PATTERN
 	ld [PlayerSpritePattern], a 		; set anim pattern air 
-	jp .move_player_rect
+	jp .clamp_velocity
 .set_anim_idle
 	ld a, PLAYER_ANIM_IDLE_PATTERN
 	ld [PlayerSpritePattern], a 		; set anim pattern idle 
-	jp .move_player_rect
+	jp .clamp_velocity
 .set_anim_walk1
 	ld a, PLAYER_ANIM_WALK1_PATTERN 
 	ld [PlayerSpritePattern], a 		; set anim pattern walk1 
-	;goto .move_player_rect
 
+.clamp_velocity
+	ld a, b 
+	and $80 
+	jp nz, .clamp_hori_neg
+	ld a, b 
+	cp (PLAYER_MAX_HORI_SPEED >> 8)
+	jp c, .move_player_rect 	; nothing to clamp, move rect 
+	ld bc, PLAYER_MAX_HORI_SPEED
+	ld a, b 
+	ld [fXVelocity], a 
+	ld a, c 
+	ld [fXVelocity + 1], a 	  ; save clamped xvel 
+	jp .move_player_rect
+.clamp_hori_neg
+	ld a, b 
+	cp (PLAYER_MIN_HORI_SPEED >> 8)
+	jp nc, .move_player_rect
+	ld bc, PLAYER_MIN_HORI_SPEED
+	ld a, b 
+	ld [fXVelocity], a 
+	ld a, c 
+	ld [fXVelocity + 1], a 	  ; save clamped xvel 
+	jp .move_player_rect
 
 .move_player_rect
 	ld a, [LevelColThresh]
