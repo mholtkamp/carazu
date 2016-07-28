@@ -25,6 +25,7 @@ PLAYER_ANIM_IDLE_PATTERN EQU 12
 PLAYER_ANIM_WALK0_PATTERN EQU 0
 PLAYER_ANIM_WALK1_PATTERN EQU 4 
 
+JUMP_PRESS_WINDOW EQU 5 
 
 	SECTION "PlayerData", BSS 
 
@@ -48,6 +49,8 @@ DS 1
 PlayerSpritePattern:
 DS 1 
 
+LastADown:
+DS 1 
 
 
 
@@ -87,6 +90,9 @@ Player_Initialize::
 	ld a, PLAYER_ANIM_IDLE_PATTERN
 	ld [PlayerSpritePattern], a 
 	
+	ld a, 0 
+	ld [LastADown], a 
+	
 	ret 
 	
 
@@ -95,6 +101,26 @@ Player_Update::
 	; prepare params for MoveRect_Integer function 
 	ld bc, $0000 
 	ld de, $0000  
+	
+	; Record time since last A down 
+	ld a, [InputsHeld]					
+	and BUTTON_A
+	ld h, a 
+	ld a, [InputsPrev]
+	cpl 
+	and h 
+	jp z, .inc_a_down_counter 
+	ld a, 0 
+	ld [LastADown], a 
+	jp .check_left
+.inc_a_down_counter
+	ld a, [LastADown]
+	inc a 
+	ld [LastADown], a 
+	cp 0 
+	jp nz, .check_left 
+	ld a, $ff 
+	ld [LastADown], a 	; cap counter at 255 
 	
 .check_left			
 	ld a, [InputsHeld]
@@ -199,11 +225,10 @@ Player_Update::
 .check_jump
 	ld a, [InputsHeld]					; player is not grounded, so check for jump
 	and BUTTON_A
-	ld h, a 
-	ld a, [InputsPrev]
-	cpl 
-	and h 
 	jp z, .update_player_animation 			; y-vel is already zeroed so go to move call 
+	ld a, [LastADown]
+	cp JUMP_PRESS_WINDOW
+	jp nc, .update_player_animation
 	
 	; Adjust veloctiy
 	ld hl, JUMP_SPEED
@@ -334,6 +359,7 @@ Player_Update::
 	ld a, [LevelColThresh]
 	ld hl, PlayerRect
 	call MoveRect_Fixed
+	ld b, a 
 	bit BIT_COLLIDED_DOWN, a 
 	jp z, .check_hit_up 
 	
@@ -345,16 +371,25 @@ Player_Update::
 	ld a, 0 
 	ld [fYVelocity], a 
 	ld [fYVelocity + 1], a 
-	jp .return
+	jp .check_hit_hori
 	
 .check_hit_up
 	bit BIT_COLLIDED_UP, a 
-	jp z, .return 
+	jp z, .check_hit_hori 
 	
 	; player collided with something moving up, zero y velocity
 	ld a, 0 
 	ld [fYVelocity], a 
 	ld [fYVelocity + 1], a 
+	
+.check_hit_hori
+	ld a, b 		; get the collision bitfield again 
+	and BIT_COLLIDED_LEFT | BIT_COLLIDED_RIGHT 
+	jp z, .return 
+	
+	ld a, 0 
+	ld [fXVelocity], a 
+	ld [fXVelocity + 1], a 
 	
 .return
 	ret
