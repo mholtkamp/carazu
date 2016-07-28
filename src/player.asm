@@ -16,11 +16,9 @@ GRAVITY_HOLD EQU $0010
 JUMP_SPEED EQU $FD80
 PLAYER_HORI_ACCEL EQU $0020
 PLAYER_MAX_HORI_SPEED EQU $0100 
-PLAYER_MIN_HORI_SPEED EQU $ff00 
-PLAYER_MAX_HORI_SPEED_ALLEGRO EQU $0200 
-PLAYER_MIN_HORI_SPEED_ALLEGRO EQU $fe00 
-PLAYER_MAX_VERT_SPEED EQU $0400
-PLAYER_MIN_VERT_SPEED EQU $0 - PLAYER_MAX_VERT_SPEED
+PLAYER_MIN_HORI_SPEED EQU ($0 - PLAYER_MAX_HORI_SPEED)
+PLAYER_MAX_VERT_SPEED EQU $0300 
+PLAYER_MIN_VERT_SPEED EQU ($0 - PLAYER_MAX_VERT_SPEED)
 
 PLAYER_ANIM_AIR_PATTERN EQU 8 
 PLAYER_ANIM_IDLE_PATTERN EQU 12 
@@ -201,6 +199,10 @@ Player_Update::
 .check_jump
 	ld a, [InputsHeld]					; player is not grounded, so check for jump
 	and BUTTON_A
+	ld h, a 
+	ld a, [InputsPrev]
+	cpl 
+	and h 
 	jp z, .update_player_animation 			; y-vel is already zeroed so go to move call 
 	
 	; Adjust veloctiy
@@ -273,23 +275,60 @@ Player_Update::
 	jp nz, .clamp_hori_neg
 	ld a, b 
 	cp (PLAYER_MAX_HORI_SPEED >> 8)
-	jp c, .move_player_rect 	; nothing to clamp, move rect 
+	jp c, .clamp_vert 	; nothing to clamp, check vert speed 
+	ld a, c 
+	cp (PLAYER_MAX_HORI_SPEED & $00ff)
+	jp c, .clamp_vert
 	ld bc, PLAYER_MAX_HORI_SPEED
 	ld a, b 
 	ld [fXVelocity], a 
 	ld a, c 
 	ld [fXVelocity + 1], a 	  ; save clamped xvel 
-	jp .move_player_rect
+	jp .clamp_vert
 .clamp_hori_neg
-	ld a, b 
-	cp (PLAYER_MIN_HORI_SPEED >> 8)
-	jp nc, .move_player_rect
+	ld a, (PLAYER_MIN_HORI_SPEED >> 8) 
+	cp b
+	jp c, .clamp_vert
+	jp nz, .skip_low_byte_hori
+	ld a, c 
+	cp (PLAYER_MIN_HORI_SPEED & $00ff)
+	jp nc, .clamp_vert
+.skip_low_byte_hori
 	ld bc, PLAYER_MIN_HORI_SPEED
 	ld a, b 
 	ld [fXVelocity], a 
 	ld a, c 
 	ld [fXVelocity + 1], a 	  ; save clamped xvel 
+.clamp_vert
+	ld a, d 
+	and $80 
+	jp nz, .clamp_vert_neg
+	ld a, d 
+	cp (PLAYER_MAX_VERT_SPEED >> 8)
+	jp c, .move_player_rect 	; nothing to clamp, move rect 
+	ld a, e 
+	cp (PLAYER_MAX_VERT_SPEED & $00ff)
+	jp c, .move_player_rect
+	ld de, PLAYER_MAX_VERT_SPEED
+	ld a, d 
+	ld [fYVelocity], a 
+	ld a, e 
+	ld [fYVelocity + 1], a 	  ; save clamped yvel 
 	jp .move_player_rect
+.clamp_vert_neg
+	ld a, (PLAYER_MIN_VERT_SPEED >> 8)
+	cp d
+	jp c, .move_player_rect
+	jp nz, .skip_low_byte_vert
+	ld a, e 
+	cp (PLAYER_MIN_VERT_SPEED & $00ff)
+	jp nc, .move_player_rect
+.skip_low_byte_vert
+	ld de, PLAYER_MIN_VERT_SPEED
+	ld a, d 
+	ld [fYVelocity], a 
+	ld a, e 
+	ld [fYVelocity + 1], a 	  ; save clamped yvel 
 
 .move_player_rect
 	ld a, [LevelColThresh]
