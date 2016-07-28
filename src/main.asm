@@ -22,6 +22,7 @@
 	INCLUDE "include/sound.inc"
 	INCLUDE "include/music.inc"
 	INCLUDE "include/menu.inc"
+	INCLUDE "include/stats.inc"
 	
 ;****************************************************************************************************************************************************
 ;*	user data (constants)
@@ -260,6 +261,7 @@ Main_Game_Loop::
 	; Game Logic Updates
 	call Player_Update
 	call Level_Update
+	call Stats_Update 
 	
 	; Local OAM Updates 
 	call Player_UpdateLocalOAM
@@ -282,6 +284,35 @@ Main_Game_Loop::
 	ld [$ff43], a 
 	ld a, [BGScrollY]
 	ld [$ff42], a
+	
+	; Update stats window 
+	ld hl, HeartEntries
+	ld de, MAP_1 + HEART_ENTRY_X
+	; heart 1 
+	ld a, [hl+]
+	ld [de], a 
+	inc de 
+	; heart 2 
+	ld a, [hl+]
+	ld [de], a 
+	inc de 
+	; heart 3 
+	ld a, [hl]
+	ld [de], a 
+
+	ld hl, BubbleEntries 
+	ld de, MAP_1 + BUBBLE_ENTRY_X+1 
+	; bubble 1 
+	ld a, [hl+]
+	ld [de], a 
+	inc de 
+	; bubble 2 
+	ld a, [hl+]
+	ld [de], a 
+	inc de 
+	; bubble 3 
+	ld a, [hl]
+	ld [de], a 
 	
 	; stream new tiles 
 	ld a, [MapStreamDir]
@@ -474,6 +505,9 @@ SwitchState::
 .switch_game
 	call Player_LoadGraphics
 	call Level_Load 
+	call Stats_LoadGraphics 
+	call Stats_Show
+	
 	ld a, STATE_GAME 
 	ld [GameState], a 
 	jp .return 

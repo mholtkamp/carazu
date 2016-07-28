@@ -11,7 +11,9 @@ rgbasm -oobj/sound.obj src/sound.asm
 rgbasm -oobj/music.obj src/music.asm 
 rgbasm -oobj/menu.obj src/menu.asm 
 rgbasm -oobj/util.obj src/util.asm
+rgbasm -oobj/stats.obj src/stats.asm
 
+rgbasm -oobj/special_tiles.obj tiles/special_tiles.asm
 rgbasm -oobj/bg_tiles_0.obj tiles/bg_tiles_0.asm
 rgbasm -oobj/player_sprite_tiles.obj tiles/player_sprite_tiles.asm
 

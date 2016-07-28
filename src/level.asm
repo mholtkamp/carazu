@@ -7,6 +7,7 @@ INCLUDE "include/globals.inc"
 INCLUDE "levels/level0.inc"
 
 ; Tile Set includes
+INCLUDE "tiles/special_tiles.inc"
 INCLUDE "tiles/bg_tiles_0.inc"
 
 CameraAnchorLeft EQU 32 
@@ -121,6 +122,22 @@ Level_Reset::
 Level_Load:: 
 
 	call Level_Reset 
+	
+	; Load special tiles 
+	ld bc, TILE_BANK_1 + 16*SPECIAL_TILES_INDEX
+	ld hl, SpecialTiles
+	ld de, NUM_SPECIAL_TILES*16 ; 64 characters, 16 bytes each
+
+.loop_special
+	ld a, [hl+]
+	ld [bc], a 
+	inc bc 
+	dec de 
+	ld a, d 
+	or e 
+	jp nz, .loop_special
+	
+	; Load the level 
 	ld a, [LevelNum]
 	sla a 
 	sla a 			; mult by four to get jump table offset 

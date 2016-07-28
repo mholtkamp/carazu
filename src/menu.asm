@@ -5,6 +5,7 @@ INCLUDE "include/globals.inc"
 INCLUDE "include/input.inc"
 INCLUDE "include/constants.inc"
 INCLUDE "include/level.inc"
+INCLUDE "include/stats.inc"
 
 	SECTION "MenuVars", BSS 
 	
@@ -244,6 +245,9 @@ Menu_Update::
 .new_game
 	ld a, 0 
 	ld [LevelNum], a 	; set level to 0 since it is a new game 
+	
+	call Stats_Reset 	; reset the stat bss variables, as this is a new game.
+	
 	ld b, STATE_GAME 
 	call SwitchState
 	ret 

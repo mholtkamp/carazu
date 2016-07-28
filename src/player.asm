@@ -70,7 +70,6 @@ Player_Initialize::
 	ld [PlayerRect + 4], a 				; width 
 	ld a, 12 
 	ld [PlayerRect + 5], a 				; height
-	
 
 	ld a, 0 
 	ld [fYVelocity], a 			; (integer)

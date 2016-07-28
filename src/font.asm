@@ -3,7 +3,7 @@ INCLUDE "include/font.inc"
 SECTION "FontTiles", HOME
 
 FullFontVRAMAddress EQU $9400		; 64 characters 
-NumbersFontVRAMAddress EQU $9760	; 10 characters
+NumbersFontVRAMAddress EQU $9600	; 16 characters
 
 FontTiles:
 DB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 
@@ -77,9 +77,9 @@ DB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $FE, $FE, $00, $0
 
 Font_LoadFull::
 
-ld bc, FullFontVRAMAddress
-ld hl, FontTiles
-ld de, 64*16 ; 64 characters, 16 bytes each
+	ld bc, FullFontVRAMAddress
+	ld hl, FontTiles
+	ld de, 64*16 ; 64 characters, 16 bytes each
 
 .loop
 	ld a, [hl+]
@@ -91,3 +91,47 @@ ld de, 64*16 ; 64 characters, 16 bytes each
 	jp nz, .loop
 	ret
 	
+Font_LoadNumbers::
+
+	ld bc, NumbersFontVRAMAddress
+	ld hl, FontTiles + (16*16)		; start at 0 
+	ld de, 16*10 ; 10 characters for 0-9 
+
+.loop 
+	ld a, [hl+]
+	ld [bc], a 
+	inc bc 
+	dec de 
+	ld a, d 
+	or e 
+	jp nz, .loop 
+	
+	; load letters (for hex)
+	ld bc, NumbersFontVRAMAddress + (10*16) ; add after the 9 
+	ld hl, FontTiles + (33*16)		; start at A in rom font 
+	ld de, 16*6 ; 6 chars A-F
+
+.loop2 
+	ld a, [hl+]
+	ld [bc], a 
+	inc bc 
+	dec de 
+	ld a, d 
+	or e 
+	jp nz, .loop2 
+	
+	; load blank space 
+	ld bc, NumbersFontVRAMAddress - 16 ; put it right behind the start of the number tiles 
+	ld hl, FontTiles 
+	ld de, 16 	; load one tile
+	
+.loop3 
+	ld a, [hl+]
+	ld [bc], a 
+	inc bc 
+	dec de 
+	ld a, d 
+	or e 
+	jp nz, .loop3 
+
+	ret 

@@ -9,7 +9,9 @@ obj/sound.obj
 obj/music.obj 
 obj/menu.obj 
 obj/util.obj 
+obj/stats.obj 
 
+obj/special_tiles.obj 
 obj/bg_tiles_0.obj
 obj/player_sprite_tiles.obj
 
