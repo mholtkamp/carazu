@@ -1,5 +1,6 @@
 	INCLUDE "include/constants.inc"
 	INCLUDE "include/level.inc"
+	INCLUDE "include/rect.inc"
 
 COLLIDED_LEFT      EQU $01
 COLLIDED_RIGHT     EQU $02 
@@ -8,20 +9,23 @@ COLLIDED_DOWN      EQU $08
 
 SECTION "UtilData", BSS
 
+fRectX:
+DS 2 
+fRectY:
+DS 2
 RectX:
 DS 1 
 RectY:
-DS 1
+DS 1 
 RectWidth:
 DS 1
 RectHeight:
 DS 1 
 
-XDisp:
-DS 1
-
-YDisp:
-DS 1
+fXDisp:
+DS 2
+fYDisp:
+DS 2
 
 CollisionThreshold:
 DS 1
@@ -29,388 +33,12 @@ DS 1
 CollisionBitfield:
 DS 1
 
+
 Scratch:
 DS 4
- 
 
 
-SECTION "MoveRect_Integer", HOME
 
-; MoveRect_Integer
-; input:
-;   hl = rect address
-;   b  = x-displacement component
-;   c  = y-displacement component
-;   d  = collision threshold
-; output:
-; 	 e = collision bitfield
-;		 BIT_COLLIDED_LEFT  0
-;		 BIT_COLLIDED_RIGHT 1 
-;		 BIT_COLLIDED_UP    2
-;		 BIT_COLLIDED_DOWN  3
-MoveRect_Integer::
-
-	; Save data needed later on 
-	; save the rect location for after the subroutine is finished
-	push hl 
-	ld a, [hl+]
-	ld [RectX], a 
-	ld a, [hl+]
-	ld [RectY], a 
-	ld a, [hl+]
-	ld [RectWidth], a 
-	ld a, [hl+]
-	ld [RectHeight], a 
-
-	ld a, b 
-	ld [XDisp], a
-	ld a, c 
-	ld [YDisp], a 
-	ld a, d 
-	ld [CollisionThreshold], a
-	
-	; clear out return value 
-	ld a, 0 
-	ld [CollisionBitfield], a 
-	
-.move_x
-	; check if there is any x displacement
-	ld a, [XDisp]	; a = x-displacement 
-	cp 0            ; is the desired x displacement 0?
-	jp z, .move_y   ; not moving x, so move y 
-	
-	; Move the rect's x coord 
-	ld a, [RectX]
-	ld c, a 
-	ld a, [XDisp]
-	add a, c		; a = rect.x + x-disp = new x position 
-	ld c, a 		; c = new position 
-	ld [RectX], a 	; store new position in memory
-	
-	; If moving right, then add rect.width to the x coord 
-	ld a, [XDisp]	; a = xdisp
-	bit 7, a 		; is x-disp negative?
-	jp nz, .use_x_pos
-	ld a, [RectWidth]		; a = rect.width 
-	sub 1 			; subtract 1 to get the last pixel on right 
-	add a, c 		; c = rect.x + rect.width - 1
-	ld c, a 		; set c to the x-pos being examined
-	
-.use_x_pos	
-	
-	; Retrieve the rect's y position (for indexing VRAM)
-	ld a, [RectY] 	; a = rect.y 
-	ld b, a 		; b = rect.y 
-	
-	; Multiply the y coord by 4 (divide by 8 and then mult by 32)
-	; to get the VRAM row address 
-	and $f8 ;zero out last 3 digits
-	ld h, b			
-	ld l, a
-	srl h
-	srl h
-	srl h
-	srl h
-	srl h
-	srl h
-	sla l 
-	sla l 
-	
-	; Add the x tile index to get the specific map entry we need 
-	; Divide by 8 to get x tile coord 
-	ld b, 0
-	srl c 
-	srl c 
-	srl c 
-	add hl, bc
-	ld a, c 				; save the x-tile offset for later 
-	ld [Scratch + 2], a 
-	ld a, [MapAddress]
-	ld b, a 
-	ld a, [MapAddress + 1]
-	ld c, a 
-	add hl, bc          ; Get address of specific tile in vram
-	
-	; set counter variable in d 
-	ld a, [RectHeight]
-	sub 1 
-	ld d, a 
-	
-.loop0 
-	ld a, [CollisionThreshold]
-	ld b, a 
-	
-	ld a, [hl]		    ; Get the entry value
-		
-	; Compare the entry value with the collision threshold 
-	; if the value is less than threshold, we need to handle collision 
-	 
-	cp b 
-	jp c, .handle_collision_x	; hit a collision tile, go handle it 
-	
-	; check whether to do next loop 
-	ld a, d 
-	sub 8 				; decrement loop variable 
-	jp c, .check_y_plus_height 
-	ld d, a 			; save loop var 
-	ld bc, 32
-	add hl, bc  		; add 32 to hl to get next tile to check (1 row = 32 tiles)
-	jp .loop0
-	
-.check_y_plus_height
-	;check the tile collision for point rect.y + rect.height 
-	; this might do a redundant check 
-	ld a, [RectHeight]
-	sub 1 
-	ld b, a 			; b = rect.height  - 1 
-	ld a, [RectY]		; a = rect.y 
-
-	add a, b 			; a = rect.y + rect.height - 1 
-	
-	;mult by 4 to get tile index 
-	ld b, a
-	and a, $f8   ;zero out least sig 3 digits 
-	ld c, a
-	srl b 
-	srl b 
-	srl b 
-	srl b 
-	srl b 
-	srl b 
-	
-	sla c  
-	sla c 
-
-	ld a, [Scratch + 2]		; retrieve that x-tile coord from earlier
-	ld h, 0 
-	ld l, a 			; hl = x-tile coord 
-
-	add hl, bc 
-	ld  b, h 
-	ld  c, l   			; bc now has x+y tile offset 
-	
-	ld a, [MapAddress]
-	ld h, a 
-	ld a, [MapAddress + 1]
-	ld l, a 
-	add hl, bc 		; get the absolute memory location of tile 
-	
-	ld a, [CollisionThreshold]
-	ld b, a
-	ld a, [hl]			; a = map entry val 
-	
-	cp b 						; if entry is less than threshold 
-	jp c, .handle_collision_x	; it's a collision tile so handle it 
-
-	jp .move_y 					; no collision tile, so move in Y dir now 
-	
-.handle_collision_x
-	
-	ld a, [XDisp]		; Get the original x disp 
-	bit 7, a 			; is x-disp negative 
-	jp z, .resolve_move_right
-	
-.resolve_move_left 
-	ld a, [CollisionBitfield]
-	or COLLIDED_LEFT		; mark that the rect collided moving left 
-	ld [CollisionBitfield], a	; save bitfield
-	ld a, [RectX]			; Get the rect.x coord (where it is colliding)
-	add a, 8			; add 8 to the rect x position (cancel out movement to left)
-	and $f8  			; zero out lower 3 bits to snap it to the tile 
-	ld [RectX], a 
-	jp .move_y 			; now attempt moving in y direction 
-	
-.resolve_move_right
-	ld a, [CollisionBitfield]
-	or COLLIDED_RIGHT
-	ld [CollisionBitfield], a	; update the result bitfield
-	ld a, [RectWidth]
-	sub 1 				
-	ld b, a 			; b = rect.width - 1
-	ld a, [RectX]       ; a = rect.x 
-
-	add a, b 			; a = rect.width + rect.x 
-	and $f8				; snap to the tile boundary
-	sub 1 				; push back one pixel from the collided tile 
-	sub b				; subtract result by rect.width to get the resolved x position 
-	ld [RectX], a 		; save the resolved x coord 
-	
-.move_y
-	ld a, [YDisp]   ; a = y-displacement
-	cp 0 			; is y-disp 0?
-	jp z, .return	; no movement in y direction, so return. nothing else to do
-	
-	; Move the rect's y coord 
-	ld a, [RectY]
-	ld c, a 		; c = rect.y 
-	ld a, [YDisp]
-	add a, c 		; get the new y position and store in c
-	ld  c, a 
-	ld [RectY], a   ; save that new y position in rect structure	
-	
-	; figure out if object is moving down or up 
-	ld a, [YDisp]
-	bit 7, a   		; Check if new pos is negative 
-	jp nz, .use_y_pos 
-	ld a, [RectHeight]
-	sub 1
-	ld b, a 		; b = rect.height - 1
-	ld a, c			; a = rect.y 
-	add a, b 		; a = rect.y + rect.height - 1
-	
-	ld c, a			; c = rect.y + rect.height - 1 (coordinate of interest)
-	
-.use_y_pos
-	
-	; mask and multiply by 4 to get VRAM index 
-	ld a, c 	; a = y-coord of interest 
-	and $f8 	; zero out lower three bits 
-	ld b, c 	; b = y-coord of interest 
-	ld c, a 	; c = y-coord of interest (with bit 0,1,2 zeroed)
-	
-	; mult by 4 
-	srl b 
-	srl b 
-	srl b 
-	srl b 
-	srl b 
-	srl b 
-	sla c 
-	sla c 
-	
-	; prepare for looping collision check 
-	ld a, [MapAddress]
-	ld h, a 
-	ld a, [MapAddress + 1]
-	ld l, a 
-	add hl, bc 			; hl = address of row to examine 
-	
-	; save row address for later 
-	ld a, h 
-	ld [Scratch], a 
-	ld a, l
-	ld [Scratch + 1], a 
-	
-	ld a, [RectX]		
-	ld c, a 			; c = rect. x
-	ld b, 0 			
-	
-	srl c 
-	srl c
-	srl c 				; divide rect.x by 8 to get x tile-coord (column num)
-	add hl, bc 			; add x tile coord to hl to get address of tile under inspection
-	
-	; get rect width to determine how many times to loop 
-	ld a, [RectWidth]
-	sub 1 		
-	ld d, a 		
-	
-.loop1 
-	ld a, [CollisionThreshold]	
-	ld b, a 					; b = collision threshold 
-	ld a, [hl]					; get map entry value 
-	
-	cp b 						; value - threshold ?
-	jp c, .handle_collision_y 	; the collision threshold is bigger than the map value. go handle collision 
-	
-	; prepare for next iteration of loop 
-	ld a, d		; a = loop counter  
-	sub 8 		; subtract 8 to see if we are past width of tile 
-	jp c, .check_x_plus_width ; if counter is now < 0, go check the right-most point of rect 
-	ld d, a 	; save loop counter value 	
-	inc hl 		; set address to tile in next column 
-	jp .loop1 
-	
-.check_x_plus_width
-	ld a, [RectWidth]
-	sub 1 
-	ld b, a 		; b = rect.width -  1
-	ld a, [RectX]	; a = rect.x 
-
-	add a, b 	; a = rect.x + rect.width - 1 
-	srl a
-	srl a
-	srl a		; divide x coord by 8 to get tile coord
-	ld b, 0 
-	ld c, a 	; c = column offset 
-	
-	; get the first row's map entry address 
-	ld a, [Scratch]
-	ld h, a 
-	ld a, [Scratch +  1]
-	ld l, a 
-	
-	add hl, bc 	; find the tile address needing to be examined 
-	
-	ld a, [CollisionThreshold]
-	ld b, a 	; b = threshold
-	ld a, [hl] 	; get tile value 
-	
-	cp b 		; val - threshold ?
-	jp c, .handle_collision_y
-	jp .return
-	
-.handle_collision_y
-
-	; figure out direction moving 
-	ld a, [YDisp]	; a = y-disp 
-	bit 7,a 		; is the number negative?
-	jp z, .resolve_move_down ;jump to the negative movement code 
-
-.resolve_move_up
-	ld a, [CollisionBitfield]
-	or COLLIDED_UP
-	ld [CollisionBitfield], a	; update the result bitfield
-	ld a, [RectY]		; a = rect.y 
-	add a, 8 		; move down 1 tile 
-	and $f8			; snap to the new tile 
-	ld [RectY], a 	; save rectified position 
-	jp .return
-	
-.resolve_move_down
-	ld a, [CollisionBitfield]
-	or COLLIDED_DOWN
-	ld [CollisionBitfield], a	; update the result bitfield
-	ld a, [RectHeight]
-	sub 1 
-	ld b, a 			; b = rect.height - 1 
-	ld a, [RectY] 		; a = rect.y 	
-
-	add a, b 		; a = rect.y + rect.height - 1 (position of interest)
-	and $f8			; snap to the collision tile 
-	sub 1 			; move up one pixel (to be in a non-colliding tile)
-	sub b			; subtract height to get resolved y-coord 
-	ld [RectY], a 	; save new y coord 
-	
-.return 	
-	;Final step is to save rect data to actual address 
-	pop hl 			; hl = rect address 
-	ld a, [RectX]
-	ld [hl+], a 	; store rect.x 
-	ld a, [RectY]	
-	ld [hl+], a 	; store rect.y 
-	ld a, [RectWidth]
-	ld [hl+], a 	; store rect.width 
-	ld a, [RectHeight]
-	ld [hl+], a 	; store rect.height 
-	
-	; Load output into register
-	ld a, [CollisionBitfield]
-	
-	ret 
-	
-
-SECTION "UtilData", BSS
-
-fRectX:
-DS 2 
-fRectY:
-DS 2
-
-fXDisp:
-DS 2
-fYDisp:
-DS 2
 
 SECTION "MoveRect_Fixed", HOME 
 
@@ -1461,3 +1089,179 @@ _MultMapWidth::
 	sla l 
 	sla l 
 	ret 
+	
+; hl = rect address 
+Rect_CheckSpecials::
+
+	; Save rect data 
+	ld a, [hl+]
+	ld [fRectX], a 
+	ld a, [hl+]
+	ld [fRectX + 1], a 
+	ld a, [hl+]
+	ld [fRectY], a 
+	ld a, [hl+]
+	ld [fRectY + 1], a 
+	ld a, [hl+]
+	ld [RectWidth], a 
+	ld a, [hl+]
+	ld [RectHeight], a 
+
+	; Find tile in rom 
+	; First duty is to find the tile row we need to examine
+	; so get y coord and divide by 8, then mult by map width 
+	ld a, [RectY]
+	ld b, a 
+	ld a, [BGFocusPixelsY]
+	add a, b 
+
+	call _MultMapWidth
+	
+	ld a, [MapAddress]
+	ld b, a 
+	ld a, [MapAddress + 1]
+	ld c, a 
+	add hl, bc 					; hl = row address 
+
+	; add origin index to get absolute map entry address 
+	ld a, [MapOriginIndex]
+	ld b, a 
+	ld a, [MapOriginIndex + 1]
+	ld c, a 
+	add hl, bc 			
+
+	; find the number of times to loop in vertical direction 
+	; find the end y tile coords 
+	ld a, [RectY]
+	ld c, a 
+	ld a, [RectHeight]
+	sub 1 
+	add a, c 
+	ld c, a 			; c = end pixel coords 
+	ld a, [BGFocusPixelsY]
+	add a, c 
+	ld c, a 
+	srl c 
+	srl c 
+	srl c 				; c = end y tile coords 
+	
+	; find the start y tile coords 
+	ld a, [RectY]
+	ld b, a 			; b = start pixel coords
+	ld a, [BGFocusPixelsY]
+	add a, b 
+	ld b, a 
+	srl b 
+	srl b 
+	srl b 				; b = start y tile coord
+	
+	ld a, c 
+	sub b 				
+	add a, 1 
+	ld e, a 			; e = number of times to loop per column ((end tile - start tile) + 1)
+	
+	; find the end tile x tile-coords
+	ld a, [RectX]
+	ld c, a 
+	ld a, [RectWidth]
+	sub 1				
+	add a, c 			
+	ld c, a			    ; c = end pixel coords
+	ld a, [BGFocusPixelsX]
+	add a, c 
+	ld c, a 
+	srl c 
+	srl c 
+	srl c 				; c = end x tile coord
+	
+	; find first tile coords 
+	ld a, [RectX]
+	ld b, a 			; b = start pixel coords
+	ld a, [BGFocusPixelsX]
+	add a, b 
+	ld b, a 
+	srl b 
+	srl b 
+	srl b 				; b = start x tile coord
+	
+	ld a, c 
+	sub b 				
+	add a, 1 
+	ld d, a 			; d = number of times to loop per row ((end tile - start tile) + 1)
+	ld [Scratch], a 	; Scratch = horizontal loop count 
+	
+	ld c, b 
+	ld b, 0 			; bc = start x-tile coord 
+	
+	add hl, bc 			; hl = starting tile address in vram map 0 \
+	
+	ld b, 0 			; b will be the return special tile bitfield 
+	
+.loop 
+
+	ld a, [hl+] 
+	
+	; Check for each special tile 
+	cp SPECIAL_TILE_SPIKE_UP
+	jp z, .set_spike
+	cp SPECIAL_TILE_SPIKE_DOWN
+	jp z, .set_spike 
+	
+	cp SPECIAL_TILE_SPRING_UP_1
+	jp z, .set_spring_up
+	cp SPECIAL_TILE_SPRING_UP_2
+	jp z, .set_spring_up 
+	
+	cp SPECIAL_TILE_DOOR_2  
+	jp z, .set_door 
+	
+	cp SPECIAL_TILE_SECRET_DOOR_2
+	jp z, .set_secret_door 
+	
+	jp .continue 
+	
+.set_spike
+	set BIT_SPIKE, b 
+	jp .continue 
+	
+.set_spring_up 
+	set BIT_SPRING_UP, b 
+	jp .continue 
+	
+.set_door 
+	set BIT_DOOR, b 
+	jp .continue 
+	
+.set_secret_door
+	set BIT_SECRET_DOOR, b 
+	jp .continue
+	
+.continue 
+	dec d 			; lower horizontal counter 
+	jp nz, .loop 
+	
+	dec e 
+	ret z			; return if finished checking all tiles 
+	
+	; prepare for next row loop 
+	ld a, [Scratch]
+	ld d, a 		; reset horizontal counter 
+	
+	ld a, l 
+	sub d 
+	ld l, a 
+	ld a, h 
+	sbc 0 
+	ld h, a 		; subtract tile pointer by horizontal count to reset to first x tile 
+	
+	ld a, [MapWidth]
+	ld c, a 
+	ld a, l 
+	add a, c 
+	ld l, a 
+	ld a, h 
+	adc a, 0 
+	ld h, a 		; add the map width to get the next row
+	
+	jp .loop 
+	

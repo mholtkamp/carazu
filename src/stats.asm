@@ -13,12 +13,12 @@ HEART_TILE_INDEX EQU (SPECIAL_TILES_INDEX + 11)
 PlayerHearts:
 DS 1 
 PlayerBubbles: 
-DS 2 
+DS 1 
 
 HeartEntries:
 DS 3
 BubbleEntries
-DS 3 
+DS 2 
 
 
 	SECTION "StatsProcs", HOME 
@@ -29,7 +29,6 @@ Stats_Reset::
 	ld [PlayerHearts], a 
 	ld a, 0 
 	ld [PlayerBubbles], a 
-	ld [PlayerBubbles + 1], a 
 
 	ret 
 	
@@ -95,16 +94,7 @@ Stats_Update::
 .update_bubbles
 	ld hl, BubbleEntries
 	ld a, [PlayerBubbles]
-	ld b, a 
-	ld a, [PlayerBubbles+1]
 	ld c, a 
-	
-	ld a, b  
-	and $0f 
-	ld d, a
-	ld a, NUMBER_TILES_INDEX
-	add a, d 
-	ld [hl+], a 	; load most sig digit 
 	
 	ld a, c 
 	and $f0 

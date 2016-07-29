@@ -7,6 +7,7 @@ INCLUDE "include/player.inc"
 INCLUDE "include/level.inc"
 INCLUDE "include/sound.inc"
 INCLUDE "include/util.inc"
+INCLUDE "include/stats.inc"
 INCLUDE "tiles/player_sprite_tiles.inc"
 
 ; Constants
@@ -384,11 +385,28 @@ Player_Update::
 .check_hit_hori
 	ld a, b 		; get the collision bitfield again 
 	and BIT_COLLIDED_LEFT | BIT_COLLIDED_RIGHT 
-	jp z, .return 
+	jp z, .check_specials 
 	
 	ld a, 0 
 	ld [fXVelocity], a 
 	ld [fXVelocity + 1], a 
+	
+.check_specials 
+	ld hl, PlayerRect
+	call Rect_CheckSpecials 
+	bit BIT_SPIKE, b 
+	jp nz, .resolve_spikes
+	bit BIT_SPRING_UP, b 
+	jp nz, .resolve_spring_up
+	jp .return 
+	
+.resolve_spikes
+	ld a, 0 
+	ld [PlayerHearts], a 
+	jp .return 
+	
+.resolve_spring_up
+	jp .return 
 	
 .return
 	ret

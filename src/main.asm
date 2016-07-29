@@ -307,12 +307,9 @@ Main_Game_Loop::
 	ld [de], a 
 	inc de 
 	; bubble 2 
-	ld a, [hl+]
-	ld [de], a 
-	inc de 
-	; bubble 3 
 	ld a, [hl]
 	ld [de], a 
+	inc de 
 	
 	; stream new tiles 
 	ld a, [MapStreamDir]

@@ -3,7 +3,7 @@ STATS_INC SET 1
 
 ; Equates 
 HEART_ENTRY_X EQU 1 
-BUBBLE_ENTRY_X EQU 15 
+BUBBLE_ENTRY_X EQU 16 
 
 ; Variables 
 GLOBAL HeartEntries

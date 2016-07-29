@@ -7,18 +7,13 @@ BIT_COLLIDED_RIGHT EQU 1
 BIT_COLLIDED_UP    EQU 2
 BIT_COLLIDED_DOWN  EQU 3
 
-; MoveRect_Integer
-;   hl = rect address
-;   b  = x-move component
-;   c  = y-move component
-;   d  = collision threshold
-; output:
-; 	 a = collision bitfield
-;		 BIT_COLLIDED_LEFT  0
-;		 BIT_COLLIDED_RIGHT 1 
-;		 BIT_COLLIDED_UP    2
-;		 BIT_COLLIDED_DOWN  3
-GLOBAL MoveRect_Integer
+BIT_SPIKE EQU 0 
+BIT_DOOR EQU 1 
+BIT_SECRET_DOOR EQU 2 
+BIT_SPRING_UP EQU 4
+BIT_SPRING_DOWN EQU 5 
+BIT_SPRING_LEFT EQU 6 
+BIT_SPRING_RIGHT EQU 7
 
 ; MoveRect_Fixed
 ; input: 
@@ -28,10 +23,7 @@ GLOBAL MoveRect_Integer
 ;    a = collision threshold
 ; output:
 ; 	 a = collision bitfield
-;		 BIT_COLLIDED_LEFT  0
-;		 BIT_COLLIDED_RIGHT 1 
-;		 BIT_COLLIDED_UP    2
-;		 BIT_COLLIDED_DOWN  3
+;	 b =  special bitfield 
 GLOBAL MoveRect_Fixed
 
 ; CheckRectGrounded
@@ -50,6 +42,15 @@ GLOBAL CheckRectGrounded_Fixed
 ;   push4 = [SpritePattern, SpriteIndex]
 ;   push5 = [0, FlipX/FlipY]
 GLOBAL UpdateOAMFromRect_Fixed 
+
+
+; Rect_CheckSpecials
+; input:
+;   hl = rect 
+; 
+; output:
+;  b = special bitfield 
+GLOBAL Rect_CheckSpecials
 
 
 ENDC 
