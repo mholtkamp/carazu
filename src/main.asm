@@ -270,7 +270,7 @@ Main_Game_Loop::
 	call UpdateSong
 	
 	; Performance Measurement
-	call RecordLY
+	call Stats_RecordLY
 	
 	; Wait for VBLANK interval 
 	call WaitVBLANK_Flag
@@ -309,7 +309,16 @@ Main_Game_Loop::
 	; bubble 2 
 	ld a, [hl]
 	ld [de], a 
+	
+	ld hl, DebugLYEntries
+	ld de, MAP_1 + DEBUG_LY_ENTRY_X
+	; digit 1 
+	ld a, [hl+]
+	ld [de], a 
 	inc de 
+	; digit 2 
+	ld a, [hl]
+	ld [de], a 
 	
 	; stream new tiles 
 	ld a, [MapStreamDir]
@@ -409,32 +418,6 @@ ClearOAM::
 	
 CLEAR_MAP::
 	ret
-
-RecordLY::
-
-	; save value of LY 
-	ld a, [rLY]
-	ld b, a 
-	and $0f
-	cp $0a 		; check if its a hex character 
-	jp c, .set_digit1_tile
-	add a, 7 		; add 7 to point to hex chars A-F  
-.set_digit1_tile
-	add a, FontPatternStart + 16 
-	ld [LYValue + 1], a 
-	
-	ld a, b 		; grab ly value again 
-	and $f0 
-	swap a 
-	cp $0a 
-	jp c, .set_digit16_tile 
-	add a, 7 
-.set_digit16_tile
-	add a, FontPatternStart + 16 
-	ld [LYValue], a 
-	
-	ret 
-	
 
 DrawLY::
 	ld hl, $9831 

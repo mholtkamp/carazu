@@ -8,6 +8,7 @@ STATS_WINDOW_Y_POS EQU 136
 STATS_WINDOW_X_POS EQU WINDOW_X_OFFSET
 BUBBLE_TILE_INDEX EQU (SPECIAL_TILES_INDEX + 10)
 HEART_TILE_INDEX EQU (SPECIAL_TILES_INDEX + 11) 
+
 	SECTION "StatsVariables", BSS 
 
 PlayerHearts:
@@ -15,10 +16,16 @@ DS 1
 PlayerBubbles: 
 DS 1 
 
+DebugLY:
+DS 1 
+
 HeartEntries:
 DS 3
 BubbleEntries
 DS 2 
+
+DebugLYEntries:
+DS 2
 
 
 	SECTION "StatsProcs", HOME 
@@ -29,6 +36,8 @@ Stats_Reset::
 	ld [PlayerHearts], a 
 	ld a, 0 
 	ld [PlayerBubbles], a 
+	ld a, 0 
+	ld [DebugLY], a 
 
 	ret 
 	
@@ -111,6 +120,26 @@ Stats_Update::
 	add a, d 
 	ld [hl], a 		; load least sig digit 
 	
+.update_debug_ly
+	ld hl, DebugLYEntries
+	ld a, [DebugLY]
+	ld c, a 
+	
+	ld a, c 
+	and $f0 
+	swap a 
+	ld d, a 
+	ld a, NUMBER_TILES_INDEX
+	add a, d 
+	ld [hl+], a 	; load sec most sig digit 
+	
+	ld a, c 
+	and $0f 
+	ld d, a 
+	ld a, NUMBER_TILES_INDEX
+	add a, d 
+	ld [hl], a 		; load least sig digit 
+	
 	ret 
 	
 	
@@ -132,4 +161,16 @@ Stats_Show::
 	set 6, [hl]
 	set 5, [hl]
 	
+	ret 
+	
+Stats_RecordLY:
+	ld a, [rLY]
+	ld b, a 
+	ld a, [DebugLY]
+	cp b 
+	jp c, .record_new_ly
+	ret 
+.record_new_ly
+	ld a, b 
+	ld [DebugLY], a 
 	ret 

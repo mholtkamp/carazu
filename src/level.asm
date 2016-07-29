@@ -179,12 +179,15 @@ Level_Load::
 	ld c, Level0SpawnY 
 	call Player_SetPosition
 	
-	call _Level_LoadBorders
-	
-	ret 
+	jp .return 
 	
 .load_1 
 
+	jp .return 
+	
+.return
+	call Player_UpdateLocalOAM
+	call _Level_LoadBorders
 	ret 
 	
 

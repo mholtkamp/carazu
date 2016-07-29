@@ -14,7 +14,7 @@ INCLUDE "tiles/player_sprite_tiles.inc"
 PLAYER_HORI_SPEED EQU $0100
 GRAVITY EQU $0020
 GRAVITY_HOLD EQU $0010
-GRAVITY_SPRUNG EQU $000c
+GRAVITY_SPRUNG EQU $0020
 JUMP_SPEED EQU $FD80
 PLAYER_HORI_ACCEL EQU $0010
 PLAYER_MAX_HORI_SPEED EQU $0100 
@@ -28,7 +28,8 @@ PLAYER_ANIM_WALK0_PATTERN EQU 0
 PLAYER_ANIM_WALK1_PATTERN EQU 4 
 
 JUMP_PRESS_WINDOW EQU 5 
-SPRING_UP_SPEED EQU $0 - $0300 
+SPRING_UP_SPEED EQU $0 - $0500 
+PLAYER_SPRUNG_UP EQU 1
 
 	SECTION "PlayerData", BSS 
 
@@ -254,17 +255,14 @@ Player_Update::
 	ld d, a 
 	ld a, [fYVelocity + 1]
 	ld e, a 
-	ld a, [PlayerSprung]
-	cp 1 
-	jp z, .use_sprung_gravity
 	ld a, [InputsHeld]
 	and BUTTON_A 
 	jp z, .use_default_gravity
+	ld a, [PlayerSprung]
+	cp PLAYER_SPRUNG_UP
+	jp z, .use_default_gravity
 	ld hl, GRAVITY_HOLD
 	jp .add_gravity
-.use_sprung_gravity
-	ld hl, GRAVITY_SPRUNG
-	jp z, .add_gravity
 .use_default_gravity
 	ld hl, GRAVITY
 .add_gravity
@@ -354,6 +352,10 @@ Player_Update::
 	ld [fYVelocity + 1], a 	  ; save clamped yvel 
 	jp .move_player_rect
 .clamp_vert_neg
+	ld a, [PlayerSprung]
+	cp PLAYER_SPRUNG_UP
+	jp z, .move_player_rect	  ; don't clamp when sprung upwards
+	
 	ld a, (PLAYER_MIN_VERT_SPEED >> 8)
 	cp d
 	jp c, .move_player_rect
@@ -427,7 +429,7 @@ Player_Update::
 	ld [fYVelocity + 1], a 
 	ld a, 0 
 	ld [PlayerGrounded], a 
-	ld a, 1 
+	ld a, PLAYER_SPRUNG_UP 
 	ld [PlayerSprung], a 
 	jp .return 
 	
