@@ -12,10 +12,11 @@ INCLUDE "tiles/player_sprite_tiles.inc"
 
 ; Constants
 PLAYER_HORI_SPEED EQU $0100
-GRAVITY EQU $0015
+GRAVITY EQU $0020
 GRAVITY_HOLD EQU $0010
+GRAVITY_SPRUNG EQU $000c
 JUMP_SPEED EQU $FD80
-PLAYER_HORI_ACCEL EQU $0020
+PLAYER_HORI_ACCEL EQU $0010
 PLAYER_MAX_HORI_SPEED EQU $0100 
 PLAYER_MIN_HORI_SPEED EQU ($0 - PLAYER_MAX_HORI_SPEED)
 PLAYER_MAX_VERT_SPEED EQU $0300 
@@ -27,6 +28,7 @@ PLAYER_ANIM_WALK0_PATTERN EQU 0
 PLAYER_ANIM_WALK1_PATTERN EQU 4 
 
 JUMP_PRESS_WINDOW EQU 5 
+SPRING_UP_SPEED EQU $0 - $0300 
 
 	SECTION "PlayerData", BSS 
 
@@ -53,6 +55,8 @@ DS 1
 LastADown:
 DS 1 
 
+PlayerSprung:
+DS 1 
 
 
 	SECTION "PlayerCode", HOME 
@@ -92,6 +96,9 @@ Player_Initialize::
 	
 	ld a, 0 
 	ld [LastADown], a 
+	
+	ld a, 0
+	ld [PlayerSprung], a 
 	
 	ret 
 	
@@ -247,11 +254,17 @@ Player_Update::
 	ld d, a 
 	ld a, [fYVelocity + 1]
 	ld e, a 
+	ld a, [PlayerSprung]
+	cp 1 
+	jp z, .use_sprung_gravity
 	ld a, [InputsHeld]
 	and BUTTON_A 
 	jp z, .use_default_gravity
 	ld hl, GRAVITY_HOLD
 	jp .add_gravity
+.use_sprung_gravity
+	ld hl, GRAVITY_SPRUNG
+	jp z, .add_gravity
 .use_default_gravity
 	ld hl, GRAVITY
 .add_gravity
@@ -366,6 +379,8 @@ Player_Update::
 	; player hit something moving down, mark as grounded 
 	ld a, 1 
 	ld [PlayerGrounded], a 			; player collided downward so load grounded = 1 
+	ld a, 0 
+	ld [PlayerSprung], a 
 	
 	; player collided with something moving down, zero y velocity
 	ld a, 0 
@@ -406,6 +421,14 @@ Player_Update::
 	jp .return 
 	
 .resolve_spring_up
+	ld a, (SPRING_UP_SPEED >> 8)
+	ld [fYVelocity], a 
+	ld a, (SPRING_UP_SPEED & $00ff)
+	ld [fYVelocity + 1], a 
+	ld a, 0 
+	ld [PlayerGrounded], a 
+	ld a, 1 
+	ld [PlayerSprung], a 
 	jp .return 
 	
 .return
