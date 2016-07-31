@@ -6,5 +6,6 @@ GLOBAL Reset_Items
 GLOBAL Load_Items
 GLOBAL Load_Item_Graphics
 GLOBAL Update_Items
+GLOBAL Scroll_Items
 
 ENDC 

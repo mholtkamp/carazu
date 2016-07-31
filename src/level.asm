@@ -2,8 +2,10 @@ INCLUDE "include/level.inc"
 INCLUDE "include/player.inc"
 INCLUDE "include/constants.inc"
 INCLUDE "include/globals.inc"
+INCLUDE "include/item.inc"
 
 ; Level includes 
+INCLUDE "levels/level_items.inc"
 INCLUDE "levels/level0.inc"
 
 ; Tile Set includes
@@ -125,6 +127,7 @@ Level_Reset::
 Level_Load:: 
 
 	call Level_Reset 
+	call Reset_Items
 	
 	; Load special tiles 
 	ld bc, TILE_BANK_1 + 16*SPECIAL_TILES_INDEX
@@ -177,6 +180,9 @@ Level_Load::
 	
 	ld hl, Level0Map
 	call _Level_LoadMap
+	
+	ld hl, Level0Items
+	call Load_Items
 	
 	ld b, Level0SpawnX
 	ld c, Level0SpawnY 
@@ -763,6 +769,7 @@ _Level_Scroll::
 	ld b, a 
 	ld a, [BGScrollXPrev]
 	sub b 
+	ld d, a 				; d = x shift 
 	ld b, a 
 	ld a, [PlayerRect]
 	add a, b 
@@ -772,10 +779,15 @@ _Level_Scroll::
 	ld b, a 
 	ld a, [BGScrollYPrev]
 	sub b 
+	ld e, a 				; e = y shift 
 	ld b, a 
 	ld a, [PlayerRect + 2]
 	add a, b 
 	ld [PlayerRect + 2], a 
+	
+	; d = xshift 
+	; e = yshift
+	call Scroll_Items
 	
 	ret 
 	
@@ -1191,7 +1203,7 @@ _Level_CalcScreenRect::
 	jp nc, .save_screen_y
 	ld a, 0 
 .save_screen_y
-	ld a, [ScreenRect+1], a 
+	ld [ScreenRect+1], a 
 	
 .save_width 
 	ld a, 22 

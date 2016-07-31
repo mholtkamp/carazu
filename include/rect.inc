@@ -52,5 +52,16 @@ GLOBAL UpdateOAMFromRect_Fixed
 ;  b = special bitfield 
 GLOBAL Rect_CheckSpecials
 
+; RectOverlapsRect_Int
+; hl = rect1 
+; de = rect2
+; ret: a = 1 if overlap. 0 otherwise 
+GLOBAL RectOverlapsRect_Int
+
+; RectOverlapsRect_Int_Fixed
+; hl = rect1 (int)
+; de = rect2 (fixed)
+; ret: a = 1 if overlap. 0 otherwise 
+GLOBAL RectOverlapsRect_Int_Fixed
 
 ENDC 

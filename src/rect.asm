@@ -42,6 +42,8 @@ DS 1
 CollisionBitfield:
 DS 1
 
+IntRect:
+DS 4 
 
 Scratch:
 DS 4
@@ -1314,7 +1316,7 @@ RectOverlapsRect_Int:
 	jp c, .return_false
 	
 	; x + width < x2 
-	ld a, [RectX2]
+	ld a, [Rect2X]
 	ld c, a 
 	
 	ld a, [RectWidth] 
@@ -1338,7 +1340,7 @@ RectOverlapsRect_Int:
 	jp c, .return_false
 	
 	; y + height < y2 
-	ld a, [RectY2]
+	ld a, [Rect2Y]
 	ld c, a 
 	
 	ld a, [RectHeight] 
@@ -1355,4 +1357,22 @@ RectOverlapsRect_Int:
 	
 .return_false 
 	ld a, 0 
+	ret 
+	
+RectOverlapsRect_Int_Fixed:
+	ld a, [de]
+	ld [IntRect], a 
+	inc de 
+	inc de 
+	ld a, [de]
+	ld [IntRect+1], a 
+	inc de 
+	inc de 
+	ld a, [de]
+	ld [IntRect+2],a 
+	inc de 
+	ld a, [de]
+	ld [IntRect+3], a 
+	call RectOverlapsRect_Int
+	; a holds overlap result.
 	ret 

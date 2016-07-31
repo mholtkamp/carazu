@@ -17,6 +17,7 @@ obj/item_tiles.obj
 obj/bg_tiles_0.obj
 obj/player_sprite_tiles.obj
 
+obj/level_items.obj 
 obj/level0.obj
 
 obj/song0.obj 

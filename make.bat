@@ -19,6 +19,7 @@ rgbasm -oobj/item_tiles.obj tiles/item_tiles.asm
 rgbasm -oobj/bg_tiles_0.obj tiles/bg_tiles_0.asm
 rgbasm -oobj/player_sprite_tiles.obj tiles/player_sprite_tiles.asm
 
+rgbasm -oobj/level_items.obj levels/level_items.asm
 rgbasm -oobj/level0.obj levels/level0.asm
 
 rgbasm -oobj/song0.obj music/song0.asm 

@@ -3,6 +3,9 @@ INCLUDE "include/globals.inc"
 INCLUDE "include/constants.inc"
 INCLUDE "include/util.inc"
 INCLUDE "include/level.inc"
+INCLUDE "include/stats.inc"
+INCLUDE "include/rect.inc"
+INCLUDE "include/player.inc"
 
 INCLUDE "tiles/item_tiles.inc"
 
@@ -290,7 +293,7 @@ Update_Items::
 	; (2) if still in screen rec, check if item overlaps player rect. If so call Item_Consume 
 	ld hl, PixelRect
 	ld de, PlayerRect 
-	call RectOverlapsRect_Int
+	call RectOverlapsRect_Int_Fixed
 	cp 1 
 	jp nz, .update_active_item_end 
 	
@@ -458,9 +461,76 @@ Item_Deactivate::
 	inc hl 			; inc pointer to next obj 
 	ret 
 	
-Item_Consume::
 
-	ret
+Item_Consume::
+	; Should set item type to none 
+	ld a, [hl]
+	ld b, a 		; B RESERVED ITEM TYPE 
+	ld a, ITEM_NONE
+	ld [hl], a 		; set item type as none.
+	
+	; zero out objs 
+	ld a, b 
+	cp ITEM_SECRET_1
+	jp nc, .disable_objs_big_item
+	; disable the single obj for a small item 
+	ld a, 0 
+	ld [hl+], a 	; obj y = 0
+	ld [hl+], a 	; obj x = 0 
+	jp .execute_item_effect
+	
+.disable_objs_big_item
+	; disable 4 objs for a big item 
+	ld a, 0 
+	ld [hl+], a 	; obj1 y = 0
+	ld [hl+], a 	; obj1 x = 0 
+	inc hl 
+	inc hl 			; inc pointer to next obj 
+	ld [hl+], a 	; obj2 y = 0
+	ld [hl+], a 	; obj2 x = 0 
+	inc hl 
+	inc hl 			; inc pointer to next obj 
+	ld [hl+], a 	; obj3 y = 0
+	ld [hl+], a 	; obj3 x = 0 
+	inc hl 
+	inc hl 			; inc pointer to next obj 
+	ld [hl+], a 	; obj4 y = 0
+	ld [hl+], a 	; obj4 x = 0 
+	inc hl 
+	inc hl 			; inc pointer to next obj 
+	
+.execute_item_effect
+	ld a, b 	; b was reserved for item type 
+	cp ITEM_HEART
+	jp z, .exe_heart
+	cp ITEM_BUBBLE
+	jp z, .exe_bubble 
+	
+	; Rest of items not implemented yet 
+	jp .return 
+	
+.exe_heart
+	ld a, [PlayerHearts]
+	inc a 
+	cp MAX_HEARTS+1
+	jp c, .exe_heart_no_clamp
+	ld a, MAX_HEARTS
+.exe_heart_no_clamp
+	ld [PlayerHearts], a 
+	jp .return
+	
+.exe_bubble
+	ld a, [PlayerBubbles]
+	inc a 
+	jp nc, .exe_bubble_no_clamp
+	ld a, 255 
+.exe_bubble_no_clamp
+	ld [PlayerBubbles], a 
+	jp .return 
+
+
+.return
+	ret 
 
 ; hl = item 
 ;  e = item num 
@@ -540,3 +610,63 @@ Item_SyncOBJs::
 	inc hl 
 	ret
 	
+; d = shiftx
+; e = shifty 
+Scroll_Items::
+
+	; Item 0 
+	ld hl, Item0 + 4
+	ld a, [hl]
+	add a, d 
+	ld [hl+], a 
+	ld a, [hl]
+	add a, e 
+	ld [hl], a 
+	add hl, bc 
+	
+	; Item 1 
+	ld hl, Item1 + 4
+	ld a, [hl]
+	add a, d 
+	ld [hl+], a 
+	ld a, [hl]
+	add a, e 
+	ld [hl], a 
+	
+	; Item 2 
+	ld hl, Item2 + 4
+	ld a, [hl]
+	add a, d 
+	ld [hl+], a 
+	ld a, [hl]
+	add a, e 
+	ld [hl], a 
+	
+	; Item 3 
+	ld hl, Item3 + 4
+	ld a, [hl]
+	add a, d 
+	ld [hl+], a 
+	ld a, [hl]
+	add a, e 
+	ld [hl], a 
+	
+	; Item 4 
+	ld hl, Item4 + 4
+	ld a, [hl]
+	add a, d 
+	ld [hl+], a 
+	ld a, [hl]
+	add a, e 
+	ld [hl], a 
+	
+	; Item 5 
+	ld hl, Item5 + 4
+	ld a, [hl]
+	add a, d 
+	ld [hl+], a 
+	ld a, [hl]
+	add a, e 
+	ld [hl], a 
+
+	ret 
