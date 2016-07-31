@@ -73,6 +73,9 @@ DS 2
 MapStreamDir:
 DS 1 
 
+ScreenRect:
+DS 4 
+
 ; Private
 LoadFlags:
 DS 1 
@@ -188,6 +191,7 @@ Level_Load::
 .return
 	call Player_UpdateLocalOAM
 	call _Level_LoadBorders
+	call _Level_CalcScreenRect
 	ret 
 	
 
@@ -726,6 +730,7 @@ _Level_LoadBottom::
 Level_Update::
 	call _Level_Scroll
 	call _Level_SetMapStream 
+	call _Level_CalcScreenRect
 	
 	ret 
 	
@@ -1169,4 +1174,31 @@ _Level_SetMapStream::
 	ld [LoadFlags], a 
 	ld a, LAST_LOAD_Y 
 	ld [LastLoad], a
+	ret 
+	
+	
+_Level_CalcScreenRect::
+
+	ld a, [MapOriginX]
+	sub 1 
+	jp nc, .save_screen_x
+	ld a, 0 
+.save_screen_x
+	ld [ScreenRect], a 
+	
+	ld a, [MapOriginY]
+	sub 1
+	jp nc, .save_screen_y
+	ld a, 0 
+.save_screen_y
+	ld a, [ScreenRect+1], a 
+	
+.save_width 
+	ld a, 22 
+	ld [ScreenRect + 2], a 	; this should never overflow since levels can only be 128 tiles wide
+	
+.save_height 
+	ld a, 22 
+	ld [ScreenRect + 3], a 	; this should also never overflow when added to y val for same reason ^ 
+
 	ret 

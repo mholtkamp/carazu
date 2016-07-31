@@ -2,15 +2,26 @@ INCLUDE "include/item.inc"
 INCLUDE "include/globals.inc"
 INCLUDE "include/constants.inc"
 INCLUDE "include/util.inc"
+INCLUDE "include/level.inc"
+
 INCLUDE "tiles/item_tiles.inc"
 
 
-ITEM_DATA_SIZE EQU 3
+
+ITEM_DATA_SIZE EQU 8
+ITEM_INACTIVE EQU 0 
+ITEM_ACTIVE EQU 1 
 
 ; Item Type
-; Type: 1 byte 
-;    X: 1 byte 
-;    Y: 1 byte 
+;   Type: 1 byte 
+;      X: 1 byte 
+;      Y: 1 byte 
+; Active: 1 byte 
+;  RectX: 1 byte 
+;  RectY: 1 byte 
+;  RectW: 1 byte 
+;  RectH: 1 byte 
+
 
 	SECTION "ItemData", BSS 
 
@@ -27,6 +38,14 @@ Item4:
 DS ITEM_DATA_SIZE
 Item5:
 DS ITEM_DATA_SIZE
+
+TileRect:
+DS 4 
+PixelRect:
+DS 4  
+CurItem:
+DS 2 
+
 
 Scratch:
 DS 1 
@@ -88,6 +107,11 @@ Load_Items::
 	ld [hl+], a 
 	ld [de], a 
 	inc de 
+	inc de 
+	inc de 
+	inc de 
+	inc de 
+	inc de 		; These 5 extra inc des are needed to point to next item struct. item list only contains TYPE,X,Y and nothing else.
 	
 	; Get oam address to edit pattern number 
 	push hl 	; save item list pointer 
@@ -182,7 +206,120 @@ Load_Item_Graphics::
 	
 Update_Items::
 
-	; Check if any items 
+	ld hl, Items 
+	ld b, MAX_ITEMS
+	
+.loop 
+	ld a, h 
+	ld [CurItem], a 
+	ld a, l 
+	ld [CurItem+1], a 		; save current item being examined
+	
+	ld a, [hl+]
+	ld d, a 	; d = type 
+	cp ITEM_NONE
+	jp z, .continue_none
+
+	ld a, [hl+]
+	ld [TileRect], a 
+	ld a, [hl+]
+	ld [TileRect+1], a 
+	ld a, [hl+]
+	ld e, a 	; e = active
+	ld a, [hl+]
+	ld [PixelRect], a 
+	ld a, [hl+]
+	ld [PixelRect+1], a 
+	ld a, [hl+]
+	ld [PixelRect+2], a 
+	ld a, [hl+]
+	ld [PixelRect+3], a 
+	
+	; determine tile rect width/height based on item number 
+	ld a, d 
+	cp ITEM_SECRET_1
+	jp nc, .large_dim
+	ld a, 1 
+	ld [TileRect+2], a 
+	ld [TileRect+3], a 
+	jp .check_active
+.large_dim
+	ld a, 2 
+	ld [TileRect+2], a 
+	ld [TileRect+3], a 
+	
+.check_active 
+	ld a, e 
+	cp ITEM_ACTIVE
+	jp z, .update_active_item
+	jp .update_inactive_item
+	
+.update_active_item
+	push hl
+	
+	; (1), check if item is outside the screen rect. if so call Item_Deactivate and continue
+	ld hl, TileRect
+	ld de, ScreenRect
+	call RectOverlapsRect_Int
+
+	cp 1
+	jp z, .check_player_overlap
+
+	ld a, [CurItem]
+	ld h, a 
+	ld a, [CurItem+1]
+	ld l, a 				; hl = cur item 
+	call Item_Deactivate 
+	jp .update_active_item_end 	; no need to check pixel overlap 
+
+.check_player_overlap
+	; (2) if still in screen rec, check if item overlaps player rect. If so call Item_Consume 
+	ld hl, PixelRect
+	ld de, PlayerRect 
+	call RectOverlapsRect_Int
+	cp 1 
+	jp nz, .update_active_item_end 
+	
+	ld a, [CurItem]
+	ld h, a 
+	ld a, [CurItem+1]
+	ld l, a 
+	call Item_Consume
+	
+.update_active_item_end
+	pop hl 				; restore the item struct pointer 
+	jp .continue
+
+.update_inactive_item
+	push hl 
+	; (1) check if item inside screen rect. if so, call Item_Activate
+	ld hl, TileRect
+	ld de, ScreenRect
+	call RectOverlapsRect_Int
+	cp 1
+	jp nz, .update_inactive_item_end 
+	
+	ld a, [CurItem]
+	ld h, a 
+	ld a, [CurItem+1]
+	ld l, a 
+	call Item_Activate
+
+.update_inactive_item_end 
+	pop hl 
+	jp .continue 
+
+.continue_none 
+	inc hl 
+	inc hl 		
+	inc hl 
+	inc hl 
+	inc hl 
+	inc hl 
+	inc hl ; increment pointer to point at next item struct 
+.continue 
+	dec b 		; decrement counter 
+	jp nz, .loop  
 	
 	ret 
 	

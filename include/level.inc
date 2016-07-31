@@ -24,6 +24,7 @@ GLOBAL MapOriginIndex
 GLOBAL MapOriginIndexPlus
 GLOBAL MapAddress
 GLOBAL MapStreamDir
+GLOBAL ScreenRect
 
 ; Procedures 
 GLOBAL Level_Initialize
