@@ -22,6 +22,15 @@ DS 1
 RectHeight:
 DS 1 
 
+Rect2X:
+DS 1 
+Rect2Y:
+DS 1 
+Rect2Width:
+DS 1 
+Rect2Height:
+DS 1 
+
 fXDisp:
 DS 2
 fYDisp:
@@ -1265,3 +1274,85 @@ Rect_CheckSpecials::
 	
 	jp .loop 
 	
+	
+; hl = rect 1 
+; de = rect 2 
+; ret: a = 1 if overlapping. 0 otherwise 
+RectOverlapsRect_Int:
+
+	ld a, [hl+]
+	ld [RectX], a 
+	ld a, [hl+]
+	ld [RectY], a 
+	ld a, [hl+]
+	ld [RectWidth], a 
+	ld a, [hl+]
+	ld [RectHeight], a 
+	
+	ld a, [de]
+	ld [Rect2X], a 
+	inc de 
+	ld a, [de]
+	ld [Rect2Y], a 
+	inc de 
+	ld a, [de]
+	ld [Rect2Width], a 
+	inc de 
+	ld a, [de]
+	ld [Rect2Height], a 
+	
+	; x > x2 + width2 
+	ld a, [RectX]
+	ld c, a 
+	
+	ld a, [Rect2Width]
+	sub 1 
+	ld b, a 
+	ld a, [Rect2X]
+	add a, b 	; a = x2 + (width2 - 1) 
+	cp c 		
+	jp c, .return_false
+	
+	; x + width < x2 
+	ld a, [RectX2]
+	ld c, a 
+	
+	ld a, [RectWidth] 
+	sub 1 
+	ld b, a 
+	ld a, [RectX]
+	add a, b 	; a = x + (width - 1)
+	cp c
+	jp c, .return_false
+	
+	; y > y2 + width2 
+	ld a, [RectY]
+	ld c, a 
+	
+	ld a, [Rect2Height]
+	sub 1 
+	ld b, a 
+	ld a, [Rect2Y]
+	add a, b 	; a = y2 + (height2 - 1) 
+	cp c 		
+	jp c, .return_false
+	
+	; y + height < y2 
+	ld a, [RectY2]
+	ld c, a 
+	
+	ld a, [RectHeight] 
+	sub 1 
+	ld b, a 
+	ld a, [RectY]
+	add a, b 	; a = y + (height - 1)
+	cp c
+	jp c, .return_false
+	
+.return_true 
+	ld a, 1 
+	ret 
+	
+.return_false 
+	ld a, 0 
+	ret 

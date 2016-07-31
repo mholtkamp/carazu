@@ -45,7 +45,18 @@ PixelRect:
 DS 4  
 CurItem:
 DS 2 
+CurItemNum:
+DS 1
 
+TileX:
+DS 1 
+TileY:
+DS 1 
+
+CurRectX:
+DS 1 
+CurRectY:
+DS 1 
 
 Scratch:
 DS 1 
@@ -207,7 +218,8 @@ Load_Item_Graphics::
 Update_Items::
 
 	ld hl, Items 
-	ld b, MAX_ITEMS
+	ld a, 0 
+	ld [CurItemNum], a 
 	
 .loop 
 	ld a, h 
@@ -269,6 +281,8 @@ Update_Items::
 	ld h, a 
 	ld a, [CurItem+1]
 	ld l, a 				; hl = cur item 
+	ld a, [CurItem]
+	ld e, a 
 	call Item_Deactivate 
 	jp .update_active_item_end 	; no need to check pixel overlap 
 
@@ -287,6 +301,14 @@ Update_Items::
 	call Item_Consume
 	
 .update_active_item_end
+	ld a, [CurItem]
+	ld h, a 
+	ld a, [CurItem+1]
+	ld l, a 
+	ld a, [CurItemNum]
+	ld e, a 
+	call Item_SyncOBJs
+	
 	pop hl 				; restore the item struct pointer 
 	jp .continue
 
@@ -306,6 +328,14 @@ Update_Items::
 	call Item_Activate
 
 .update_inactive_item_end 
+	ld a, [CurItem]
+	ld h, a 
+	ld a, [CurItem+1]
+	ld l, a 
+	ld a, [CurItemNum]
+	ld e, a 
+	call Item_SyncOBJs
+	
 	pop hl 
 	jp .continue 
 
@@ -318,8 +348,195 @@ Update_Items::
 	inc hl 
 	inc hl ; increment pointer to point at next item struct 
 .continue 
-	dec b 		; decrement counter 
+	ld a, [CurItemNum]
+	inc a 
+	ld [CurItemNum], a 	; save new item num for next loop. 
+	cp MAX_ITEMS		; check if we already iterated through every item 
 	jp nz, .loop  
 	
 	ret 
+	
+Item_Activate::
+	ld b, [hl]		; B RESERVED FOR ITEM TYPE 
+	inc hl 	; now points at tile x
+	ld a, [hl]
+	ld [TileX], a 
+	inc hl  ; now points at tile y 
+	ld a, [hl]
+	ld [TileY], a 
+	inc hl  ; now points at active 
+	ld a, ITEM_ACTIVE
+	ld [hl], a 
+	inc hl ; now points at (pixel) RectX
+	
+	; Find the x/y coordinates of the item rect 
+	ld a, [MapOriginX]
+	ld d, a 
+	ld a, [TileX]
+	sub d 			; a = tilex - originx 
+	sla a 
+	sla a 
+	sla a 			; a = (tilex - originx)*8
+	ld d, a 
+	ld a, [BGFocusPixelsX]
+	add a, d 		; add the pixel offset. a = rectx 
+	ld [hl+], a 	; save rectx
+	
+	ld a, [MapOriginY]
+	ld d, a 
+	ld a, [TileY]
+	sub d 
+	sla a 
+	sla a
+	sla a 
+	ld d, a 
+	ld a, [BGFocusPixelsY]
+	add a, d 
+	ld [hl+], a 	; save recty 
+	
+	; Determine rect width/height of item based on item type 
+	ld a, b 
+	cp ITEM_SECRET_1
+	jp nc, .big_item 
+	ld a, 8
+	ld [hl+], a 
+	ld [hl+], a 
+	ret
+	
+.big_item 
+	ld a, 16 
+	ld [hl+], a 
+	ld [hl+], a 
+	ret 
+
+; hl = item pointer
+; e = item num 
+Item_Deactivate::
+	; First, mark item as inactive 
+	ld b, [hl] ; b = item type  
+	inc hl 	; now points at x 
+	inc hl 	; now points at y 
+	inc hl  ; now points at active 
+	ld a, ITEM_INACTIVE
+	ld [hl], a 	; save item as inactive 
+	
+	; Second, depending on item type (and therefore size)
+	; disable all associated objs by setting them to 0,0
+	sla e 
+	sla e 	; mult item number by 4 to get oam offset 
+	ld d, 0 
+	ld hl, LocalOAM + ITEM_OBJ_INDEX*4
+	add hl, de 	; hl = obj y coord of interest 
+	
+	ld a, b 	; a = item type 
+	cp ITEM_SECRET_1
+	jp nc, .disable_objs_big_item
+	; disable the single obj for a small item 
+	ld a, 0 
+	ld [hl+], a 	; obj y = 0
+	ld [hl+], a 	; obj x = 0 
+	ret 
+	
+.disable_objs_big_item
+	; disable 4 objs for a big item 
+	ld a, 0 
+	ld [hl+], a 	; obj1 y = 0
+	ld [hl+], a 	; obj1 x = 0 
+	inc hl 
+	inc hl 			; inc pointer to next obj 
+	ld [hl+], a 	; obj2 y = 0
+	ld [hl+], a 	; obj2 x = 0 
+	inc hl 
+	inc hl 			; inc pointer to next obj 
+	ld [hl+], a 	; obj3 y = 0
+	ld [hl+], a 	; obj3 x = 0 
+	inc hl 
+	inc hl 			; inc pointer to next obj 
+	ld [hl+], a 	; obj4 y = 0
+	ld [hl+], a 	; obj4 x = 0 
+	inc hl 
+	inc hl 			; inc pointer to next obj 
+	ret 
+	
+Item_Consume::
+
+	ret
+
+; hl = item 
+;  e = item num 
+Item_SyncOBJs::
+
+	; Sync objs with item rectx/recty if active
+	ld a, [hl+]		; a = item type 
+	ld b, a 		; B RESERVED FOR ITEM TYPE 
+	cp ITEM_NONE 
+	ret z
+	
+	inc hl 
+	inc hl 
+	ld a, [hl+]		; a = active 
+	cp ITEM_INACTIVE
+	ret z
+	
+	ld a, [hl+]
+	ld [CurRectX], a 
+	ld a, [hl+]
+	ld [CurRectY], a 
+	
+	sla e
+	sla e 		; mult item num by 4 to get obj offset 
+	ld d, 0 
+	
+	; Item is active, so update objs 
+	ld hl, LocalOAM + ITEM_OBJ_INDEX*4
+	add hl, de 
+	
+	ld a, b 
+	cp ITEM_SECRET_1
+	jp nc, .big_item
+	ld a, [CurRectY]
+	add a, 16 	; add 16 y offset to sprite 
+	ld [hl+], a 
+	ld a, [CurRectX]
+	add a, 8 	; add 8 x offset to sprite 
+	ld [hl+], a 
+	ret 
+	
+.big_item
+	; obj 1 
+	ld a, [CurRectY]
+	add a, 16 	; add 16 y offset to sprite 
+	ld [hl+], a 
+	ld a, [CurRectX]
+	add a, 8 	; add 8 x offset to sprite 
+	ld [hl+], a 
+	inc hl 
+	inc hl 
+	; obj 2 
+	ld a, [CurRectY]
+	add a, 24 	
+	ld [hl+], a 
+	ld a, [CurRectX]
+	add a, 8 	
+	ld [hl+], a 
+	inc hl 
+	inc hl 
+	; obj 3 
+	ld a, [CurRectY]
+	add a, 16 	
+	ld [hl+], a 
+	ld a, [CurRectX]
+	add a, 16 	
+	ld [hl+], a 
+	inc hl 
+	inc hl 
+	ld a, [CurRectY]
+	add a, 24 	
+	ld [hl+], a 
+	ld a, [CurRectX]
+	add a, 16 	
+	ld [hl+], a 
+	inc hl 
+	inc hl 
+	ret
 	
