@@ -114,11 +114,11 @@ Load_Items::
 	ld [de], a 
 	inc de 
 	; Save X
-	ld [hl+], a 
+	ld a, [hl+]
 	ld [de], a 
 	inc de 
 	; Save Y 
-	ld [hl+], a 
+	ld a, [hl+] 
 	ld [de], a 
 	inc de 
 	inc de 
@@ -133,8 +133,6 @@ Load_Items::
 	ld a, [Scratch]
 	cp MAX_ITEMS
 	jp nc, .continue 		; obj counter is above max, dont do anything. 
-	inc a 
-	ld [Scratch], a 		; increment the counter 
 	sla a 
 	sla a 					; mult by 4 because each obj entry is 4 bytes 
 	add a, l 
@@ -206,6 +204,11 @@ Load_Items::
 	
 .continue 
 	pop hl 	; restore item list pointer 
+	
+	ld a, [Scratch]
+	inc a 
+	ld [Scratch], a 		; increment the counter 
+	
 	jp .loop 
 	
 	
@@ -250,7 +253,7 @@ Update_Items::
 	ld a, [hl+]
 	ld [PixelRect+3], a 
 	
-	; determine tile rect width/height based on item number 
+	; determine tile rect width/height based on item type  
 	ld a, d 
 	cp ITEM_SECRET_1
 	jp nc, .large_dim
@@ -284,7 +287,7 @@ Update_Items::
 	ld h, a 
 	ld a, [CurItem+1]
 	ld l, a 				; hl = cur item 
-	ld a, [CurItem]
+	ld a, [CurItemNum]
 	ld e, a 
 	call Item_Deactivate 
 	jp .update_active_item_end 	; no need to check pixel overlap 
@@ -301,6 +304,8 @@ Update_Items::
 	ld h, a 
 	ld a, [CurItem+1]
 	ld l, a 
+	ld a, [CurItemNum]
+	ld e, a 
 	call Item_Consume
 	
 .update_active_item_end
@@ -377,24 +382,28 @@ Item_Activate::
 	ld d, a 
 	ld a, [TileX]
 	sub d 			; a = tilex - originx 
+	ld e, a 
+	ld a, [BGFocusPixelsX]
+	ld d, a 
+	ld a, e 
 	sla a 
 	sla a 
 	sla a 			; a = (tilex - originx)*8
-	ld d, a 
-	ld a, [BGFocusPixelsX]
-	add a, d 		; add the pixel offset. a = rectx 
+	sub d 
 	ld [hl+], a 	; save rectx
 	
 	ld a, [MapOriginY]
 	ld d, a 
 	ld a, [TileY]
 	sub d 
+	ld e, a 
+	ld a, [BGFocusPixelsY]
+	ld d, a 
+	ld a, e 
 	sla a 
 	sla a
 	sla a 
-	ld d, a 
-	ld a, [BGFocusPixelsY]
-	add a, d 
+	sub d 
 	ld [hl+], a 	; save recty 
 	
 	; Determine rect width/height of item based on item type 
@@ -470,6 +479,13 @@ Item_Consume::
 	ld [hl], a 		; set item type as none.
 	
 	; zero out objs 
+	
+	sla e 
+	sla e 	; mult item number by 4 to get oam offset 
+	ld d, 0 
+	ld hl, LocalOAM + ITEM_OBJ_INDEX*4
+	add hl, de 	; hl = obj y coord of interest 
+	
 	ld a, b 
 	cp ITEM_SECRET_1
 	jp nc, .disable_objs_big_item

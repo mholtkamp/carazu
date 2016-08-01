@@ -1373,6 +1373,7 @@ RectOverlapsRect_Int_Fixed:
 	inc de 
 	ld a, [de]
 	ld [IntRect+3], a 
+	ld de, IntRect 		; hl already set from caller 
 	call RectOverlapsRect_Int
 	; a holds overlap result.
 	ret 
