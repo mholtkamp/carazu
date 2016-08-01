@@ -194,10 +194,19 @@ Load_Items::
 	
 .load_big_item
 	ld [hl+], a 
+	inc hl
+	inc hl 
+	inc hl 
 	inc a 
 	ld [hl+], a 
+	inc hl
+	inc hl 
+	inc hl 
 	inc a 
 	ld [hl+], a 
+	inc hl
+	inc hl 
+	inc hl 
 	inc a 
 	ld [hl], a 
 	jp .continue 
