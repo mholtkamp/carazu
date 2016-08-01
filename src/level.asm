@@ -432,6 +432,9 @@ _Level_LoadTileSet::
 	
 
 _Level_LoadBorders::
+	ld a, [MapBank]
+	ld [ROM_BANK_WRITE_ADDR], a 
+	
 	call _Level_LoadLeft
 	call _Level_LoadRight
 	call _Level_LoadTop
