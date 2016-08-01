@@ -96,6 +96,11 @@ Reset_Items::
 	
 ; hl = pointer to item list 
 Load_Items::
+
+	; All item lists are on Bank 1 
+	ld a, 1 
+	ld [ROM_BANK_WRITE_ADDR], a 
+	
 	; Sets the item type and x/y of all items for a level. 
 	ld de, Items 	; initialize destination pointer 
 	
