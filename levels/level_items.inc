@@ -2,5 +2,9 @@ IF !DEF(LEVEL_ITEMS_INC)
 LEVEL_ITEMS_INC SET 1 
 
 GLOBAL Level0Items
+GLOBAL Level1Items
+GLOBAL Level2Items
+GLOBAL Level3Items
+
 
 ENDC 

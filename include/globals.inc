@@ -9,5 +9,6 @@ GLOBAL GameState
 
 ; b = new state 
 GLOBAL SwitchState
+GLOBAL WaitVBLANK_Flag
 
 ENDC 

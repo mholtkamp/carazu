@@ -72,6 +72,10 @@ MoveRect_Fixed::
 	
 	ld [CollisionThreshold], a 
 	
+	; switch to correct rom bank 
+	ld a, [MapBank]
+	ld [ROM_BANK_WRITE_ADDR], a 
+	
 	push hl 
 	ld a, [hl+]
 	ld [fRectX], a 
@@ -147,8 +151,6 @@ MoveRect_Fixed::
 	ld a, [BGFocusPixelsY]
 	add a, b 				; a = rect.y + pixelsY  
 	
-	; Multiply the y coord by MapWidthShift-3 (divide by 8 and then mult by MapWidth)
-	; to get the Map row address 
 	call _MultMapWidth
 	
 	; Add the x tile index to get the specific map entry we need 
@@ -502,6 +504,10 @@ CheckRectGrounded_Fixed::
 
 	; save collision threshold
 	ld [CollisionThreshold], a 
+	
+	; switch to correct rom bank 
+	ld a, [MapBank]
+	ld [ROM_BANK_WRITE_ADDR], a 
 	
 	; save rect data 
 	ld a, [hl+]
@@ -1103,6 +1109,10 @@ _MultMapWidth::
 	
 ; hl = rect address 
 Rect_CheckSpecials::
+
+	; switch to correct rom bank 
+	ld a, [MapBank]
+	ld [ROM_BANK_WRITE_ADDR], a 
 
 	; Save rect data 
 	ld a, [hl+]

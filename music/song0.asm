@@ -1,7 +1,7 @@
 INCLUDE "music/song0.inc"
 INCLUDE "include/music.inc" ; Include for note equates 
 
-	SECTION "Song0", HOME 
+	SECTION "Song0", DATA, BANK[1]
 	
 	
 Song0_Instrument1:

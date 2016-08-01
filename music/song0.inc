@@ -1,6 +1,8 @@
 IF !DEF(SONG0_INC)
 SONG0_INC SET 1 
 
+Song0_Bank EQU 1 
+
 Song0_ChannelBitfield EQU %00000111 
 
 GLOBAL Song0_Channel1

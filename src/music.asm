@@ -22,6 +22,9 @@ DS 1
 PlayStatus:
 DS 1 
 
+SongBank:
+DS 1 
+
 Instrument_1:
 DS 2 
 Instrument_2:
@@ -116,6 +119,12 @@ LoadSong::
 	
 .load_0 
 
+	; Save song bank
+	ld a, Song0_Bank
+	ld [SongBank], a 
+	; switch song banks 
+	ld [ROM_BANK_WRITE_ADDR], a 
+	
 	; BPM 
 	ld a, Song0_FramesPerTick
 	ld [FramesPerTick], a 
@@ -339,6 +348,10 @@ SetupCursors::
 	
 UpdateSong::
 
+	; switch rom banks to correct song bank 
+	ld a, [SongBank]
+	ld [ROM_BANK_WRITE_ADDR], a 
+	
 	; If song is paused, do nothing 
 	ld a, [PlayStatus]
 	cp SONG_PAUSE  

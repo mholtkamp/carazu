@@ -7,15 +7,18 @@ INCLUDE "include/item.inc"
 ; Level includes 
 INCLUDE "levels/level_items.inc"
 INCLUDE "levels/level0.inc"
+INCLUDE "levels/level1.inc"
+INCLUDE "levels/level2.inc"
+INCLUDE "levels/level3.inc"
 
 ; Tile Set includes
 INCLUDE "tiles/special_tiles.inc"
 INCLUDE "tiles/bg_tiles_0.inc"
 
-CameraAnchorLeft EQU 32 
+CameraAnchorLeft EQU 40 
 CameraAnchorRight EQU 64
-CameraAnchorTop EQU 40
-CameraAnchorBottom EQU 104 
+CameraAnchorTop EQU 56
+CameraAnchorBottom EQU 88 
 
 	SECTION "LevelData", BSS 
 	
@@ -78,6 +81,9 @@ DS 1
 ScreenRect:
 DS 4 
 
+MapBank:
+DS 1 
+
 ; Private
 LoadFlags:
 DS 1 
@@ -105,6 +111,7 @@ Level_Initialize::
 	ld [LoadFlags], a 
 	ld [LastLoad], a 
 	ld [MapStreamDir], a 
+	ld [MapBank], a 
 	
 	ret 
 	
@@ -121,6 +128,7 @@ Level_Reset::
 	ld [LoadFlags], a 
 	ld [LastLoad], a 
 	ld [MapStreamDir], a 
+	ld [MapBank], a 
 	
 	ret 
 	
@@ -160,6 +168,10 @@ Level_Load::
 	nop 
 	jp .load_1 
 	nop 
+	jp .load_2
+	nop 
+	jp .load_3 
+	nop 
 	
 	ret 
 	
@@ -168,7 +180,7 @@ Level_Load::
 	ld c, Level0MapHeight
 	ld d, Level0MapOriginX 
 	ld e, Level0MapOriginY
-	ld h, Level0MapWidthShift
+	ld h, Level0MapBank
 	call _Level_LoadAttributes0
 	
 	ld de, Level0MapOriginIndex
@@ -187,12 +199,86 @@ Level_Load::
 	ld b, Level0SpawnX
 	ld c, Level0SpawnY 
 	call Player_SetPosition
-	
 	jp .return 
 	
 .load_1 
-
+	ld b, Level1MapWidth
+	ld c, Level1MapHeight
+	ld d, Level1MapOriginX 
+	ld e, Level1MapOriginY
+	ld h, Level1MapBank
+	call _Level_LoadAttributes0
+	
+	ld de, Level1MapOriginIndex
+	ld hl, Level1MapOriginIndex + Level1MapWidth * VRAM_MAP_HEIGHT
+	call _Level_LoadAttributes1
+	
+	ld a, Level1TileSet
+	call _Level_LoadTileSet
+	
+	ld hl, Level1Map
+	call _Level_LoadMap
+	
+	ld hl, Level1Items
+	call Load_Items
+	
+	ld b, Level1SpawnX
+	ld c, Level1SpawnY 
+	call Player_SetPosition
 	jp .return 
+	
+.load_2
+	ld b, Level2MapWidth
+	ld c, Level2MapHeight
+	ld d, Level2MapOriginX 
+	ld e, Level2MapOriginY
+	ld h, Level2MapBank
+	call _Level_LoadAttributes0
+	
+	ld de, Level2MapOriginIndex
+	ld hl, Level2MapOriginIndex + Level2MapWidth * VRAM_MAP_HEIGHT
+	call _Level_LoadAttributes1
+	
+	ld a, Level2TileSet
+	call _Level_LoadTileSet
+	
+	ld hl, Level2Map
+	call _Level_LoadMap
+	
+	ld hl, Level2Items
+	call Load_Items
+	
+	ld b, Level2SpawnX
+	ld c, Level2SpawnY 
+	call Player_SetPosition
+	jp .return 
+	
+.load_3
+	ld b, Level3MapWidth
+	ld c, Level3MapHeight
+	ld d, Level3MapOriginX 
+	ld e, Level3MapOriginY
+	ld h, Level3MapBank
+	call _Level_LoadAttributes0
+	
+	ld de, Level3MapOriginIndex
+	ld hl, Level3MapOriginIndex + Level3MapWidth * VRAM_MAP_HEIGHT
+	call _Level_LoadAttributes1
+	
+	ld a, Level3TileSet
+	call _Level_LoadTileSet
+	
+	ld hl, Level3Map
+	call _Level_LoadMap
+	
+	ld hl, Level3Items
+	call Load_Items
+	
+	ld b, Level3SpawnX
+	ld c, Level3SpawnY 
+	call Player_SetPosition
+	jp .return 
+
 	
 .return
 	call Player_UpdateLocalOAM
@@ -219,8 +305,8 @@ _Level_LoadAttributes0::
 	ld a, e 
 	ld [MapOriginY], a 			; save origin y-coord 
 	
-	ld a, h
-	ld [MapWidthShift], a 		; save map width shift 
+	ld a, h 
+	ld [MapBank], a 			; save map bank 
 	
 	ret 
 	
@@ -245,6 +331,10 @@ _Level_LoadAttributes1::
 ; _Level_LoadMap 
 ; hl = map data address (beginning of entire map)
 _Level_LoadMap::
+	; switch to proper rom bank 
+	ld a, [MapBank]
+	ld [ROM_BANK_WRITE_ADDR], a 
+	
 	; save map address 
 	ld a, h
 	ld [MapAddress], a 
@@ -317,6 +407,9 @@ _Level_LoadTileSet::
 	
 	
 .load_0
+	ld a, BGTiles0Bank
+	ld [ROM_BANK_WRITE_ADDR], a 
+	
 	ld a, BGTiles0ColThresh
 	ld [LevelColThresh], a 
 	
@@ -346,6 +439,7 @@ _Level_LoadBorders::
 	ret
 	
 _Level_LoadLeft::
+	
 	; Find VRAM address first 
 	ld a, [BGFocusY]
 	sub 1 

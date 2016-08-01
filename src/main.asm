@@ -274,6 +274,10 @@ Main_Game_Loop::
 	; Performance Measurement
 	call Stats_RecordLY
 	
+	; switch to correct rom bank for vblank routine 
+	ld a, [MapBank]
+	ld [ROM_BANK_WRITE_ADDR], a 
+	
 	; Wait for VBLANK interval 
 	call WaitVBLANK_Flag
 	nop

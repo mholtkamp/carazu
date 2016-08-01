@@ -21,6 +21,9 @@ rgbasm -oobj/player_sprite_tiles.obj tiles/player_sprite_tiles.asm
 
 rgbasm -oobj/level_items.obj levels/level_items.asm
 rgbasm -oobj/level0.obj levels/level0.asm
+rgbasm -oobj/level1.obj levels/level1.asm
+rgbasm -oobj/level2.obj levels/level2.asm
+rgbasm -oobj/level3.obj levels/level3.asm
 
 rgbasm -oobj/song0.obj music/song0.asm 
 

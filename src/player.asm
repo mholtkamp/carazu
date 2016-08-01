@@ -415,6 +415,8 @@ Player_Update::
 	jp nz, .resolve_spikes
 	bit BIT_SPRING_UP, b 
 	jp nz, .resolve_spring_up
+	bit BIT_DOOR, b 
+	jp nz, .resolve_door 
 	jp .return 
 	
 .resolve_spikes
@@ -431,6 +433,17 @@ Player_Update::
 	ld [PlayerGrounded], a 
 	ld a, PLAYER_SPRUNG_UP 
 	ld [PlayerSprung], a 
+	jp .return 
+	
+.resolve_door 
+	ld a, [InputsHeld]
+	and BUTTON_UP
+	jp z, .return
+	ld a, [LevelNum]
+	inc a
+	ld [LevelNum], a 
+	ld b, STATE_GAME 
+	call SwitchState
 	jp .return 
 	
 .return
