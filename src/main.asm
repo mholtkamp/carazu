@@ -146,7 +146,7 @@ JOYPAD_VECT:
 	DB	$00	; $00 - GameBoy
 
 	; $0147 (Cartridge type - all Color GameBoy cartridges are at least $19)
-	DB	$02	; $19 - ROM + MBC5
+	DB	$03	; $19 - ROM + MBC5
 
 	; $0148 (ROM size)
 	DB	$01	; $01 - 512Kbit = 64Kbyte = 4 banks
@@ -190,6 +190,13 @@ Start::
 	call CLEAR_MAP
 	call ClearOAM
 	
+	; Load Save file 
+	call Stats_LoadFromSave
+	cp 1 
+	jp z, .skip_save_init
+	; No save so create new save 
+	call Stats_InitNoSave
+.skip_save_init
 	; Initialize Game State
 	ld a, STATE_MENU
 	ld [GameState], a 
@@ -200,6 +207,8 @@ Start::
 	; Initialize BSS data
 	call Player_Initialize
 	call Level_Initialize 
+	ld a, 0 
+	ld [DebugLY], a
 	
 	; Load Menu (don't use SwitchState because that waits for VBLANK)
 	call Menu_Load
@@ -494,7 +503,7 @@ SwitchState::
 	call Level_Load 
 	call Stats_LoadGraphics 
 	call Stats_Show
-	
+	call Stats_SaveRun
 	
 	ld a, STATE_GAME 
 	ld [GameState], a 

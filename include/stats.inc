@@ -13,11 +13,24 @@ GLOBAL DebugLYEntries
 
 GLOBAL PlayerHearts
 GLOBAL PlayerBubbles
+GLOBAL HasFermata
+GLOBAL HasBass
+GLOBAL HasAllegro
+GLOBAL PlayTime
+GLOBAL RecordTime
+GLOBAL RecordBubbles
+GLOBAL Secret1
+GLOBAL Secret2
+GLOBAL Secret3 
 GLOBAL DebugLY
 
 ; Procedures 
-GLOBAL Stats_Reset
+GLOBAL Stats_ResetRun
 GLOBAL Stats_LoadFromSave
+GLOBAL Stats_InitNoSave
+GLOBAL Stats_SaveRun
+GLOBAL Stats_SaveRecords
+GLOBAL Stats_SaveSecrets
 GLOBAL Stats_LoadGraphics
 GLOBAL Stats_Update
 GLOBAL Stats_Hide

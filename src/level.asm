@@ -107,7 +107,6 @@ Level_Initialize::
 	ld [BGScrollYPrev], a 
 	ld [BGFocusPixelsX], a 
 	ld [BGFocusPixelsY], a 
-	ld [LevelNum], a 
 	ld [LoadFlags], a 
 	ld [LastLoad], a 
 	ld [MapStreamDir], a 

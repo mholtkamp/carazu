@@ -158,9 +158,17 @@ Menu_UpdateCursorSprite::
 Menu_Load::
 
 	; Reset cursor position
+	ld a, [LevelNum]
+	cp -1
+	jp z, .set_cursor_0
+	ld a, 1 
+	ld [MenuCursor], a 
+	jp .load_tiles
+.set_cursor_0
 	ld a, 0
 	ld [MenuCursor], a 
 	
+.load_tiles 
 	ld hl, MenuSpriteTiles
 	ld b, 0 	; load sprite tiles 
 	ld c,	MenuSpriteTileCount
@@ -246,11 +254,17 @@ Menu_Update::
 	ld a, 0 
 	ld [LevelNum], a 	; set level to 0 since it is a new game 
 	
-	call Stats_Reset 	; reset the stat bss variables, as this is a new game.
+	call Stats_ResetRun	; reset the stat bss variables, as this is a new game.
 	
 	ld b, STATE_GAME 
 	call SwitchState
 	ret 
 	
 .continue 
-	jp .update_obj
+	ld a, [LevelNum]
+	cp -1 
+	jp z, .update_obj		; level is -1, means no saved run 
+	
+	ld b, STATE_GAME
+	call SwitchState
+	ret 
