@@ -3,7 +3,7 @@ INCLUDE "include/player.inc"
 INCLUDE "include/font.inc"
 INCLUDE "include/constants.inc"
 INCLUDE "include/level.inc"
-
+INCLUDE "include/globals.inc"
 
 STATS_WINDOW_Y_POS EQU 136 
 STATS_WINDOW_X_POS EQU WINDOW_X_OFFSET
@@ -384,6 +384,28 @@ Stats_Update::
 	ld a, NUMBER_TILES_INDEX
 	add a, d 
 	ld [hl], a 		; load least sig digit 
+	
+.check_death
+	ld a, [PlayerHearts]
+	cp 0 
+	jp nz, .update_debug_ly
+	ld a, 1 
+	ld [PlayerHearts], a 
+	
+	ld a, RAM_ENABLE
+	ld [RAM_ENABLE_WRITE_ADDR], a
+	ld a, 0 
+	ld [RAM_BANK_WRITE_ADDR], a 
+	
+	; Get the last saved bubble count 
+	ld a, [SaveBubbles]
+	ld [PlayerBubbles], a 
+	
+	ld a, RAM_DISABLE
+	ld [RAM_ENABLE_WRITE_ADDR], a
+	
+	ld b, STATE_GAME 
+	call SwitchState
 	
 .update_debug_ly
 	ld hl, DebugLYEntries

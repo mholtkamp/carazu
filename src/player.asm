@@ -451,7 +451,6 @@ Player_Update::
 	
 Player_UpdateLocalOAM::
 
-
 	; Update player OAM 
 	ld hl, PlayerRect			
 	push hl 					; param0 = rect address 
