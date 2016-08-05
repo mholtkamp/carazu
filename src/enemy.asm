@@ -3,12 +3,15 @@ INCLUDE "include/constants.inc"
 INCLUDE "include/util.inc"
 INCLUDE "include/rect.inc"
 INCLUDE "include/level.inc"
+INCLUDE "include/globals.inc"
+INCLUDE "include/player.inc"
 INCLUDE "tiles/enemy_tiles.inc"
 
 SLIME_X_OFFSET EQU 2
 SLIME_Y_OFFSET EQU 4
 SLIME_WIDTH EQU 12 
 SLIME_HEIGHT EQU 12
+SLIME_MOVE_SPEED EQU $0100
 
 	SECTION "EnemyVariables", BSS 
 	
@@ -34,6 +37,23 @@ EnemyType:
 DS 1 
 EnemyStruct:
 DS 2 
+OBJOffset:
+DS 1 
+
+EnemyRect:
+EnemyX:
+DS 2 
+EnemyY:
+DS 2 
+EnemyWidth:
+DS 1
+EnemyHeight: 
+DS 1 
+
+EnemyScratch: 
+DS 12
+EnemyPatternIndex:
+DS 1 
 
 	SECTION "EnemyProcedures", HOME 
 	
@@ -87,7 +107,7 @@ ResetEnemies::
 	jp nz, .loop 
 	
 	; Clear enemy objs 
-	ld hl, LocalOAM + EMEMY_OBJ_INDEX*4
+	ld hl, LocalOAM + ENEMY_OBJ_INDEX*4
 
 	ld a, 0 
 	ld b, 20  ; 20 =  5 enemies * 4 objs per enemy  
@@ -436,23 +456,23 @@ Enemy_Spawn::
 	
 	; Now call enemy-type specific spawning code
 	ld a, [EnemyType]
-	cp ENEMY_TYPE_SLIME
+	cp ENEMY_SLIME
 	jp z, .slime 
-	cp ENEMY_TYPE_BIRDY
+	cp ENEMY_BIRDY
 	jp z, .birdy 
-	cp ENEMY_TYPE_SHOOTER
+	cp ENEMY_SHOOTER
 	jp z, .shooter 
-	cp ENEMY_TYPE_SPIKE
+	cp ENEMY_SPIKE
 	jp z, .spike 
-	cp ENEMY_TYPE_JUMP_SLIME
+	cp ENEMY_JUMP_SLIME
 	jp z, .jump_slime 
-	cp ENEMY_TYPE_BOMB_BIRDY
+	cp ENEMY_BOMB_BIRDY
 	jp z, .bomb_birdy 
 	cp ENEMY_PARA_SHOOTER
 	jp z, .para_shooter 
-	cp ENEMY_TYPE_BLACK_SPIKE
+	cp ENEMY_BLACK_SPIKE
 	jp z, .black_spike 
-	cp ENEMY_TYPE_ZIG_BIRDY 
+	cp ENEMY_ZIG_BIRDY 
 	jp z, .zig_birdy 
 	
 .slime 
@@ -460,13 +480,16 @@ Enemy_Spawn::
 	ld [de], a
 	inc de 
 	ld a, SLIME_HEIGHT
-	ld [de]
+	ld [de], a 
 	inc de 
 	ld a, [hl+]
 	ld [de], a 				; save left tile boundary
 	inc de 
-	ld a, [hl]
+	ld a, [hl+]
 	ld [de], a 				; save right tile boundary 
+	inc de 
+	ld a, 0 
+	ld [de], a				; set anim counter to 0  
 	ld b, SLIME_X_OFFSET
 	ld c, SLIME_Y_OFFSET
 	jp .apply_rect_offset 
@@ -508,7 +531,247 @@ jp .return
 .return 
 	ret 
 	
-	
+
+; hl = enemy struct pointer 
+;  b = first obj offset from LocalOAM
 Enemy_Update::
+	
+	ld a, h 
+	ld [EnemyStruct], a 
+	ld a, l 
+	ld [EnemyStruct+1], a 		; save start of enemy struct 
+	
+	ld a, b 
+	ld [OBJOffset], a 			; save obj offset 
+	
+	ld a, [hl+]
+	ld [EnemyType], a 
+	cp ENEMY_NONE 
+	jp .return 
+	
+	; would a jump table be faster? Yea probably
+	cp ENEMY_SLIME
+	jp .slime 
+	cp ENEMY_BIRDY
+	jp .birdy 
+	cp ENEMY_SHOOTER 
+	jp .shooter 
+	cp ENEMY_SPIKE 
+	jp .spike 
+	cp ENEMY_JUMP_SLIME
+	jp .jump_slime
+	cp ENEMY_BOMB_BIRDY
+	jp .bomb_birdy
+	cp ENEMY_PARA_SHOOTER
+	jp .para_shooter
+	cp ENEMY_BLACK_SPIKE
+	jp .black_spike 
+	cp ENEMY_ZIG_BIRDY
+	jp .zig_birdy
+	
+	
+	; Unknown enemy type... that's a problem
+	jp .return 
+	
+
+	; This .generic label is actually a proc, so use call, not jp 
+	; returns a = 1 if enemy is still alive, 0 if enemy was killed 
+	; input: [EnemyPatternIndex] = pattern index 
+	; input: [FlipOBJs]			 = flip on x axis?
+.generic 
+	; check if overlapping the player 
+	inc hl 		; hl now pointing at enemy rect 
+	push hl 	; save this pointer to enemy rect 
+	ld de, PlayerRect 
+	call RectOverlapsRect_Fixed
+	pop hl 		; restore enemy rect pointer 
+	
+	cp 0
+	jp z, .generic_update_objs
+	
+	; enemy overlaps player. If a spike, instantly injure player 
+	ld a, [EnemyType]
+	cp ENEMY_SPIKE
+	jp z, .damage_player 
+	cp ENEMY_BLACK_SPIKE
+	jp z, .damage_player 
+	
+	; Not a spike, so check the relative y position of the player 
+	ld a, [PlayerRect+2]
+	ld b, a 				
+	ld a, PLAYER_HEIGHT - 1
+	add a, b 
+	ld b, a 			; b = player bottom y pos 
+	inc hl 
+	inc hl 
+	ld a, [hl+]			; inc hl twice to point at y coord and get it. (hl should have been pointing at enemy struct's rect)
+	ld c, a 
+	inc hl 
+	inc hl 
+	ld a, [hl]			; get height 
+	srl a 				; shift right to divide by 2 
+	add a, c 			; a = enemy_y + enemy_height/2
+	
+	; if the enemy pos is higher than the player pos, damage the player 
+	cp b 
+	jp nc, .damage_player
+	
+	; Well, the player was higher than enemy, so now we need to kill this enemy :(
+	ld a, [EnemyStruct]
+	ld h, a 
+	ld a, [EnemyStruct+1]
+	ld l, a 
+	ld a, [OBJOffset]
+	ld b, a 
+	call Enemy_Kill 
+	ld a, 0 
+	ret 
+	
+	
+.damage_player
+	; call Player_Damage 
+	jp .generic_update_objs
+
+
+.generic_update_objs
+	ld a, [EnemyStruct]
+	ld h, a 
+	ld a, [EnemyStruct+1]
+	ld l, a 
+	inc hl 
+	inc hl 		
+	push hl 	; param 
+	ld hl, LocalOAM
+	ld a, [OBJOffset]
+	ld c, a 
+	ld b, 0 
+	add hl, bc 
+	push hl 	;
+	
+	
+	
+	ld a, 1 
+	ret 
+	
+.slime 
+	 
+	; Slimey updates 
+	ld a, [EnemyStruct]
+	ld h, a 
+	ld a, [EnemyStruct+1]
+	ld l, a 
+	
+	; Get x pos 
+	ld a, [hl+]
+	ld [EnemyX], a
+	ld a, [hl+]
+	ld [EnemyX+1], a 
+	
+	; Get Scratch 
+	ld a, l 
+	add a, 6 
+	ld l, a 
+	ld a, h 
+	adc a, 0 
+	ld h, a 		; position hl at scratch 
+	
+	ld a, [hl+]
+	ld [EnemyScratch], a 		; left tile 
+	ld a, [hl+]
+	ld [EnemyScratch+1], a 		; right tile 
+	ld a, [hl+]
+	ld [EnemyScratch+2], a 		; cur direction 
+	ld a, [hl]
+	ld [EnemyScratch+3], a 		; anim counter 
+	inc a
+	ld [hl], a 					; inc anim counter 
+	ld a, [EnemyScratch+2]		; get cur dir 
+	cp 0 
+	jp .slime_move_left 
+	ld de, SLIME_MOVE_SPEED
+	jp .slime_move 
+.slime_move_left
+	ld de, 0 - SLIME_MOVE_SPEED
+.slime_move 
+	ld a, [EnemyX]
+	ld h, a 
+	ld a, [EnemyX+1]
+	ld l, a 
+	add hl, de 			; get new slime position 
+	ld a, l
+	ld [EnemyX+1], a 	
+	ld a, h 
+	ld [EnemyX], a 		; store new x pos 
+	
+	; Check if tile is past left bounds or right bounds 
+	ld b, a 
+	ld a, [BGFocusPixelsX]
+	ld c, a 
+	ld a, b 
+	sub c 			; subtract scroll offset 
+	srl a 
+	srl a 
+	srl a 
+	add a, 32 		; use tile bias 
+	ld b, a 			; b = cur tile 
+	
+	; check left boundary 
+	ld a, [MapOriginX]
+	ld c, a 
+	ld a, [EnemyScratch]
+	sub c 					; a = relative left 
+	sub 1 					; move boundary one tile over when going left
+	add a, 32 				; bias by 32 for positive compare 
+	cp b
+	jp nc, .slime_set_dir_right
+	
+	; check right boundary 
+	ld a, [EnemyScratch+1]
+	sub c 
+	sub 1 
+	add a, 32 
+	cp b 
+	jp c, .slime_set_dir_left
+	
+.slime_set_dir_right
+	ld a, 1 
+	ld [EnemyScratch+2], a 
+	jp .slime_finish
+.slime_set_dir_left 
+	ld a, 0 
+	ld [EnemyScratch+2], a 
+	
+.slime_finish
+	ld a, [EnemyScratch+3]		; get anim counter 
+	and $04 
+	ld b, a 
+	ld a, ENEMY_TILE_SLIME 
+	add a, b
+	ld c, a 
+    
+	call .generic
+	jp .return 
+
+
+.birdy 
+.shooter 
+.spike 
+.jump_slime
+.bomb_birdy
+.para_shooter
+.black_spike
+.zig_birdy
+	
+	
+	
+.return 
+	ret 
+	
+Enemy_Kill::
+
+	ret 
+	
+	
+Enemy_Recall::
 
 	ret 

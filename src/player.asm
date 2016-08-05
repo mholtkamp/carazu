@@ -72,9 +72,9 @@ Player_Initialize::
 	ld [PlayerRect + 2], a 				; y (integer)
 	ld a, 0 
 	ld [PlayerRect + 3], a 				; y (fractional)
-	ld a, 8
+	ld a, PLAYER_HEIGHT
 	ld [PlayerRect + 4], a 				; width 
-	ld a, 12 
+	ld a, PLAYER_HEIGHT 
 	ld [PlayerRect + 5], a 				; height
 
 	ld a, 0 

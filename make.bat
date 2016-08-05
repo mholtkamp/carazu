@@ -13,7 +13,7 @@ rgbasm -oobj/menu.obj src/menu.asm
 rgbasm -oobj/util.obj src/util.asm
 rgbasm -oobj/stats.obj src/stats.asm
 rgbasm -oobj/item.obj src/item.asm 
-rgbasm -oobj/enemy.obj src/enemy.asm
+rgbasm -oobj/enemy.obj src/enemy.asm 
 
 rgbasm -oobj/special_tiles.obj tiles/special_tiles.asm
 rgbasm -oobj/item_tiles.obj tiles/item_tiles.asm

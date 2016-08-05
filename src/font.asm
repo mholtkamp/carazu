@@ -1,9 +1,11 @@
 INCLUDE "include/font.inc"
+INCLUDE "include/constants.inc"
 
-SECTION "FontTiles", HOME
+SECTION "FontTiles", DATA, BANK[1]
 
 FullFontVRAMAddress EQU $9400		; 64 characters 
 NumbersFontVRAMAddress EQU $9600	; 16 characters
+FontTilesBank EQU 1 
 
 FontTiles:
 DB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 
@@ -77,6 +79,10 @@ DB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $FE, $FE, $00, $0
 
 Font_LoadFull::
 
+	; Equip rom bank 1 
+	ld a, FontTilesBank
+	ld [ROM_BANK_WRITE_ADDR], a 
+
 	ld bc, FullFontVRAMAddress
 	ld hl, FontTiles
 	ld de, 64*16 ; 64 characters, 16 bytes each
@@ -92,6 +98,10 @@ Font_LoadFull::
 	ret
 	
 Font_LoadNumbers::
+
+	; Equip rom bank 1 
+	ld a, FontTilesBank
+	ld [ROM_BANK_WRITE_ADDR], a 
 
 	ld bc, NumbersFontVRAMAddress
 	ld hl, FontTiles + (16*16)		; start at 0 

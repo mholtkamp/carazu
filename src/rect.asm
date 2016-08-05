@@ -1369,6 +1369,94 @@ RectOverlapsRect_Int:
 	ld a, 0 
 	ret 
 	
+; RectOverlapsRect_Fixed
+; hl = rect1 
+; de = rect2
+; ret: a = 1 if overlap. 0 otherwise 
+RectOverlapsRect_Fixed
+
+	ld a, [hl+]
+	ld [RectX], a 
+	inc hl 
+	ld a, [hl+]
+	ld [RectY], a 
+	inc hl 
+	ld a, [hl+]
+	sub 1 
+	ld [RectWidth], a 
+	ld a, [hl+]
+	sub 1 
+	ld [RectHeight], a 
+	
+	ld a, [de]
+	ld [Rect2X], a 
+	inc de 
+	inc de 
+	ld a, [de]
+	ld [Rect2Y], a 
+	inc de 
+	inc de 
+	ld a, [de]
+	sub 1 
+	ld [Rect2Width], a 
+	inc de 
+	ld a, [de]
+	sub 1 
+	ld [Rect2Height], a 
+	
+	; x > x2 + width2 
+	ld a, [RectX]
+	ld c, a 
+	
+	ld a, [Rect2Width]
+	ld b, a 
+	ld a, [Rect2X]
+	add a, b 	; a = x2 + (width2 - 1) 
+	cp c 		
+	jp c, .return_false
+	
+	; x + width < x2 
+	ld a, [Rect2X]
+	ld c, a 
+	
+	ld a, [RectWidth] 
+	ld b, a 
+	ld a, [RectX]
+	add a, b 	; a = x + (width - 1)
+	cp c
+	jp c, .return_false
+	
+	; y > y2 + width2 
+	ld a, [RectY]
+	ld c, a 
+	
+	ld a, [Rect2Height]
+	ld b, a 
+	ld a, [Rect2Y]
+	add a, b 	; a = y2 + (height2 - 1) 
+	cp c 		
+	jp c, .return_false
+	
+	; y + height < y2 
+	ld a, [Rect2Y]
+	ld c, a 
+	
+	ld a, [RectHeight] 
+	ld b, a 
+	ld a, [RectY]
+	add a, b 	; a = y + (height - 1)
+	cp c
+	jp c, .return_false
+	
+.return_true 
+	ld a, 1 
+	ret 
+	
+.return_false 
+	ld a, 0 
+	ret 
+
+	
 RectOverlapsRect_Int_Fixed:
 	ld a, [de]
 	ld [IntRect], a 

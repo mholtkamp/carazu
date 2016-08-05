@@ -64,4 +64,10 @@ GLOBAL RectOverlapsRect_Int
 ; ret: a = 1 if overlap. 0 otherwise 
 GLOBAL RectOverlapsRect_Int_Fixed
 
+; RectOverlapsRect_Fixed
+; hl = rect1 
+; de = rect2
+; ret: a = 1 if overlap. 0 otherwise 
+GLOBAL RectOverlapsRect_Fixed
+
 ENDC 

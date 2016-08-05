@@ -20,6 +20,18 @@ ENEMY_ENTRY_DATA_SIZE EQU 8
 ; ...
 ; EnemyEntry.Param4[7]
 
+
+; SCRATCH DATA FORMATS 
+
+;===========
+;== SLIME ==
+;===========
+; +8 = left boundary 
+; +9 = right boundary
+; +10 = current direction, 0 = left, 1 = right 
+; +11 = anim counter
+
+
 ; Variables 
 GLOBAL Enemies
 GLOBAL EnemyList
