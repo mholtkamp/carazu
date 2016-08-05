@@ -1,6 +1,7 @@
 	INCLUDE "include/constants.inc"
 	INCLUDE "include/level.inc"
 	INCLUDE "include/rect.inc"
+	INCLUDE "include/globals.inc"
 
 COLLIDED_LEFT      EQU $01
 COLLIDED_RIGHT     EQU $02 
@@ -623,73 +624,39 @@ RectAddress: DS 2
 
 
 SECTION "UpdateOAMFromRect_Fixed", HOME 
-; UpdateOAMFromRect_Fixed
-;   push0 = [Rect Address]  
-;   push1 = [OAM Address] 
-;   push2 = [Rect Offset X, Rect Offset Y]
-;   push3 = [Sprite Char Width/ Sprite Char Height]
-;   push4 = [SpritePattern, SpriteIndex]
-;   push5 = [0, FlipX = bit 1 | FlipY = bit 0]
-UpdateOAMFromRect_Fixed::
+; UpdateOAMFromRect_2x2
+;   hl = [Rect Address]  
+;	b = sprite tile pattern index 
+;   c = oam index 
+;   d = Rect Offset X
+;   e = Rect Offset Y
+;   a = flip x 
+UpdateOAMFromRect_2x2::
 
-	; pop off the return address and save it 
-	pop bc 
-	ld a, b 
-	ld [Scratch], a 
-	ld a, c 
-	ld [Scratch + 1], a 
-	
 	; save params 
-	pop bc
-	ld a, c
-	ld [SpriteFlip], a 
+	ld [SpriteFlip], a 		
 	
-	pop bc 
-	ld a, c 
-	ld [SpriteIndex], a 
+	ld a, d 
+	ld [RectOffsetX], a 
+	ld a, e 
+	ld [RectOffsetY], a 
+	
 	ld a, b 
 	ld [SpritePattern], a 
-	
-	pop bc 
-	ld a, b 
-	ld [SpriteCharWidth], a 
 	ld a, c 
-	ld [SpriteCharHeight], a 
+	ld [SpriteIndex], a 
 	
-	pop bc 
-	ld a, b 
-	ld [RectOffsetX], a 
-	ld a, c 
-	ld [RectOffsetY], a
-
-	pop bc 
-	ld a, b 
-	ld [OAMAddress], a 
-	ld a, c 
-	ld [OAMAddress + 1], a 
-	
-	pop hl  
 	ld a, [hl+]
 	ld [RectX], a 
 	inc hl 
-	ld a, [hl+]
+	ld a, [hl]
 	ld [RectY], a		; Rect width / height not needed 
-	
-	; push back the return address
-	ld a, [Scratch]
-	ld b, a 
-	ld a, [Scratch + 1]
-	ld c, a 
-	push bc 
 	
 	; Now to actually begin the subroutine. Use a nested loop to iterate 
 	; through sprite objs, starting with top left obj.
 	
 	; Get the starting OAM address
-	ld a, [OAMAddress]
-	ld h, a 
-	ld a, [OAMAddress + 1]
-	ld l, a 
+	ld hl, LocalOAM 
 
 	ld a, [SpriteIndex]
 	ld c, a 
@@ -704,7 +671,7 @@ UpdateOAMFromRect_Fixed::
 	ld a, [RectY] 
 	sub c 
 	add a, 16 			; add 16 to get the sprite y coordinates (x = 8, y = 16: top left pixel on screen)
-	ld c, a 			; b = obj y-coordinate  
+	ld c, a 			; c = obj y-coordinate  
 	ld [Scratch], a 	; save the top most obj y-coordinate
 	
 	ld a, [RectOffsetX]
@@ -712,333 +679,130 @@ UpdateOAMFromRect_Fixed::
 	ld a, [RectX]
 	sub b 
 	add a, 8 			; get obj x-coordinate 
-	ld b, a 			; c = obj x-coordinate 
+	ld b, a 			; b = obj x-coordinate 
 	
 	
 	; figure out which loop to run based on flip values 
 	ld a, [SpriteFlip]
-	and $03 		; mask away unneeded bits just in case 
-	sla a 
-	sla a 			; multiply by 4 to get byte offset for jumps below 
+	cp 1
+	jp z, .flip_x 
+	jp .no_flip 
 	
-	push hl 		; save oam address 
-	ld hl, .flip_table
-	ld d, 0 
-	ld e, a 
-	add hl, de 
-	jp [hl]			; jump into the table 
-	
-.flip_table
-	jp .no_flip
-	nop
-	jp .flip_y
-	nop
-	jp .flip_x
-	nop
-	jp .flip_x_y  
-	nop
 	
 .no_flip 
 
-	pop hl 			; restore oam address 
-	
 	; Get patten index for first sprite 
 	; no flip = start from first pattern
 	ld a, [SpritePattern]
-	ld d, a 					; d = sprite pattern 
-	ld e, 0 					; e = vert loop counter 
+	ld d, a 
 	
-	ld a, 0 
-	ld [Scratch + 1], a 			; use scratch[1] for hori counter 
-	
-.loop_no_flip
-
-	ld [hl], c 		; save the y obj-coord 
-	inc hl 
-	ld [hl], b 		; save the x obj-coord 
-	inc hl 
-	ld [hl], d 		; save the pattern number  
-	inc hl 	
-	res 6, [hl]
-	res 5, [hl]		; clear y flip and x flip 
-	inc hl 
-	
+	; top-left 
 	ld a, c 
-	add a, 8
-	ld c, a 		; increase y coords by 8 
-	inc d 			; incease pattern number 
-	inc e 			; increase counter 
-	
-	; check vert counter 
-	push bc 		; save bc to use the registers 
-	ld a, [SpriteCharHeight]
-	ld b, a 
-	ld a, e 
-	cp b
-	pop bc 			; restore the registers, won't change flags 
-	jp nz, .loop_no_flip 		; vert counter != char height yet, so continue loop 
-	
-	; no need to adjust pattern index, as it just increments normally for no-flip 
-	
-	ld a, [Scratch]
-	ld c, a 			; reset y obj-coord
-	ld e, 0				; reset row counter 
+	ld [hl+], a 		; save y coord 
 	ld a, b 
-	add a, 8
-	ld b, a 			; increase obj x-coords by 8 for next iteration 
+	ld [hl+], a 		; save x coord 
+	ld a, d 
+	ld [hl+], a 		; save pattern 
+	ld a, 0 
+	ld [hl+], a 		; no flip 
 	
-	; Check vertical counter to see if we are finished 
-	push bc 			; save bc to use registers 
-	ld a, [SpriteCharWidth]
-	ld b, a 
-	ld a, [Scratch+1]
-	inc a 
-	ld [Scratch+1], a 	; save incremented vert counter 
-	cp b 				; is vert counter == char height?
-	pop bc 
-	jp nz, .loop_no_flip	; not finished yet. update next row of OBJs
-	ret ;finished updating the sprite's OBJs 
+	inc d 
+	
+	; bottom-left 
+	ld a, c 
+	add a, 8 
+	ld [hl+], a 		
+	ld a, b 
+	ld [hl+], a 
+	ld a, d 
+	ld [hl+], a 
+	ld a, 0 
+	ld [hl+], a 	
+	
+	inc d  
+	
+	; top-right 
+	ld a, c 
+	ld [hl+], a 
+	ld a, b 
+	add a, 8 
+	ld [hl+], a 
+	ld a, d
+	ld [hl+], a 
+	ld a, 0 
+	ld [hl+], a 
+	
+	inc d 
+	
+	; bottom-right 
+	ld a, c 
+	add a, 8 
+	ld [hl+], a 
+	ld a, b 
+	add a, 8 
+	ld [hl+], a 
+	ld a, d 
+	ld [hl+], a 
+	ld a, 0 
+	ld [hl+], a 
+	
+	ret 
 	
 	
 .flip_x 
-
-	pop hl 			; restore oam address 
-	
-	; Get patten index for obj first sprite 
-	; flip x = NumChars - 1 - Width 
-	; do a small loop to multiply width x height 
-	ld a, [SpriteCharWidth]
-	ld d, a 
-	ld a, [SpriteCharHeight]
-	ld e, a 
-	ld a, 0 
-.flip_x_mult_loop
-	add a, e  		; add height to sum 
-	dec d 
-	jp nz, .flip_x_mult_loop
-	
-	; register a should contain the number of obj-sprites 
-	sub e 
-	ld d, a 
+	; Get patten index for first sprite 
+	; no flip = start from first pattern
 	ld a, [SpritePattern]
-	add a, d 
-	ld d, a 		; d = starting pattern index 
+	ld d, a 
 	
-	ld e, 0 					; e = vert loop counter 
-	
-	ld a, 0 
-	ld [Scratch + 1], a 			; use scratch[1] for hori counter 
-	
-.loop_flip_x
-
-	ld [hl], c 		; save the y obj-coord 
-	inc hl 
-	ld [hl], b 		; save the x obj-coord 
-	inc hl 
-	ld [hl], d 		; save the pattern number  
-	inc hl 	
-	res 6, [hl]
-	set 5, [hl]		; clear y flip and x flip 
-	inc hl 
-
+	; top-left 
 	ld a, c 
-	add a, 8
-	ld c, a 		; increase y coords by 8 
-	inc d 			; decrease pattern number 
-	inc e 			; increase counter 
-	
-	; check vert counter 
-	push bc 		; save bc to use the registers 
-	ld a, [SpriteCharHeight]
-	ld b, a 
-	ld a, e 
-	cp b
-	pop bc 			; restore the registers, won't change flags 
-	jp nz, .loop_flip_x 		; vert counter != char height yet, so continue loop 
-	
-	; get correct pattern index for first char in next column 
-	push bc 
-	ld a, [SpriteCharHeight]
-	ld b, a 
+	ld [hl+], a 		; save y coord 
+	ld a, b 
+	ld [hl+], a 		; save x coord 
 	ld a, d 
-	sub b 
-	sub b 
-	ld d, a     ; d = next pattern index 
-	pop bc
+	add a, 2 
+	ld [hl+], a 		; save pattern 
+	ld a, $20 
+	ld [hl+], a 		; no flip 
 	
-	ld a, [Scratch]
-	ld c, a 			; reset y obj-coord
-	ld e, 0				; reset row counter 
-	ld a, b 
-	add a, 8
-	ld b, a 			; increase obj x-coords by 8 for next iteration 
-	
-	; Check vertical counter to see if we are finished 
-	push bc 			; save bc to use registers 
-	ld a, [SpriteCharWidth]
-	ld b, a 
-	ld a, [Scratch+1]
-	inc a 
-	ld [Scratch+1], a 	; save incremented vert counter 
-	cp b 				; is vert counter == char height?
-	pop bc 
-	jp nz, .loop_flip_x	; not finished yet. update next row of OBJs
-	ret ;finished updating the sprite's OBJs 
-	
-
-.flip_y 
-
-	pop hl 			; restore oam address 
-	
-	; Get patten index for obj first sprite 
-	; flip y = CharHeight - 1 
-	; do a small loop to multiply width x height 
-	ld a, [SpriteCharHeight]
-	ld e, a 
-	ld a, [SpritePattern]
-	add a, e 		; add char height to sprite pattern
-	sub 1 			; subtract to get starting pattern index 
-	ld d, a 		; d = starting pattern index 
-	
-	ld e, 0 					; e = vert loop counter 
-	
-	ld a, 0 
-	ld [Scratch + 1], a 			; use scratch[1] for hori counter 
-	
-.loop_flip_y
-
-	ld [hl], c 		; save the y obj-coord 
-	inc hl 
-	ld [hl], b 		; save the x obj-coord 
-	inc hl 
-	ld [hl], d 		; save the pattern number  
-	inc hl 	
-	set 6, [hl]
-	res 5, [hl]		; set y flip and reset x flip 
-	inc hl 
-
+	; bottom-left 
 	ld a, c 
-	add a, 8
-	ld c, a 		; increase y coords by 8 
-	dec d 			; decrease pattern number 
-	inc e 			; increase counter 
-	
-	; check vert counter 
-	push bc 		; save bc to use the registers 
-	ld a, [SpriteCharHeight]
-	ld b, a 
-	ld a, e 
-	cp b
-	pop bc 			; restore the registers, won't change flags 
-	jp nz, .loop_flip_y 		; vert counter != char height yet, so continue loop 
-	
-	; get correct pattern index for first char in next column 
-	push bc 
-	ld a, [SpriteCharHeight]
-	ld b, a 
+	add a, 8 
+	ld [hl+], a 		
+	ld a, b 
+	ld [hl+], a 
 	ld a, d 
-	add b 
-	add b 
-	ld d, a     ; d = next pattern index 
-	pop bc
-	
-	ld a, [Scratch]
-	ld c, a 			; reset y obj-coord
-	ld e, 0				; reset row counter 
-	ld a, b 
-	add a, 8
-	ld b, a 			; increase obj x-coords by 8 for next iteration 
-	
-	; Check vertical counter to see if we are finished 
-	push bc 			; save bc to use registers 
-	ld a, [SpriteCharWidth]
-	ld b, a 
-	ld a, [Scratch+1]
-	inc a 
-	ld [Scratch+1], a 	; save incremented vert counter 
-	cp b 				; is vert counter == char height?
-	pop bc 
-	jp nz, .loop_flip_y	; not finished yet. update next row of OBJs
-	ret ;finished updating the sprite's OBJs 
-	
-	
-.flip_x_y 
+	add a, 3 
+	ld [hl+], a 
+	ld a, $20 
+	ld [hl+], a 	
 
-	pop hl 			; restore oam address 
-	
-	; Get patten index for obj first sprite 
-	; flip x = NumChars - 1 - Width 
-	; do a small loop to multiply width x height 
-	ld a, [SpriteCharWidth]
-	ld d, a 
-	ld a, [SpriteCharHeight]
-	ld e, a 
-	ld a, 0 
-.flip_x_y_mult_loop
-	add a, e  		; add height to sum 
-	dec d 
-	jp nz, .flip_x_y_mult_loop
-	
-	; register a should contain the number of obj-sprites 
-	sub 1 
-	ld d, a 
-	ld a, [SpritePattern]
-	add a, d 
-	ld d, a 		; d = starting pattern index 
-	
-	ld e, 0 					; e = vert loop counter 
-	
-	ld a, 0 
-	ld [Scratch + 1], a 			; use scratch[1] for hori counter 
-	
-.loop_flip_x_y
-
-	ld [hl], c 		; save the y obj-coord 
-	inc hl 
-	ld [hl], b 		; save the x obj-coord 
-	inc hl 
-	ld [hl], d 		; save the pattern number  
-	inc hl 	
-	set 6, [hl]
-	set 5, [hl]		; clear y flip and x flip 
-	inc hl 
-
+	; top-right 
 	ld a, c 
-	add a, 8
-	ld c, a 		; increase y coords by 8 
-	dec d 			; decrease pattern number 
-	inc e 			; increase counter 
-	
-	; check vert counter 
-	push bc 		; save bc to use the registers 
-	ld a, [SpriteCharHeight]
-	ld b, a 
-	ld a, e 
-	cp b
-	pop bc 			; restore the registers, won't change flags 
-	jp nz, .loop_flip_x_y 		; vert counter != char height yet, so continue loop 
-	
-	; the pattern will be correct in next column because it just decs normally
-	
-	ld a, [Scratch]
-	ld c, a 			; reset y obj-coord
-	ld e, 0				; reset row counter 
+	ld [hl+], a 
 	ld a, b 
-	add a, 8
-	ld b, a 			; increase obj x-coords by 8 for next iteration 
+	add a, 8 
+	ld [hl+], a 
+	ld a, d
+	ld [hl+], a 
+	ld a, $20 
+	ld [hl+], a 
 	
-	; Check vertical counter to see if we are finished 
-	push bc 			; save bc to use registers 
-	ld a, [SpriteCharWidth]
-	ld b, a 
-	ld a, [Scratch+1]
+	; bottom-right 
+	ld a, c 
+	add a, 8 
+	ld [hl+], a 
+	ld a, b 
+	add a, 8 
+	ld [hl+], a 
+	ld a, d 
 	inc a 
-	ld [Scratch+1], a 	; save incremented vert counter 
-	cp b 				; is vert counter == char height?
-	pop bc 
-	jp nz, .loop_flip_x_y	; not finished yet. update next row of OBJs
-	ret ;finished updating the sprite's OBJs 
+	ld [hl+], a 
+	ld a, $20 
+	ld [hl+], a 
 	
+	ret 
 	
 ;	a = y-block 	
 ; a/b/h/l are overwritten 

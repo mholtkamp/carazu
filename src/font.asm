@@ -1,7 +1,7 @@
 INCLUDE "include/font.inc"
 INCLUDE "include/constants.inc"
 
-SECTION "FontTiles", DATA, BANK[1]
+	SECTION "FontTiles", DATA, BANK[1]
 
 FullFontVRAMAddress EQU $9400		; 64 characters 
 NumbersFontVRAMAddress EQU $9600	; 16 characters
@@ -73,9 +73,7 @@ DB $38, $38, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $38, $38, $00, $0
 DB $10, $10, $38, $38, $6C, $6C, $C6, $C6, $00, $00, $00, $00, $00, $00, $00, $00 
 DB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $FE, $FE, $00, $00
 
-
-
-
+	SECTION "FontProcedures", HOME 
 
 Font_LoadFull::
 

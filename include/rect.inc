@@ -34,14 +34,14 @@ GLOBAL MoveRect_Fixed
 ;	a - 1 if grounded, 0 otherwise 
 GLOBAL CheckRectGrounded_Fixed
 
-; UpdateSpriteOAM
-;   push0 = [Rect Address]  
-;   push1 = [OAM Address] 
-;   push2 = [Rect Offset X, Rect Offset Y]
-;   push3 = [Sprite Char Width/ Sprite Char Height]
-;   push4 = [SpritePattern, SpriteIndex]
-;   push5 = [0, FlipX/FlipY]
-GLOBAL UpdateOAMFromRect_Fixed 
+; UpdateOAMFromRect_2x2
+;   hl = [Rect Address]  
+;	b = sprite tile pattern index 
+;   c = oam index 
+;   d = Rect Offset X
+;   e = Rect Offset Y
+;   a = flip x 
+GLOBAL UpdateOAMFromRect_2x2 
 
 
 ; Rect_CheckSpecials

@@ -310,6 +310,7 @@ Stats_SaveDefaultRecords::
 	ld a, RAM_DISABLE
 	ld [RAM_ENABLE_WRITE_ADDR], a
 	ret 
+	
 Stats_LoadGraphics::
 	call Font_LoadNumbers
 	

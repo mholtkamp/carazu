@@ -72,7 +72,7 @@ Player_Initialize::
 	ld [PlayerRect + 2], a 				; y (integer)
 	ld a, 0 
 	ld [PlayerRect + 3], a 				; y (fractional)
-	ld a, PLAYER_HEIGHT
+	ld a, PLAYER_WIDTH
 	ld [PlayerRect + 4], a 				; width 
 	ld a, PLAYER_HEIGHT 
 	ld [PlayerRect + 5], a 				; height
@@ -146,7 +146,7 @@ Player_Update::
 	ld [fXVelocity], a 
 	ld a, c 
 	ld [fXVelocity + 1], a ; save new x velocity 
-	ld a, %00000010 
+	ld a, 1
 	ld [PlayerFlipX], a 
 	jp .check_grounded
 	
@@ -453,24 +453,13 @@ Player_UpdateLocalOAM::
 
 	; Update player OAM 
 	ld hl, PlayerRect			
-	push hl 					; param0 = rect address 
-	ld hl, LocalOAM				
-	push hl 					; param1 = oam address 
-	ld b, 4 
-	ld c, 4 
-	push bc 					; param2 = rect offset x / y 
-	ld b, 2  
-	ld c, 2  
-	push bc 					; param3 = sprite char width/height 
 	ld a, [PlayerSpritePattern]
-	ld b, a  
-	ld c, 0 
-	push bc 					; param4 = sprite pattern, sprite OBJ index 
-	ld b, 0 
+	ld b, a 					
+	ld c, 0 					; oam index = 0 
+	ld d, 4						; rect x offseet =  4 
+	ld e, 4 					; rect y offset  = 4 
 	ld a, [PlayerFlipX]
-	ld c, a  
-	push bc 					; param5 = 0, flip flags 
-	call UpdateOAMFromRect_Fixed
+	call UpdateOAMFromRect_2x2
 	ret 
 	
 Player_SetPosition::
