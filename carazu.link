@@ -11,9 +11,11 @@ obj/menu.obj
 obj/util.obj 
 obj/stats.obj 
 obj/item.obj 
+obj/enemy.obj
 
 obj/special_tiles.obj 
 obj/item_tiles.obj 
+obj/enemy_tiles.obj 
 obj/bg_tiles_0.obj
 obj/player_sprite_tiles.obj
 

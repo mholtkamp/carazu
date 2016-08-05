@@ -652,7 +652,6 @@ Scroll_Items::
 	ld a, [hl]
 	add a, e 
 	ld [hl], a 
-	add hl, bc 
 	
 	; Item 1 
 	ld hl, Item1 + 4

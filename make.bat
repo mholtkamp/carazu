@@ -13,9 +13,11 @@ rgbasm -oobj/menu.obj src/menu.asm
 rgbasm -oobj/util.obj src/util.asm
 rgbasm -oobj/stats.obj src/stats.asm
 rgbasm -oobj/item.obj src/item.asm 
+rgbasm -oobj/enemy.obj src/enemy.asm
 
 rgbasm -oobj/special_tiles.obj tiles/special_tiles.asm
 rgbasm -oobj/item_tiles.obj tiles/item_tiles.asm
+rgbasm -oobj/enemy_tiles.obj tiles/enemy_tiles.asm 
 rgbasm -oobj/bg_tiles_0.obj tiles/bg_tiles_0.asm
 rgbasm -oobj/player_sprite_tiles.obj tiles/player_sprite_tiles.asm
 
