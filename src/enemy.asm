@@ -16,6 +16,9 @@ SLIME_MOVE_SPEED EQU $0100
 RECALL_RANGE_MIN EQU  192 
 RECALL_RANGE_MAX EQU  224 
 
+STAR_COUNTER_MAX EQU 12
+STAR_SPEED EQU 2
+
 	SECTION "EnemyVariables", BSS 
 	
 Enemies:												; 20 * 5 = 100 bytes
@@ -65,6 +68,17 @@ DS 1
 EnemyFlip:
 DS 1 
 
+Star1X:
+DS 1 
+Star2X:
+DS 1 
+StarsY:
+DS 1 
+StarsCounter:
+DS 1 
+StarsActive:
+DS 1 
+
 	SECTION "EnemyProcedures", HOME 
 	
 LoadEnemyGraphics::
@@ -101,6 +115,9 @@ ResetEnemyList::
 	
 ResetEnemies::
 
+	ld a, 0 
+	ld [StarsActive], a		; set stars as inactive  
+	
 	ld a, 0 			; 0 = ENEMY_NONE 
 	ld b, ENEMY_DATA_SIZE 
 	ld c, MAX_ENEMIES 
@@ -286,9 +303,23 @@ ScrollEnemies::
 	add a, e 
 	ld [hl], a 
 
+	; Stars 
+	ld a, [Star1X]
+	add a, d 
+	ld [Star1X], a 
+	ld a, [Star2X]
+	add a, d 
+	ld [Star2X], a 
+	ld a, [StarsY]
+	add a, e 
+	ld [StarsY], a 
+	
 	ret 
 	
 UpdateEnemies::
+	
+	;Update Stars 
+	call UpdateStars 
 	
 	; Update each enemy struct first 
 	; Originally, had this as loop, but unwrapping it for minor performance increase 
@@ -645,6 +676,7 @@ Enemy_Update::
 	ld a, [OBJOffset]
 	ld b, a 
 	call Enemy_Kill 
+	call SpawnStars
 	ld a, 0 
 	ret 
 	
@@ -923,3 +955,94 @@ Enemy_Recall::
 	inc hl 
 	
 	ret 
+
+	
+SpawnStars::
+	ld a, 1 
+	ld [StarsActive], a 
+	ld a, [PlayerRect]
+	ld b,a
+	ld [Star1X], a 
+	ld [Star2X], a 
+	ld a, [PlayerRect+2]
+	add a, PLAYER_HEIGHT + 4
+	ld c, a 
+	ld [StarsY], a 
+	ld a, STAR_COUNTER_MAX 
+	ld [StarsCounter], a 
+	
+	; setup star obj attributes 
+	ld hl, LocalOAM + STARS_OBJ_INDEX*4 
+	ld de, LocalOAM + STARS_OBJ_INDEX*4 + 4 
+	ld a, c 
+	add a, 16 
+	ld [hl+], a 
+	ld [de], a 
+	inc de 
+	ld a, b 
+	add a, 8 
+	ld [hl+], a 
+	ld [de], a 
+	inc de 
+	ld a, ITEM_TILE_STAR
+	ld [hl+], a
+	ld [de], a 
+	inc de 
+	ld a, 0 
+	ld [hl], a 
+	ld [de], a 
+	
+	ret 
+	
+UpdateStars::
+	ld a, [StarsActive]
+	cp 0 
+	ret z 
+
+	; stars are active so update 
+	ld a, [StarsCounter]
+	dec a 
+	ld [StarsCounter], a 
+	cp 0
+	jp z, .deactivate_stars 
+	
+	; set y obj val 
+	ld hl, LocalOAM + STARS_OBJ_INDEX*4
+	ld a, [StarsY]
+	add a, 16 
+	ld [hl], a 
+	ld hl, LocalOAM + STARS_OBJ_INDEX*4 + 4
+	ld [hl], a 
+	
+	ld b, STAR_SPEED
+	ld a, [Star1X]
+	sub b 
+	ld [Star1X], a 
+	add a, 8 
+	ld hl, LocalOAM + STARS_OBJ_INDEX*4 + 1 
+	ld [hl], a 
+	ld a, [Star2X]
+	add a, b 
+	ld [Star2X], a 
+	add a, 8 
+	ld hl, LocalOAM + STARS_OBJ_INDEX*4 + 4 + 1 
+	ld [hl], a 
+
+	ret 
+	
+.deactivate_stars
+	; clear star flag 
+	ld a, 0 
+	ld [StarsActive], a 
+	
+	; disable star objs 
+	ld a, 0 
+	ld hl, LocalOAM + STARS_OBJ_INDEX*4
+	ld [hl+], a 
+	ld [hl+], a 
+	inc hl 
+	inc hl 
+	ld [hl+], a 
+	ld [hl+], a 
+	ret 
+	
