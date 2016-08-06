@@ -208,6 +208,9 @@ Start::
 	; Initialize BSS data
 	call Player_Initialize
 	call Level_Initialize 
+	call ResetEnemies
+	call ResetEnemyList
+	
 	ld a, 0 
 	ld [DebugLY], a
 	
@@ -273,6 +276,7 @@ Main_Game_Loop::
 	call Player_Update
 	call Level_Update
 	call Update_Items
+	call UpdateEnemies
 	call Stats_Update 
 	
 	; Local OAM Updates 

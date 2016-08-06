@@ -13,6 +13,9 @@ SLIME_WIDTH EQU 12
 SLIME_HEIGHT EQU 12
 SLIME_MOVE_SPEED EQU $0100
 
+RECALL_RANGE_MIN EQU  192 
+RECALL_RANGE_MAX EQU  224 
+
 	SECTION "EnemyVariables", BSS 
 	
 Enemies:												; 20 * 5 = 100 bytes
@@ -50,9 +53,16 @@ DS 1
 EnemyHeight: 
 DS 1 
 
+EnemyRectOffsetX:
+DS 1 
+EnemyRectOffsetY:
+DS 1 
+
 EnemyScratch: 
 DS 12
-EnemyPatternIndex:
+EnemySpritePattern:
+DS 1 
+EnemyFlip:
 DS 1 
 
 	SECTION "EnemyProcedures", HOME 
@@ -147,25 +157,25 @@ LoadEnemyList::
 	ld a, b 
 	
 	cp END_ENEMY_LIST
-	jp .return 
+	jp z, .return 
 	cp ENEMY_SLIME
-	jp .load_slime
+	jp z, .load_slime
 	cp ENEMY_BIRDY
-	jp .load_birdy 
+	jp z, .load_birdy 
 	cp ENEMY_SHOOTER
-	jp .load_shooter 
+	jp z, .load_shooter 
 	cp ENEMY_SPIKE 
-	jp .load_spike
+	jp z, .load_spike
 	cp ENEMY_JUMP_SLIME
-	jp .load_jump_slime
+	jp z, .load_jump_slime
 	cp ENEMY_BOMB_BIRDY
-	jp .load_bomb_birdy 
+	jp z, .load_bomb_birdy 
 	cp ENEMY_PARA_SHOOTER
-	jp .load_para_shooter 
+	jp z, .load_para_shooter 
 	cp ENEMY_BLACK_SPIKE
-	jp .load_black_spike
+	jp z, .load_black_spike
 	cp ENEMY_ZIG_BIRDY
-	jp .load_zig_birdy 
+	jp z, .load_zig_birdy 
 	
 	; Unknown enemy type encountered. Possibly because of mismatch between 
 	; the number of params in list and the expected number of params 
@@ -227,7 +237,7 @@ LoadEnemyList::
 ScrollEnemies::
 
 	; Enemy0 
-	ld hl, Enemy0 + 1 
+	ld hl, Enemy0 + 2
 	ld a, [hl]
 	add a, d 
 	ld [hl+], a 
@@ -237,7 +247,7 @@ ScrollEnemies::
 	ld [hl], a 
 
 	; Enemy1 
-	ld hl, Enemy1 + 1 
+	ld hl, Enemy1 + 2 
 	ld a, [hl]
 	add a, d 
 	ld [hl+], a 
@@ -247,7 +257,7 @@ ScrollEnemies::
 	ld [hl], a 
 	
 	; Enemy2 
-	ld hl, Enemy2 + 1 
+	ld hl, Enemy2 + 2 
 	ld a, [hl]
 	add a, d 
 	ld [hl+], a 
@@ -257,7 +267,7 @@ ScrollEnemies::
 	ld [hl], a 
 	
 	; Enemy3
-	ld hl, Enemy3 + 1 
+	ld hl, Enemy3 + 2 
 	ld a, [hl]
 	add a, d 
 	ld [hl+], a 
@@ -267,7 +277,7 @@ ScrollEnemies::
 	ld [hl], a 
 	
 	; Enemy4
-	ld hl, Enemy4 + 1 
+	ld hl, Enemy4 + 2 
 	ld a, [hl]
 	add a, d 
 	ld [hl+], a 
@@ -283,23 +293,23 @@ UpdateEnemies::
 	; Update each enemy struct first 
 	; Originally, had this as loop, but unwrapping it for minor performance increase 
 	ld hl, Enemy0 
-	ld b, ENEMY_OBJ_INDEX*4 
+	ld b, ENEMY_OBJ_INDEX
 	call Enemy_Update
 	
 	ld hl, Enemy1 
-	ld b, (ENEMY_OBJ_INDEX+4)*4
+	ld b, ENEMY_OBJ_INDEX+4
 	call Enemy_Update
 	
 	ld hl, Enemy2 
-	ld b, (ENEMY_OBJ_INDEX+8)*4
+	ld b, ENEMY_OBJ_INDEX+8
 	call Enemy_Update
 	
 	ld hl, Enemy3 
-	ld b, (ENEMY_OBJ_INDEX+12)*4
+	ld b, ENEMY_OBJ_INDEX+12
 	call Enemy_Update
 	
 	ld hl, Enemy4 
-	ld b, (ENEMY_OBJ_INDEX+16)*4
+	ld b, ENEMY_OBJ_INDEX+16
 	call Enemy_Update
 	
 	
@@ -316,28 +326,30 @@ UpdateEnemies::
 	push hl 
 	ld a, [hl+]
 	cp ENEMY_NONE 
-	jp z, .continue 
+	jp z, .continue_none
 	
 	ld a, [hl+]
 	ld [EnemyTileRect], a 		; tile x 
 	ld a, [hl+]
 	ld [EnemyTileRect+1], a 	; tile y 
+	ld hl, EnemyTileRect
 	ld de, ScreenRect
+	push bc 
 	call RectOverlapsRect_Int
+	pop bc 
+	pop hl 
 	
 	cp 1 
 	jp nz, .continue		; no rect overlap so do not attempt spawning  
 	
-	dec hl 
-	dec hl 
-	dec hl 			; dec three times to point to beginning of enemy list entry 
-	
+	push hl 
 	push bc
 	call Enemy_Spawn
 	pop bc  
-	
+	; intentional fall through to continue_none
+.continue_none 
+	pop hl 
 .continue 
-	pop hl 	; get current enemy entry 
 	ld a, 8 
 	add a, l 
 	ld l, a 
@@ -431,7 +443,9 @@ Enemy_Spawn::
 	sla a 				; multiply tile difference by 8 to get pixels 
 	ld b, a 
 	ld a, [BGFocusPixelsX]
-	add a, b  			; offset by focus scroll value 
+	ld c, a 
+	ld a, b 
+	sub c  			; offset by focus scroll value 
 	ld [de], a			; store RectX (int)
 	inc de 
 	ld a, 0 
@@ -447,7 +461,9 @@ Enemy_Spawn::
 	sla a 				; multiply tile difference by 8 to get pixels 
 	ld b, a 
 	ld a, [BGFocusPixelsY]
-	add a, b  			; offset by focus scroll value 
+	ld c, a 
+	ld a, b 
+	sub c      			; offset by focus scroll value 
 	ld [de], a			; store RectY (int)
 	inc de 
 	ld a, 0 
@@ -547,27 +563,27 @@ Enemy_Update::
 	ld a, [hl+]
 	ld [EnemyType], a 
 	cp ENEMY_NONE 
-	jp .return 
+	jp z, .return 
 	
 	; would a jump table be faster? Yea probably
 	cp ENEMY_SLIME
-	jp .slime 
+	jp z, .slime 
 	cp ENEMY_BIRDY
-	jp .birdy 
+	jp z, .birdy 
 	cp ENEMY_SHOOTER 
-	jp .shooter 
+	jp z, .shooter 
 	cp ENEMY_SPIKE 
-	jp .spike 
+	jp z, .spike 
 	cp ENEMY_JUMP_SLIME
-	jp .jump_slime
+	jp z, .jump_slime
 	cp ENEMY_BOMB_BIRDY
-	jp .bomb_birdy
+	jp z, .bomb_birdy
 	cp ENEMY_PARA_SHOOTER
-	jp .para_shooter
+	jp z, .para_shooter
 	cp ENEMY_BLACK_SPIKE
-	jp .black_spike 
+	jp z, .black_spike 
 	cp ENEMY_ZIG_BIRDY
-	jp .zig_birdy
+	jp z, .zig_birdy
 	
 	
 	; Unknown enemy type... that's a problem
@@ -576,18 +592,23 @@ Enemy_Update::
 
 	; This .generic label is actually a proc, so use call, not jp 
 	; returns a = 1 if enemy is still alive, 0 if enemy was killed 
-	; input: [EnemyPatternIndex] = pattern index 
-	; input: [FlipOBJs]			 = flip on x axis?
+	; input: [EnemySpritePattern] = pattern index 
+	; input: [EnemyFlip]			 = flip on x axis?
 .generic 
 	; check if overlapping the player 
-	inc hl 		; hl now pointing at enemy rect 
+	ld a, [EnemyStruct]
+	ld h, a 
+	ld a, [EnemyStruct+1]
+	ld l, a 
+	inc hl 
+	inc hl 
 	push hl 	; save this pointer to enemy rect 
 	ld de, PlayerRect 
 	call RectOverlapsRect_Fixed
 	pop hl 		; restore enemy rect pointer 
 	
 	cp 0
-	jp z, .generic_update_objs
+	jp z, .generic_check_recall
 	
 	; enemy overlaps player. If a spike, instantly injure player 
 	ld a, [EnemyType]
@@ -612,9 +633,9 @@ Enemy_Update::
 	srl a 				; shift right to divide by 2 
 	add a, c 			; a = enemy_y + enemy_height/2
 	
-	; if the enemy pos is higher than the player pos, damage the player 
+	; if the enemy pos is higher (lower y val) than the player pos, damage the player 
 	cp b 
-	jp nc, .damage_player
+	jp c, .damage_player
 	
 	; Well, the player was higher than enemy, so now we need to kill this enemy :(
 	ld a, [EnemyStruct]
@@ -630,8 +651,45 @@ Enemy_Update::
 	
 .damage_player
 	; call Player_Damage 
-	jp .generic_update_objs
+	jp .generic_check_recall
 
+
+.generic_check_recall 
+	; Check if the enemy is outside of the screen rect. If so, recall the enemy
+	; Recall meaning, nullify enemy but do not purge from enemy list. So if the enemy
+	; should be loaded in again, it will because the player has not killed it.
+	ld a, [EnemyStruct]
+	ld h, a 
+	ld a, [EnemyStruct + 1]
+	ld l, a 
+	inc hl
+	inc hl 			; hl pointing at enemy rect 
+	ld a, [hl+]		; get x coord
+	cp RECALL_RANGE_MIN
+	jp c, .generic_check_recall_y		; less than min
+	cp RECALL_RANGE_MAX 
+	jp nc, .generic_check_recall_y		; more than max
+	jp .generic_recall 
+	
+.generic_check_recall_y
+	inc hl 
+	ld a, [hl]
+	cp RECALL_RANGE_MIN
+	jp c, .generic_update_objs		; less than min
+	cp RECALL_RANGE_MAX 
+	jp nc, .generic_update_objs		; more than max
+	jp .generic_recall 
+	
+.generic_recall 
+	ld a, [EnemyStruct]
+	ld h, a 
+	ld a, [EnemyStruct+1]
+	ld l, a 
+	ld a, [OBJOffset]
+	ld b, a 
+	call Enemy_Recall
+	ld a, 0 
+	ret 
 
 .generic_update_objs
 	ld a, [EnemyStruct]
@@ -639,16 +697,17 @@ Enemy_Update::
 	ld a, [EnemyStruct+1]
 	ld l, a 
 	inc hl 
-	inc hl 		
-	push hl 	; param 
-	ld hl, LocalOAM
+	inc hl 		; hl points at enemy rect 
+	ld a, [EnemySpritePattern]
+	ld b, a 
 	ld a, [OBJOffset]
 	ld c, a 
-	ld b, 0 
-	add hl, bc 
-	push hl 	;
-	
-	
+	ld a, [EnemyRectOffsetX]
+	ld d, a 
+	ld a, [EnemyRectOffsetY]
+	ld e, a 
+	ld a, [EnemyFlip]
+	call UpdateOAMFromRect_2x2
 	
 	ld a, 1 
 	ret 
@@ -662,6 +721,8 @@ Enemy_Update::
 	ld l, a 
 	
 	; Get x pos 
+	inc hl 
+	inc hl 
 	ld a, [hl+]
 	ld [EnemyX], a
 	ld a, [hl+]
@@ -669,7 +730,7 @@ Enemy_Update::
 	
 	; Get Scratch 
 	ld a, l 
-	add a, 6 
+	add a, 4 
 	ld l, a 
 	ld a, h 
 	adc a, 0 
@@ -687,7 +748,7 @@ Enemy_Update::
 	ld [hl], a 					; inc anim counter 
 	ld a, [EnemyScratch+2]		; get cur dir 
 	cp 0 
-	jp .slime_move_left 
+	jp z, .slime_move_left 
 	ld de, SLIME_MOVE_SPEED
 	jp .slime_move 
 .slime_move_left
@@ -708,11 +769,19 @@ Enemy_Update::
 	ld a, [BGFocusPixelsX]
 	ld c, a 
 	ld a, b 
-	sub c 			; subtract scroll offset 
+	add a, c 			; add scroll offset to get correct tile 
+	cp RECALL_RANGE_MAX
+	jp nc, .slime_shift_arith
 	srl a 
 	srl a 
 	srl a 
-	add a, 32 		; use tile bias 
+	jp .slime_add_bias
+.slime_shift_arith
+	sra a 
+	sra a 
+	sra a 
+.slime_add_bias
+	add a, 32 		; use tile bias for positive compare 
 	ld b, a 			; b = cur tile 
 	
 	; check left boundary 
@@ -732,6 +801,7 @@ Enemy_Update::
 	add a, 32 
 	cp b 
 	jp c, .slime_set_dir_left
+	jp .slime_finish 
 	
 .slime_set_dir_right
 	ld a, 1 
@@ -742,14 +812,35 @@ Enemy_Update::
 	ld [EnemyScratch+2], a 
 	
 .slime_finish
+	; save updated position
+	ld a, [EnemyStruct]
+	ld h, a 
+	ld a, [EnemyStruct+1]
+	ld l, a 
+	inc hl 
+	inc hl 
+	ld a, [EnemyX]
+	ld [hl+], a 
+	ld a, [EnemyX+1]
+	ld [hl+], a 
+	ld bc, 6 
+	add hl, bc 
+	ld a, [EnemyScratch+2]
+	ld [hl], a 
+	ld [EnemyFlip], a 
+	
 	ld a, [EnemyScratch+3]		; get anim counter 
 	and $04 
 	ld b, a 
 	ld a, ENEMY_TILE_SLIME 
 	add a, b
-	ld c, a 
-    
+	ld [EnemySpritePattern], a 
+	ld a, SLIME_X_OFFSET
+	ld [EnemyRectOffsetX],a 
+	ld a, SLIME_Y_OFFSET
+	ld [EnemyRectOffsetY], a 
 	call .generic
+	
 	jp .return 
 
 
@@ -772,6 +863,43 @@ Enemy_Kill::
 	ret 
 	
 	
+; hl = enemy struct 
+; b = obj index 
 Enemy_Recall::
-
+	; This will remove an enemy from Enemies array of structures 
+	ld a, ENEMY_NONE 
+	ld [hl+], a 			; clear the enemy type  
+	ld a, 0 
+	ld [hl], a 				; clear the enemy identifier
+	
+	; Reset objs 
+	sla b 
+	sla b 			; mult obj offset by 4 to get offset in bytes of LocalOAM
+	ld c, b 
+	ld b, 0 
+	ld hl, LocalOAM
+	add hl, bc 
+	
+	ld a, 0				; 0 will disable sprite  
+	; disable obj0 
+	ld [hl+], a 
+	ld [hl+], a 
+	inc hl
+	inc hl 
+	; disable obj1 
+	ld [hl+], a 
+	ld [hl+], a 
+	inc hl
+	inc hl 
+	; disable obj2 
+	ld [hl+], a 
+	ld [hl+], a 
+	inc hl
+	inc hl
+	; disable obj3 
+	ld [hl+], a 
+	ld [hl+], a 
+	inc hl
+	inc hl 
+	
 	ret 

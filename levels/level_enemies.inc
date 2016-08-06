@@ -1,0 +1,10 @@
+IF !DEF(LEVEL_ENEMIES_INC)
+LEVEL_ENEMIES_INC SET 1 
+
+GLOBAL Level0Enemies
+GLOBAL Level1Enemies
+GLOBAL Level2Enemies
+GLOBAL Level3Enemies
+
+
+ENDC 

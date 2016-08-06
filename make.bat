@@ -22,6 +22,7 @@ rgbasm -oobj/bg_tiles_0.obj tiles/bg_tiles_0.asm
 rgbasm -oobj/player_sprite_tiles.obj tiles/player_sprite_tiles.asm
 
 rgbasm -oobj/level_items.obj levels/level_items.asm
+rgbasm -oobj/level_enemies.obj levels/level_enemies.asm
 rgbasm -oobj/level0.obj levels/level0.asm
 rgbasm -oobj/level1.obj levels/level1.asm
 rgbasm -oobj/level2.obj levels/level2.asm

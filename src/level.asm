@@ -3,9 +3,11 @@ INCLUDE "include/player.inc"
 INCLUDE "include/constants.inc"
 INCLUDE "include/globals.inc"
 INCLUDE "include/item.inc"
+INCLUDE "include/enemy.inc"
 
 ; Level includes 
 INCLUDE "levels/level_items.inc"
+INCLUDE "levels/level_enemies.inc"
 INCLUDE "levels/level0.inc"
 INCLUDE "levels/level1.inc"
 INCLUDE "levels/level2.inc"
@@ -135,6 +137,8 @@ Level_Load::
 
 	call Level_Reset 
 	call Reset_Items
+	call ResetEnemies
+	call ResetEnemyList
 	
 	; Load special tiles 
 	ld bc, TILE_BANK_1 + 16*SPECIAL_TILES_INDEX
@@ -195,6 +199,9 @@ Level_Load::
 	ld hl, Level0Items
 	call Load_Items
 	
+	ld hl, Level0Enemies
+	call LoadEnemyList
+	
 	ld b, Level0SpawnX
 	ld c, Level0SpawnY 
 	call Player_SetPosition
@@ -220,6 +227,9 @@ Level_Load::
 	
 	ld hl, Level1Items
 	call Load_Items
+	
+	ld hl, Level1Enemies
+	call LoadEnemyList
 	
 	ld b, Level1SpawnX
 	ld c, Level1SpawnY 
@@ -247,6 +257,9 @@ Level_Load::
 	ld hl, Level2Items
 	call Load_Items
 	
+	ld hl, Level2Enemies
+	call LoadEnemyList
+	
 	ld b, Level2SpawnX
 	ld c, Level2SpawnY 
 	call Player_SetPosition
@@ -272,6 +285,9 @@ Level_Load::
 	
 	ld hl, Level3Items
 	call Load_Items
+	
+	ld hl, Level3Enemies
+	call LoadEnemyList
 	
 	ld b, Level3SpawnX
 	ld c, Level3SpawnY 
@@ -884,6 +900,7 @@ _Level_Scroll::
 	; d = xshift 
 	; e = yshift
 	call Scroll_Items
+	call ScrollEnemies
 	
 	ret 
 	
