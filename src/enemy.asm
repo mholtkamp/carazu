@@ -858,8 +858,28 @@ Enemy_Update::
 .return 
 	ret 
 	
+; hl = enemy struct 
+; b = obj index 
 Enemy_Kill::
-
+	inc hl
+	ld a, [hl]
+	dec hl 
+	push hl 		; save enemy struct 
+	ld hl, EnemyList 
+	ld d, a 
+	ld a, MAX_ENEMY_LIST_ENTRIES
+	sub d 
+	sla a 
+	sla a 
+	sla a 		; mult by 8 to get offset into EnemyList array 
+	ld e, a 
+	ld d, 0 
+	add hl, de 
+	ld a, ENEMY_NONE 
+	ld [hl], a 	; clear the enemy entry 
+	pop hl 			; restore enemy struct 
+	call Enemy_Recall  	; to remove enemy from Enemies array and to hide sprites 
+	call Player_Bounce
 	ret 
 	
 	

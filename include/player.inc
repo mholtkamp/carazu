@@ -29,4 +29,9 @@ GLOBAL Player_SetPosition
 ; Player_LoadGraphics
 GLOBAL Player_LoadGraphics 
 
+; Player_Bounce
+; No params 
+; No returns 
+GLOBAl Player_Bounce 
+
 ENDC

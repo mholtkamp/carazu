@@ -30,6 +30,7 @@ PLAYER_ANIM_WALK1_PATTERN EQU 4
 JUMP_PRESS_WINDOW EQU 5 
 SPRING_UP_SPEED EQU $0 - $0500 
 PLAYER_SPRUNG_UP EQU 1
+PLAYER_BOUNCE_SPEED EQU $0 - $0280
 
 	SECTION "PlayerData", BSS 
 
@@ -476,5 +477,20 @@ Player_LoadGraphics::
 	ld e, 0 			; player sprite tiles start from index 0
 	ld hl, PlayerSpriteTiles 
 	call LoadTiles 
+	
+	ret 
+	
+Player_Bounce::
+
+	; Launch player slightly into air. This proc should be called 
+	; when the player jumps on an enemy.
+	ld a, 0 
+	ld [PlayerGrounded], a 
+	ld a, (PLAYER_BOUNCE_SPEED & $ff00) >> 8 
+	ld [fYVelocity], a 
+	ld a, (PLAYER_BOUNCE_SPEED & $00ff)
+	ld [fYVelocity + 1], a 
+	
+	; TODO: Determine whether to reset the fermata charge here.
 	
 	ret 
