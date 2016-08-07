@@ -1308,25 +1308,25 @@ _Level_SetMapStream::
 _Level_CalcScreenRect::
 
 	ld a, [MapOriginX]
-	sub 1 
+	sub 2 
 	jp nc, .save_screen_x
 	ld a, 0 
 .save_screen_x
 	ld [ScreenRect], a 
 	
 	ld a, [MapOriginY]
-	sub 1
+	sub 2
 	jp nc, .save_screen_y
 	ld a, 0 
 .save_screen_y
 	ld [ScreenRect+1], a 
 	
 .save_width 
-	ld a, 22 
+	ld a, 24 
 	ld [ScreenRect + 2], a 	; this should never overflow since levels can only be 128 tiles wide
 	
 .save_height 
-	ld a, 22 
+	ld a, 24 
 	ld [ScreenRect + 3], a 	; this should also never overflow when added to y val for same reason ^ 
 
 	ret 

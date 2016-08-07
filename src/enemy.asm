@@ -11,7 +11,7 @@ SLIME_X_OFFSET EQU 2
 SLIME_Y_OFFSET EQU 4
 SLIME_WIDTH EQU 12 
 SLIME_HEIGHT EQU 12
-SLIME_MOVE_SPEED EQU $0100
+SLIME_MOVE_SPEED EQU $00C0
 
 RECALL_RANGE_MIN EQU  192 
 RECALL_RANGE_MAX EQU  224 
@@ -361,18 +361,56 @@ UpdateEnemies::
 	
 	ld a, [hl+]
 	ld [EnemyTileRect], a 		; tile x 
+	ld d, a 					; d = enemy x tile 
 	ld a, [hl+]
 	ld [EnemyTileRect+1], a 	; tile y 
-	ld hl, EnemyTileRect
-	ld de, ScreenRect
-	push bc 
-	call RectOverlapsRect_Int
-	pop bc 
+	ld e, a 					; e = enemy y tile 
 	pop hl 
 	
-	cp 1 
-	jp nz, .continue		; no rect overlap so do not attempt spawning  
+	ld a, [ScreenRect]
+	cp d 
+	jp z, .check_y_bounds 
+	add a, 21 					; screen rect width = 22 
+	cp d 
+	jp z, .check_y_bounds 
+	ld a, [ScreenRect+1]
+	cp e
+	jp z, .check_x_bounds 
+	add a, 21 					; screen rect height = 22 
+	cp e 
+	jp z, .check_x_bounds 
+
+	jp .continue 		; not on the edge of the screen rect 
+
+.check_y_bounds 
+	ld a, [ScreenRect+1]
+	add a, 23 
+	cp e 
+	jp c, .continue 
 	
+	sub 23 		; restore screenrect.y and set back 1 more tile 
+	ld d, a 	; d not being used anymore (tile x)
+	dec e		;push y coord downward one when checking upper edge of screen rect (because enemies are 2 by 2 tiles)
+	ld a, e 
+	cp d 
+	jp c, .continue 
+	jp .spawn 
+	
+.check_x_bounds 
+	ld a, [ScreenRect]
+	add a, 23 
+	cp d 
+	jp c, .continue 
+	
+	sub 23 		
+	ld e, a 	
+	dec d		
+	ld a, d 
+	cp e 
+	jp c, .continue 
+	;jp .spawn 
+	
+.spawn 
 	push hl 
 	push bc
 	call Enemy_Spawn
