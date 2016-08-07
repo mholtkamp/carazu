@@ -857,7 +857,9 @@ Enemy_Update::
 	ld [EnemyFlip], a 
 	
 	ld a, [EnemyScratch+3]		; get anim counter 
-	and $04 
+	and $10 
+	srl a 
+	srl a 
 	ld b, a 
 	ld a, ENEMY_TILE_SLIME 
 	add a, b
