@@ -31,6 +31,8 @@ JUMP_PRESS_WINDOW EQU 5
 SPRING_UP_SPEED EQU $0 - $0500 
 PLAYER_SPRUNG_UP EQU 1
 PLAYER_BOUNCE_SPEED EQU $0 - $0280
+PLAYER_DAMAGE_COUNTER_MAX EQU 60
+PLAYER_DAMAGE_XVEL EQU $0240
 
 	SECTION "PlayerData", BSS 
 
@@ -63,6 +65,11 @@ DS 1
 PlayerPrevYLow:
 DS 1 
 
+PlayerDamaged:
+DS 1 
+
+PlayerDamagedCounter:
+DS 1 
 
 	SECTION "PlayerCode", HOME 
 
@@ -105,7 +112,8 @@ Player_Initialize::
 	ld a, 0
 	ld [PlayerSprung], a 
 	ld [PlayerPrevYLow], a 
-	
+	ld [PlayerDamaged], a 
+	ld [PlayerDamagedCounter], a 
 	ret 
 	
 
@@ -116,6 +124,21 @@ Player_Update::
 	add a, PLAYER_HEIGHT - 1 
 	ld [PlayerPrevYLow], a 
 	
+	; if damaged, handle accordingly 
+	ld a, [PlayerDamaged]
+	cp 1 
+	jp nz, .prepare_move
+	
+	ld a, [PlayerDamagedCounter]
+	dec a
+	ld [PlayerDamagedCounter], a 
+	jp nz, .damage_flicker
+	ld a, 0 
+	ld [PlayerDamaged], a 
+	
+.damage_flicker
+	
+.prepare_move 
 	; prepare params for MoveRect_Integer function 
 	ld bc, $0000 
 	ld de, $0000  
@@ -470,6 +493,32 @@ Player_UpdateLocalOAM::
 	ld e, 4 					; rect y offset  = 4 
 	ld a, [PlayerFlipX]
 	call UpdateOAMFromRect_2x2
+	
+	ld a, [PlayerDamaged]
+	cp 1 
+	jp nz, .return 
+	ld a, [PlayerDamagedCounter]
+	bit 3, a 
+	jp nz, .return 
+	ld hl, LocalOAM + PLAYER_OBJ_INDEX*4
+	ld a, 0 
+	ld [hl+], a 		; disable player sprites 
+	ld [hl+], a 
+	inc hl 
+	inc hl 
+	ld [hl+], a 
+	ld [hl+], a 
+	inc hl 
+	inc hl 
+	ld [hl+], a 
+	ld [hl+], a 
+	inc hl 
+	inc hl 
+	ld [hl+], a 
+	ld [hl+], a 
+	inc hl 
+	inc hl 
+.return 
 	ret 
 	
 Player_SetPosition::
@@ -502,4 +551,42 @@ Player_Bounce::
 	
 	; TODO: Determine whether to reset the fermata charge here.
 	
+	ret 
+	
+Player_Damage::
+
+	ld b, a 	; store contact x coordinate 
+	
+	; Do nothing if player is already damaged 
+	ld a, [PlayerDamaged]
+	cp 1 
+	jp z, .return 
+	
+	ld a, 1 
+	ld [PlayerDamaged], a 			; set damaged flag for correct logic in player-update 
+	ld a, PLAYER_DAMAGE_COUNTER_MAX
+	ld [PlayerDamagedCounter], a 
+	ld a, [PlayerHearts]
+	dec a 
+	ld [PlayerHearts], a 
+	
+	; Now set the players x velocity based on contact 
+	ld a, [PlayerRect]
+	add a, PLAYER_WIDTH/2 
+	cp b 
+	jp c, .push_left 
+	
+.push_right
+	ld a, (PLAYER_DAMAGE_XVEL & $ff00) >> 8 
+	ld [fXVelocity], a 
+	ld a, (PLAYER_DAMAGE_XVEL & $00ff)
+	ld [fXVelocity+1], a
+	jp .return 
+.push_left 
+	ld a, ((0 - PLAYER_DAMAGE_XVEL) & $ff00) >> 8 
+	ld [fXVelocity], a 
+	ld a, ((0 - PLAYER_DAMAGE_XVEL) & $00ff)
+	ld [fXVelocity+1], a
+	; jp .return 
+.return 
 	ret 

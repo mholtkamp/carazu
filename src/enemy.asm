@@ -715,7 +715,21 @@ Enemy_Update::
 	
 	
 .damage_player
-	; call Player_Damage 
+	ld a, [EnemyStruct]
+	ld h, a 
+	ld a, [EnemyStruct+1]
+	ld l, a 
+	inc hl 
+	inc hl 
+	ld a, [hl+]				
+	ld b, a 
+	inc hl 
+	inc hl 
+	inc hl 		; hl pointing at width 
+	ld a, [hl]
+	srl a 		; divide width by 2 
+	add a, b 	; a = x coord of contact 
+	call Player_Damage 
 	jp .generic_check_recall
 
 

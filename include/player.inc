@@ -33,6 +33,10 @@ GLOBAL Player_LoadGraphics
 ; Player_Bounce
 ; No params 
 ; No returns 
-GLOBAl Player_Bounce 
+GLOBAL Player_Bounce 
+
+; Player_Damage 
+; Param a = contact x-coord 
+GLOBAL Player_Damage
 
 ENDC
