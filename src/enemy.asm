@@ -849,19 +849,33 @@ Enemy_Update::
 	ld c, a 
 	ld a, b 
 	add a, c 			; add scroll offset to get correct tile 
+	ld b, a 
+	add a, SLIME_WIDTH - 1 
+	ld d, a 
+	
 	cp RECALL_RANGE_MAX
 	jp nc, .slime_shift_arith
-	srl a 
-	srl a 
-	srl a 
+	srl b 
+	srl b 
+	srl b
+	srl d 
+	srl d 
+	srl d 
 	jp .slime_add_bias
 .slime_shift_arith
-	sra a 
-	sra a 
-	sra a 
+	sra b 
+	sra b 
+	sra b 
+	sra d 
+	sra d 
+	sra d 
 .slime_add_bias
-	add a, 32 		; use tile bias for positive compare 
-	ld b, a 			; b = cur tile 
+	ld a, 32 		; use tile bias for positive compare 
+	add a, b 			; b = cur tile 
+	ld b, a 
+	ld a, 32 
+	add a, d 
+	ld d, a 
 	
 	; check left boundary 
 	ld a, [MapOriginX]
@@ -876,9 +890,9 @@ Enemy_Update::
 	; check right boundary 
 	ld a, [EnemyScratch+1]
 	sub c 
-	sub 1 
+	inc a 
 	add a, 32 
-	cp b 
+	cp d 
 	jp c, .slime_set_dir_left
 	jp .slime_finish 
 	
