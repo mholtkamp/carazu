@@ -132,11 +132,9 @@ Player_Update::
 	ld a, [PlayerDamagedCounter]
 	dec a
 	ld [PlayerDamagedCounter], a 
-	jp nz, .damage_flicker
+	jp nz, .prepare_move
 	ld a, 0 
 	ld [PlayerDamaged], a 
-	
-.damage_flicker
 	
 .prepare_move 
 	; prepare params for MoveRect_Integer function 
@@ -171,6 +169,19 @@ Player_Update::
 	ld h, a 
 	ld a, [fXVelocity + 1]
 	ld l, a 
+	bit 7, h 
+	jp z, .check_left_add_input_vel
+	
+	;if xvel is less than PLAYER_MIN_HORI_SPEED, don't do anything!
+	ld a, h 
+	cp (PLAYER_MIN_HORI_SPEED & $ff00) >> 8  
+	jp c, .apply_drag 		; higher byte is already above max. do nothing 
+	jp nz, .check_left_add_input_vel 
+	ld a, l
+	cp (PLAYER_MIN_HORI_SPEED & $00ff) 
+	jp c, .apply_drag 		; lower byte is above max low byte and high bytes are equal. do nothing 
+	
+.check_left_add_input_vel
 	ld bc, $0 - PLAYER_HORI_ACCEL
 	add hl, bc 		; subtract hori accel
 	ld b, h 
@@ -191,6 +202,19 @@ Player_Update::
 	ld h, a 
 	ld a, [fXVelocity + 1]
 	ld l, a 
+	bit 7, h 
+	jp nz, .check_right_add_input_vel	
+	
+	;if xvel is greater than MAX_HORI_SPEED, don't do anything!
+	ld a, (PLAYER_MAX_HORI_SPEED & $ff00) >> 8 
+	cp h 
+	jp c, .apply_drag 		; higher byte is already above max. do nothing 
+	jp nz, .check_right_add_input_vel 
+	ld a, (PLAYER_MAX_HORI_SPEED & $00ff)
+	cp l 
+	jp c, .apply_drag 		; lower byte is above max low byte and high bytes are equal. do nothing 
+	
+.check_right_add_input_vel
 	ld bc, PLAYER_HORI_ACCEL
 	add hl, bc 		; bc = new hori speed 
 	ld b, h 
@@ -339,36 +363,6 @@ Player_Update::
 	ld [PlayerSpritePattern], a 		; set anim pattern walk1 
 
 .clamp_velocity
-	ld a, b 
-	and $80 
-	jp nz, .clamp_hori_neg
-	ld a, b 
-	cp (PLAYER_MAX_HORI_SPEED >> 8)
-	jp c, .clamp_vert 	; nothing to clamp, check vert speed 
-	ld a, c 
-	cp (PLAYER_MAX_HORI_SPEED & $00ff)
-	jp c, .clamp_vert
-	ld bc, PLAYER_MAX_HORI_SPEED
-	ld a, b 
-	ld [fXVelocity], a 
-	ld a, c 
-	ld [fXVelocity + 1], a 	  ; save clamped xvel 
-	jp .clamp_vert
-.clamp_hori_neg
-	ld a, (PLAYER_MIN_HORI_SPEED >> 8) 
-	cp b
-	jp c, .clamp_vert
-	jp nz, .skip_low_byte_hori
-	ld a, c 
-	cp (PLAYER_MIN_HORI_SPEED & $00ff)
-	jp nc, .clamp_vert
-.skip_low_byte_hori
-	ld bc, PLAYER_MIN_HORI_SPEED
-	ld a, b 
-	ld [fXVelocity], a 
-	ld a, c 
-	ld [fXVelocity + 1], a 	  ; save clamped xvel 
-.clamp_vert
 	ld a, d 
 	and $80 
 	jp nz, .clamp_vert_neg
