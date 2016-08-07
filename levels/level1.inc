@@ -12,8 +12,8 @@ Level1MapOriginY EQU 12
 Level1MapOriginIndex EQU Level1MapOriginY*Level1MapWidth + Level1MapOriginX
 
 ; Player sprite positioning
-Level1SpawnX EQU 40 
-Level1SpawnY EQU 40 
+Level1SpawnX EQU 2 
+Level1SpawnY EQU 28 
 
 GLOBAL Level1Map
 

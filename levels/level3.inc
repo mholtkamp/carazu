@@ -12,8 +12,8 @@ Level3MapOriginY EQU 0
 Level3MapOriginIndex EQU Level3MapOriginY*Level3MapWidth + Level3MapOriginX
 
 ; Player sprite positioning
-Level3SpawnX EQU 90 
-Level3SpawnY EQU 40 
+Level3SpawnX EQU 114 
+Level3SpawnY EQU 8 
 
 GLOBAL Level3Map
 

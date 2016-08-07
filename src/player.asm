@@ -541,11 +541,25 @@ Player_UpdateLocalOAM::
 .return 
 	ret 
 	
-Player_SetPosition::
+Player_SetPositionFromTiles::
+	ld a, [MapOriginX]
+	ld d, a 
 	ld a, b 
+	sub d 
+	sla a 
+	sla a 
+	sla a 
 	ld [PlayerRect], a 
+	
+	ld a, [MapOriginY]
+	ld d, a 
 	ld a, c 
-	ld [PlayerRect + 2], a 
+	sub d 
+	sla a 
+	sla a 
+	sla a 
+	ld [PlayerRect+2], a 
+
 	ret 
 	
 Player_LoadGraphics::

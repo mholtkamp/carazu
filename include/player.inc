@@ -25,7 +25,7 @@ GLOBAL Player_UpdateLocalOAM
 ; Player_SetPosition
 ; b = x 
 ; c = y 
-GLOBAL Player_SetPosition
+GLOBAL Player_SetPositionFromTiles
 
 ; Player_LoadGraphics
 GLOBAL Player_LoadGraphics 

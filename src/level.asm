@@ -204,7 +204,7 @@ Level_Load::
 	
 	ld b, Level0SpawnX
 	ld c, Level0SpawnY 
-	call Player_SetPosition
+	call Player_SetPositionFromTiles
 	jp .return 
 	
 .load_1 
@@ -233,7 +233,7 @@ Level_Load::
 	
 	ld b, Level1SpawnX
 	ld c, Level1SpawnY 
-	call Player_SetPosition
+	call Player_SetPositionFromTiles
 	jp .return 
 	
 .load_2
@@ -262,7 +262,7 @@ Level_Load::
 	
 	ld b, Level2SpawnX
 	ld c, Level2SpawnY 
-	call Player_SetPosition
+	call Player_SetPositionFromTiles
 	jp .return 
 	
 .load_3
@@ -291,7 +291,7 @@ Level_Load::
 	
 	ld b, Level3SpawnX
 	ld c, Level3SpawnY 
-	call Player_SetPosition
+	call Player_SetPositionFromTiles
 	jp .return 
 
 	
