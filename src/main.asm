@@ -503,6 +503,7 @@ SwitchState::
 	jp .return 
 	
 .switch_game
+	call Player_Initialize
 	call Player_LoadGraphics
 	call Load_Item_Graphics
 	call LoadEnemyGraphics

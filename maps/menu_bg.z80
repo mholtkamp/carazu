@@ -1,6 +1,6 @@
-; MENU_BG.INC
+; MENU_BG.Z80
 ;
-; Map Include File.
+; Map Source File.
 ;
 ; Info:
 ;   Section       : MenuBGMap
@@ -18,6 +18,11 @@ MenuBGMapWidth  EQU 12
 MenuBGMapHeight EQU 2
 MenuBGMapBank   EQU 0
 
- GLOBAL MenuBGMap
+ SECTION "MenuBGMap", HOME
 
-; End of MENU_BG.INC
+MenuBGMap::
+DB $00,$02,$04,$06,$08,$0A,$04,$06,$0C,$0E
+DB $10,$12,$01,$03,$05,$07,$09,$0B,$05,$07
+DB $0D,$0F,$11,$13
+
+; End of MENU_BG.Z80
