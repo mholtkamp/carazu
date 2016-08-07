@@ -184,6 +184,19 @@ Player_Update::
 .check_left_add_input_vel
 	ld bc, $0 - PLAYER_HORI_ACCEL
 	add hl, bc 		; subtract hori accel
+	;limit speed 
+	bit 7, h
+	jp z, .check_left_save
+	ld a, h 
+	cp (PLAYER_MIN_HORI_SPEED & $ff00) >> 8 
+	jp c, .check_left_limit
+	jp nz, .check_right_save
+	ld a, l 
+	cp (PLAYER_MIN_HORI_SPEED & $00ff)
+	jp nc, .check_left_save 
+.check_left_limit
+	ld hl, PLAYER_MIN_HORI_SPEED
+.check_left_save
 	ld b, h 
 	ld c, l 		; bc = new hori speed 
 	ld a, b
@@ -217,6 +230,19 @@ Player_Update::
 .check_right_add_input_vel
 	ld bc, PLAYER_HORI_ACCEL
 	add hl, bc 		; bc = new hori speed 
+	;limit speed 
+	bit 7, h
+	jp nz, .check_right_save
+	ld a, (PLAYER_MAX_HORI_SPEED & $ff00) >> 8 
+	cp h 
+	jp c, .check_right_limit
+	jp nz, .check_right_save
+	ld a, (PLAYER_MAX_HORI_SPEED & $00ff)
+	cp l 
+	jp nc, .check_right_save 
+.check_right_limit
+	ld hl, PLAYER_MAX_HORI_SPEED
+.check_right_save
 	ld b, h 
 	ld c, l 		; bc = new hori speed 
 	ld a, b
