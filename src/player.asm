@@ -60,6 +60,9 @@ DS 1
 PlayerSprung:
 DS 1 
 
+PlayerPrevYLow:
+DS 1 
+
 
 	SECTION "PlayerCode", HOME 
 
@@ -101,11 +104,17 @@ Player_Initialize::
 	
 	ld a, 0
 	ld [PlayerSprung], a 
+	ld [PlayerPrevYLow], a 
 	
 	ret 
 	
 
 Player_Update::
+	
+	; save the previous player-y coord for enemy jump detection 
+	ld a, [PlayerRect+2]
+	add a, PLAYER_HEIGHT - 1 
+	ld [PlayerPrevYLow], a 
 	
 	; prepare params for MoveRect_Integer function 
 	ld bc, $0000 

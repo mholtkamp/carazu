@@ -3,6 +3,7 @@ PLAYER_INC SET 1
 
 ; Variables 
 GLOBAL PlayerRect
+GLOBAL PlayerPrevYLow
 
 ; Procedures 
 

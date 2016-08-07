@@ -15,4 +15,6 @@ Level2Enemies:
 	DB ENEMY_NONE
 	
 Level3Enemies:
+	DB ENEMY_SLIME, 20, 26, 20, 60
+	DB ENEMY_SLIME, 64, 11, 64, 98
 	DB ENEMY_NONE

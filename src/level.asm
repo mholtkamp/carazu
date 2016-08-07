@@ -875,7 +875,7 @@ _Level_Scroll::
 	cp CameraAnchorBottom 
 	jp nc, .attempt_bottom 
 	
-.return 
+.return  	; Do not change this .return label. the code BELOW jumps here 
 	; Before returning, update the player rect position in case scroll changed 
 	ld a, [BGScrollX]
 	ld b, a 
@@ -896,12 +896,15 @@ _Level_Scroll::
 	ld a, [PlayerRect + 2]
 	add a, b 
 	ld [PlayerRect + 2], a 
+	ld a, [PlayerPrevYLow]
+	add a, b 
+	ld [PlayerPrevYLow], a 
 	
 	; d = xshift 
 	; e = yshift
 	call Scroll_Items
 	call ScrollEnemies
-	
+
 	ret 
 	
 .attempt_left 

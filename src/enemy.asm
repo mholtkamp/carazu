@@ -649,24 +649,19 @@ Enemy_Update::
 	jp z, .damage_player 
 	
 	; Not a spike, so check the relative y position of the player 
-	ld a, [PlayerRect+2]
-	ld b, a 				
-	ld a, PLAYER_HEIGHT - 1
-	add a, b 
+	ld a, [PlayerPrevYLow]
 	ld b, a 			; b = player bottom y pos 
+	
 	inc hl 
 	inc hl 
 	ld a, [hl+]			; inc hl twice to point at y coord and get it. (hl should have been pointing at enemy struct's rect)
 	ld c, a 
-	inc hl 
-	inc hl 
-	ld a, [hl]			; get height 
-	srl a 				; shift right to divide by 2 
-	add a, c 			; a = enemy_y + enemy_height/2
+	
+	ld a, b 
 	
 	; if the enemy pos is higher (lower y val) than the player pos, damage the player 
-	cp b 
-	jp c, .damage_player
+	cp c 
+	jp nc, .damage_player
 	
 	; Well, the player was higher than enemy, so now we need to kill this enemy :(
 	ld a, [EnemyStruct]
