@@ -37,6 +37,20 @@ ENEMY_ENTRY_DATA_SIZE EQU 8
 ; +17 = yoffset 
 
 
+;===========
+;== BIRDY ==
+;===========
+; +8 = left boundary 			[param0]
+; +9 = right boundary 			[param1]
+; +10 = xvel 		  			[param2]
+; +11 = vertical distance  	 	[param3]
+; +12 = flags 					[param4]
+; +13 = current direction
+; +14 = anim counter 
+; +13 = bullet counter
+; +14 = yoffset 
+
+
 ; Variables 
 GLOBAL Enemies
 GLOBAL EnemyList

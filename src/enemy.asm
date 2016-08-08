@@ -14,6 +14,12 @@ SLIME_HEIGHT EQU 12
 SLIME_MOVE_SPEED EQU $00C0
 SLIME_GRAVITY EQU $0040
 
+BIRDY_X_OFFSET EQU 1
+BIRDY_Y_OFFSET EQU 4
+BIRDY_WIDTH EQU 14
+BIRDY_HEIGHT EQU 10 
+BIRDY_Y_JITTER_SPEED EQU $0010
+
 RECALL_RANGE_MIN EQU  192 
 RECALL_RANGE_MAX EQU  224 
 
@@ -68,11 +74,11 @@ EnemyRectOffsetY:
 DS 1 
 
 SlimeScratch: 
-SlimeLeftBound:
+LeftBound:
 DS 1 
-SlimeRightBound:
+RightBound:
 DS 1 
-SlimeXVel:
+EnemyXVel:
 DS 1 
 SlimeJumpVel:
 DS 1 
@@ -84,6 +90,14 @@ CurDirection:
 DS 1 
 AnimCounter:
 DS 1 
+
+BirdyVerticalDistance:
+DS 1 
+BirdyFlags:
+DS 1 
+BulletCounter:
+DS 1 
+
 
 
 EnemySpritePattern:
@@ -622,10 +636,40 @@ Enemy_Spawn::
 	ld c, SLIME_Y_OFFSET
 	jp .apply_rect_offset 
 	
-	
-
-
 .birdy 
+	ld a, BIRDY_WIDTH
+	ld [de], a 
+	inc de 
+	ld a, BIRDY_HEIGHT 
+	ld [de], a 
+	inc de 
+	ld a, [hl+]
+	ld [de], a 				; save left tile boundary
+	inc de 
+	ld a, [hl+]
+	ld [de], a 				; save right tile boundary 
+	inc de 
+	ld a, [hl+]
+	ld [de], a 				; save the xvel 
+	inc de 		
+	ld a, [hl+]
+	ld [de], a				; save vertical distance  
+	inc de
+	ld a, [hl+]
+	ld [de], a 				; save the options flag 
+	inc de 
+	ld a, 0 
+	ld [de], a 				; init cur direction 
+	inc de 
+	ld [de], a 				; init anim counter 
+	inc de 
+	ld [de], a 				; init bullet counter to 0 
+	inc de 
+	ld [de], a 				; init y offset to 0
+	ld b, BIRDY_X_OFFSET
+	ld c, BIRDY_Y_OFFSET
+	jp .apply_rect_offset
+
 .shooter 
 .spike 
 
@@ -669,6 +713,22 @@ Enemy_Update::
 	
 	ld a, [hl+]
 	ld [EnemyType], a 
+	inc hl 
+	ld a, [hl+]
+	ld [EnemyX], a
+	ld a, [hl+]
+	ld [EnemyX+1], a 
+	ld a, [hl+]
+	ld [EnemyY], a 
+	ld [EnemyPrevY], a 
+	ld a, [hl+]
+	ld [EnemyY+1], a 
+	ld a, [hl+]
+	ld [EnemyWidth], a 
+	ld a, [hl+]
+	ld [EnemyHeight], a 
+	
+	ld a, [EnemyType]
 	cp ENEMY_NONE 
 	jp z, .return 
 	
@@ -818,35 +878,20 @@ Enemy_Update::
 	ret 
 	
 .slime 
-	 
-	; Slimey updates 
-	ld a, [EnemyStruct]
-	ld h, a 
 	ld a, [EnemyStruct+1]
+	add a, 8 
 	ld l, a 
-	
-	; Get x pos 
-	inc hl 
-	inc hl 
-	ld a, [hl+]
-	ld [EnemyX], a
-	ld a, [hl+]
-	ld [EnemyX+1], a 
-	ld a, [hl+]
-	ld [EnemyY], a 
-	ld [EnemyPrevY], a 
-	ld a, [hl+]
-	ld [EnemyY+1], a 
-	inc hl 
-	inc hl 		; pointing at scratch data now 
+	ld a, [EnemyStruct]
+	adc a, 0 
+	ld h, a 			; load enemy struct pointer and offset into scratch region 
 	
 	; Load slime behavior config 
 	ld a, [hl+]
-	ld [SlimeLeftBound], a 		; left tile 
+	ld [LeftBound], a 		; left tile 
 	ld a, [hl+]
-	ld [SlimeRightBound], a 	; right tile 
+	ld [RightBound], a 	; right tile 
 	ld a, [hl+]
-	ld [SlimeXVel], a 			; xvel 
+	ld [EnemyXVel], a 			; xvel 
 	ld a, [hl+]
 	ld [SlimeJumpVel], a 		; jump vel
 	ld a, [hl+]
@@ -865,102 +910,8 @@ Enemy_Update::
 	ld [EnemyYVel+1], a 		; get y vel (fraction)
 	ld a, [hl+]
 	ld [YOffset], a 			; y offset 
-	ld a, [CurDirection]		; get cur dir 
-	cp 0 
-	jp z, .slime_move_left 
-	ld a, [SlimeXVel]
-	ld e, a 
-	ld d, 0 
-	sla e 
-	rl d 
-	sla e 
-	rl d 
-	sla e 
-	rl d 					; speed is offset by 3 shifts 
-	jp .slime_move 
-.slime_move_left
-	ld a, [SlimeXVel]
-	cpl 
-	ld e, a 
-	ld d, $ff 
-	sla e 
-	rl d 
-	sla e 
-	rl d 
-	sla e 
-	rl d 
-	inc de 
-.slime_move 
-	ld a, [EnemyX]
-	ld h, a 
-	ld a, [EnemyX+1]
-	ld l, a 
-	add hl, de 			; get new slime position 
-	ld a, l
-	ld [EnemyX+1], a 	
-	ld a, h 
-	ld [EnemyX], a 		; store new x pos 
-	
-	; Check if tile is past left bounds or right bounds 
-	ld b, a 
-	ld a, [BGFocusPixelsX]
-	ld c, a 
-	ld a, b 
-	add a, c 			; add scroll offset to get correct tile 
-	ld b, a 
-	add a, SLIME_WIDTH - 1 
-	ld d, a 
-	
-	cp RECALL_RANGE_MAX
-	jp nc, .slime_shift_arith
-	srl b 
-	srl b 
-	srl b
-	srl d 
-	srl d 
-	srl d 
-	jp .slime_add_bias
-.slime_shift_arith
-	sra b 
-	sra b 
-	sra b 
-	sra d 
-	sra d 
-	sra d 
-.slime_add_bias
-	ld a, 32 		; use tile bias for positive compare 
-	add a, b 			; b = cur tile 
-	ld b, a 
-	ld a, 32 
-	add a, d 
-	ld d, a 
-	
-	; check left boundary 
-	ld a, [MapOriginX]
-	ld c, a 
-	ld a, [SlimeLeftBound]
-	sub c 					; a = relative left 
-	sub 1 					; move boundary one tile over when going left
-	add a, 32 				; bias by 32 for positive compare 
-	cp b
-	jp nc, .slime_set_dir_right
-	
-	; check right boundary 
-	ld a, [SlimeRightBound]
-	sub c 
-	inc a 
-	add a, 32 
-	cp d 
-	jp c, .slime_set_dir_left
-	jp .slime_jump 
-	
-.slime_set_dir_right
-	ld a, 1 
-	ld [CurDirection], a 
-	jp .slime_jump
-.slime_set_dir_left 
-	ld a, 0 
-	ld [CurDirection], a 
+
+	call Enemy_MoveWithBounds
 	
 .slime_jump
 	ld a, [SlimeFlags]
@@ -1060,6 +1011,79 @@ Enemy_Update::
 
 
 .birdy 
+	ld a, [EnemyStruct+1]
+	add a, 8 
+	ld l, a 
+	ld a, [EnemyStruct]
+	adc a, 0 
+	ld h, a 			; load enemy struct pointer and offset into scratch region 
+	
+	; Load birdy behavior config 
+	ld a, [hl+]
+	ld [LeftBound], a 
+	ld a, [hl+]
+	ld [RightBound], a 
+	ld a, [hl+]
+	ld [EnemyXVel], a 
+	ld a, [hl+]
+	ld [BirdyVerticalDistance], a 
+	ld a, [hl+]
+	ld [BirdyFlags], a
+
+	; Load birdy variables 
+	ld a, [hl+]
+	ld [CurDirection], a 
+	ld a, [hl]
+	ld [AnimCounter], a 
+	inc a 
+	ld [hl+], a 
+	ld a, [hl+]
+	ld [BulletCounter], a 
+	ld a, [hl+]
+	ld [YOffset], a 
+	
+	call Enemy_MoveWithBounds
+	
+.birdy_finish 
+	ld a, [EnemyStruct]
+	ld h, a 
+	ld a, [EnemyStruct+1]
+	ld l, a 
+	inc hl 
+	inc hl 
+	ld a, [EnemyX]
+	ld [hl+], a 
+	ld a, [EnemyX+1]
+	ld [hl+], a 
+	ld a, [EnemyY]
+	ld [hl+], a 
+	ld a, [EnemyY+1]
+	ld [hl+], a 
+	ld bc, 7 
+	add hl, bc 
+	ld a, [CurDirection]
+	ld [hl+], a 
+	ld [EnemyFlip], a 
+	inc hl 
+	ld a, [BulletCounter]
+	ld [hl+], a 
+	ld a, [YOffset]
+	ld [hl+], a 
+	
+	ld a, [AnimCounter]		; get anim counter 
+	and $10 
+	srl a 
+	srl a 
+	ld b, a 
+	ld a, ENEMY_TILE_BIRDY
+	add a, b
+	ld [EnemySpritePattern], a 
+	ld a, BIRDY_X_OFFSET
+	ld [EnemyRectOffsetX],a 
+	ld a, BIRDY_Y_OFFSET
+	ld [EnemyRectOffsetY], a 
+	call .generic
+	jp .return 
 .shooter 
 .spike 
 	
@@ -1222,3 +1246,107 @@ UpdateStars::
 	ld [hl+], a 
 	ret 
 	
+	
+Enemy_MoveWithBounds
+
+	ld a, [CurDirection]		; get cur dir 
+	cp 0 
+	jp z, .move_left 
+	ld a, [EnemyXVel]
+	ld e, a 
+	ld d, 0 
+	sla e 
+	rl d 
+	sla e 
+	rl d 
+	sla e 
+	rl d 					; speed is offset by 3 shifts 
+	jp .move 
+.move_left
+	ld a, [EnemyXVel]
+	cpl 
+	ld e, a 
+	ld d, $ff 
+	sla e 
+	rl d 
+	sla e 
+	rl d 
+	sla e 
+	rl d 
+	inc de 
+.move 
+	ld a, [EnemyX]
+	ld h, a 
+	ld a, [EnemyX+1]
+	ld l, a 
+	add hl, de 			; get new enemy position 
+	ld a, l
+	ld [EnemyX+1], a 	
+	ld a, h 
+	ld [EnemyX], a 		; store new x pos 
+	
+	; Check if tile is past left bounds or right bounds 
+	ld b, a 
+	ld a, [BGFocusPixelsX]
+	ld c, a 
+	ld a, b 
+	add a, c 			; add scroll offset to get correct tile 
+	ld b, a 
+	ld a, [EnemyWidth]
+	dec a 
+	ld c, a 
+	ld a, b 
+	add a, c 
+	ld d, a 
+	
+	cp RECALL_RANGE_MAX
+	jp nc, .shift_arith
+	srl b 
+	srl b 
+	srl b
+	srl d 
+	srl d 
+	srl d 
+	jp .add_bias
+.shift_arith
+	sra b 
+	sra b 
+	sra b 
+	sra d 
+	sra d 
+	sra d 
+.add_bias
+	ld a, 32 		; use tile bias for positive compare 
+	add a, b 			; b = cur tile 
+	ld b, a 
+	ld a, 32 
+	add a, d 
+	ld d, a 
+	
+	; check left boundary 
+	ld a, [MapOriginX]
+	ld c, a 
+	ld a, [LeftBound]
+	sub c 					; a = relative left 
+	sub 1 					; move boundary one tile over when going left
+	add a, 32 				; bias by 32 for positive compare 
+	cp b
+	jp nc, .set_dir_right
+	
+	; check right boundary 
+	ld a, [RightBound]
+	sub c 
+	inc a 
+	add a, 32 
+	cp d 
+	jp c, .set_dir_left
+	ret
+	
+.set_dir_right
+	ld a, 1 
+	ld [CurDirection], a 
+	ret
+.set_dir_left 
+	ld a, 0 
+	ld [CurDirection], a 
+	ret 
