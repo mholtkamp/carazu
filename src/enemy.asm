@@ -12,6 +12,7 @@ SLIME_Y_OFFSET EQU 4
 SLIME_WIDTH EQU 12 
 SLIME_HEIGHT EQU 12
 SLIME_MOVE_SPEED EQU $00C0
+SLIME_GRAVITY EQU $0040
 
 RECALL_RANGE_MIN EQU  192 
 RECALL_RANGE_MAX EQU  224 
@@ -55,6 +56,11 @@ EnemyWidth:
 DS 1
 EnemyHeight: 
 DS 1 
+EnemyPrevY:
+DS 1 
+
+EnemyYVel:
+DS 2 
 
 EnemyRectOffsetX:
 DS 1 
@@ -68,7 +74,12 @@ SlimeRightBound:
 DS 1 
 SlimeXVel:
 DS 1 
-
+SlimeJumpVel:
+DS 1 
+SlimeFlags:
+DS 1 
+YOffset:
+DS 1 
 CurDirection:
 DS 1 
 AnimCounter:
@@ -195,16 +206,6 @@ LoadEnemyList::
 	jp z, .load_shooter 
 	cp ENEMY_SPIKE 
 	jp z, .load_spike
-	cp ENEMY_JUMP_SLIME
-	jp z, .load_jump_slime
-	cp ENEMY_BOMB_BIRDY
-	jp z, .load_bomb_birdy 
-	cp ENEMY_PARA_SHOOTER
-	jp z, .load_para_shooter 
-	cp ENEMY_BLACK_SPIKE
-	jp z, .load_black_spike
-	cp ENEMY_ZIG_BIRDY
-	jp z, .load_zig_birdy 
 	
 	; Unknown enemy type encountered. Possibly because of mismatch between 
 	; the number of params in list and the expected number of params 
@@ -226,39 +227,59 @@ LoadEnemyList::
 	ld a, [hl+]		
 	ld [de], a 		; param2 = xvel 
 	inc de 			
-	inc de 			; param3 = yvel 
-	inc de 			; param4 = option flags 
+	ld a, [hl+]
+	ld [de], a 		; param3 = yvel 
+	inc de 			
+	ld a, [hl+]
+	ld [de], a 		; param4 = option flags 
+	inc de 			
 	jp .loop
 	
 .load_birdy
 	ld a, [hl+]
-	ld [de], a 		; param0 = 0: one-way , 1: two-way 
+	ld [de], a 		; param0 = left boundary 
 	inc de 			
 	ld a, [hl+]
-	ld [de], a 		; param1 = left tile boundary (if two way)
-	inc de 	
-	ld a, [hl+]
-	ld [de], a		; param2 = right tile boundary (if two way) 
+	ld [de], a 		; param1 = right boundary
 	inc de 
-	inc de 			; no param3 
-	inc de 			; no param4 
+	ld a, [hl+]		
+	ld [de], a 		; param2 = xvel 
+	inc de 			
+	ld a, [hl+]
+	ld [de], a 		; param3 = vertical distance 
+	inc de 			
+	ld a, [hl+]
+	ld [de], a 		; param4 = option flags 
+	inc de 			
 	jp .loop 
 	
 .load_shooter
 	ld a, [hl+]
-	ld [de], a 		; param0 = shot direction. refer to shooter equates 
+	ld [de], a 		; param0 = bullet speed 
 	inc de 	
-	inc de 			; no param1
-	inc de			; no param2
+	ld a, [hl+]
+	ld [de], a 		; param1 = bullet fire interval 
+	inc de 	
+	ld a, [hl+]
+	ld [de], a 		; param2 = option flags 
+	inc de
 	inc de 			; no param3
 	inc de 			; no param4 
 	
 .load_spike
-.load_jump_slime
-.load_bomb_birdy
-.load_para_shooter
-.load_black_spike
-.load_zig_birdy
+	ld a, [hl+]
+	ld [de], a 		; param0 = left/top boundary 
+	inc de 	
+	ld a, [hl+]
+	ld [de], a 		; param1 = right/bottom boundary 
+	inc de 	
+	ld a, [hl+]
+	ld [de], a 		; param2 = speed 
+	inc de 	
+	ld a, [hl+]
+	ld [de], a 		; param3 = option flags 
+	inc de 	
+	inc de 			; no param4 
 
 .return 
 	ret 
@@ -563,16 +584,6 @@ Enemy_Spawn::
 	jp z, .shooter 
 	cp ENEMY_SPIKE
 	jp z, .spike 
-	cp ENEMY_JUMP_SLIME
-	jp z, .jump_slime 
-	cp ENEMY_BOMB_BIRDY
-	jp z, .bomb_birdy 
-	cp ENEMY_PARA_SHOOTER
-	jp z, .para_shooter 
-	cp ENEMY_BLACK_SPIKE
-	jp z, .black_spike 
-	cp ENEMY_ZIG_BIRDY 
-	jp z, .zig_birdy 
 	
 .slime 
 	ld a, SLIME_WIDTH
@@ -588,12 +599,25 @@ Enemy_Spawn::
 	ld [de], a 				; save right tile boundary 
 	inc de 
 	ld a, [hl+]
-	ld [de], a 
-	inc de 					; save the xvel 
+	ld [de], a 				; save the xvel 
+	inc de 					
+	ld a, [hl+]
+	ld [de], a 				; save the jump vel  (yvel)
+	inc de 
+	ld a, [hl+]
+	ld [de], a 				; save the option flags 
+	inc de 
 	ld a, 0 
 	ld [de], a 				; save cur direction as 0 (left)
 	inc de 			
 	ld [de], a				; set anim counter to 0  
+	inc de 
+	ld a, 0
+	ld [de], a 				; set y vel (int)
+	inc de 
+	ld [de], a 				; set y vel (fract)
+	inc de 
+	ld [de], a 				; set y offset to 0 
 	ld b, SLIME_X_OFFSET
 	ld c, SLIME_Y_OFFSET
 	jp .apply_rect_offset 
@@ -604,11 +628,6 @@ Enemy_Spawn::
 .birdy 
 .shooter 
 .spike 
-.jump_slime
-.bomb_birdy
-.para_shooter 
-.black_spike
-.zig_birdy
 
 jp .return 
 	
@@ -653,7 +672,7 @@ Enemy_Update::
 	cp ENEMY_NONE 
 	jp z, .return 
 	
-	; would a jump table be faster? Yea probably
+	; would a jump table be faster? With only 4 enemies probably not 
 	cp ENEMY_SLIME
 	jp z, .slime 
 	cp ENEMY_BIRDY
@@ -662,17 +681,6 @@ Enemy_Update::
 	jp z, .shooter 
 	cp ENEMY_SPIKE 
 	jp z, .spike 
-	cp ENEMY_JUMP_SLIME
-	jp z, .jump_slime
-	cp ENEMY_BOMB_BIRDY
-	jp z, .bomb_birdy
-	cp ENEMY_PARA_SHOOTER
-	jp z, .para_shooter
-	cp ENEMY_BLACK_SPIKE
-	jp z, .black_spike 
-	cp ENEMY_ZIG_BIRDY
-	jp z, .zig_birdy
-	
 	
 	; Unknown enemy type... that's a problem
 	jp .return 
@@ -698,20 +706,19 @@ Enemy_Update::
 	cp 0
 	jp z, .generic_check_recall
 	
-	; enemy overlaps player. If a spike, instantly injure player 
+	; enemy overlaps player. If a spike, or shooter instantly damage player 
 	ld a, [EnemyType]
 	cp ENEMY_SPIKE
 	jp z, .damage_player 
-	cp ENEMY_BLACK_SPIKE
+	cp ENEMY_SHOOTER 
 	jp z, .damage_player 
 	
 	; Not a spike, so check the relative y position of the player 
 	ld a, [PlayerPrevYLow]
 	ld b, a 			; b = player bottom y pos 
+	dec b 				; give player a 1 pixel advantage 
 	
-	inc hl 
-	inc hl 
-	ld a, [hl+]			; inc hl twice to point at y coord and get it. (hl should have been pointing at enemy struct's rect)
+	ld a, [EnemyPrevY]		; compare with enemy prev y 
 	ld c, a 
 	
 	ld a, b 
@@ -825,27 +832,39 @@ Enemy_Update::
 	ld [EnemyX], a
 	ld a, [hl+]
 	ld [EnemyX+1], a 
+	ld a, [hl+]
+	ld [EnemyY], a 
+	ld [EnemyPrevY], a 
+	ld a, [hl+]
+	ld [EnemyY+1], a 
+	inc hl 
+	inc hl 		; pointing at scratch data now 
 	
-	; Get Scratch 
-	ld a, l 
-	add a, 4 
-	ld l, a 
-	ld a, h 
-	adc a, 0 
-	ld h, a 		; position hl at scratch 
-	
+	; Load slime behavior config 
 	ld a, [hl+]
 	ld [SlimeLeftBound], a 		; left tile 
 	ld a, [hl+]
-	ld [SlimeRightBound], a 		; right tile 
+	ld [SlimeRightBound], a 	; right tile 
 	ld a, [hl+]
 	ld [SlimeXVel], a 			; xvel 
+	ld a, [hl+]
+	ld [SlimeJumpVel], a 		; jump vel
+	ld a, [hl+]
+	ld [SlimeFlags], a			; flags  
+
+	; Load slime variables
 	ld a, [hl+]
 	ld [CurDirection], a 		; cur direction 
 	ld a, [hl]
 	ld [AnimCounter], a 		; anim counter 
 	inc a
-	ld [hl], a 					; inc anim counter 
+	ld [hl+], a 				; inc anim counter 
+	ld a, [hl+]
+	ld [EnemyYVel], a 			; get y vel (int)
+	ld a, [hl+]
+	ld [EnemyYVel+1], a 		; get y vel (fraction)
+	ld a, [hl+]
+	ld [YOffset], a 			; y offset 
 	ld a, [CurDirection]		; get cur dir 
 	cp 0 
 	jp z, .slime_move_left 
@@ -854,12 +873,20 @@ Enemy_Update::
 	ld d, 0 
 	sla e 
 	rl d 
+	sla e 
+	rl d 
+	sla e 
+	rl d 					; speed is offset by 3 shifts 
 	jp .slime_move 
 .slime_move_left
 	ld a, [SlimeXVel]
 	cpl 
 	ld e, a 
 	ld d, $ff 
+	sla e 
+	rl d 
+	sla e 
+	rl d 
 	sla e 
 	rl d 
 	inc de 
@@ -925,15 +952,66 @@ Enemy_Update::
 	add a, 32 
 	cp d 
 	jp c, .slime_set_dir_left
-	jp .slime_finish 
+	jp .slime_jump 
 	
 .slime_set_dir_right
 	ld a, 1 
 	ld [CurDirection], a 
-	jp .slime_finish
+	jp .slime_jump
 .slime_set_dir_left 
 	ld a, 0 
 	ld [CurDirection], a 
+	
+.slime_jump
+	ld a, [SlimeFlags]
+	and SLIME_FLAG_JUMP
+	jp z, .slime_finish 	; not a jumping slime, so just go to finish 
+	ld a, [EnemyYVel]
+	ld d, a 
+	ld a, [EnemyYVel+1]
+	ld e, a 
+	ld hl, SLIME_GRAVITY
+	add hl, de 				; get new y velocity 
+	ld a, h 
+	cpl 
+	inc a 
+	ld b, a 
+	ld a, [YOffset]
+	add a, b 
+	bit 7, a 
+	jp nz, .slime_reset_jump
+	ld [YOffset], a 
+	ld a, [EnemyY]
+	add a, h 
+	ld [EnemyY], a 
+	ld a, h 
+	ld [EnemyYVel], a 
+	ld a, l 
+	ld [EnemyYVel+1], a 
+	jp .slime_finish
+.slime_reset_jump 
+	ld a, [YOffset]
+	cpl 
+	inc a 	; get negative value to zero rect's y position 
+	ld b, a 
+	ld a, [EnemyY]
+	add a, b 
+	ld [EnemyY], a 
+	ld a, 0 
+	ld [YOffset], a
+	ld a, [SlimeJumpVel]
+	ld l, a 
+	ld h, $ff
+	sla l 
+	rl h 
+	sla l
+	rl h 
+	sla l 
+	rl h 
+	ld a, h 
+	ld [EnemyYVel], a
+	ld a, l 
+	ld [EnemyYVel+1], a 	
 	
 .slime_finish
 	; save updated position
@@ -947,11 +1025,22 @@ Enemy_Update::
 	ld [hl+], a 
 	ld a, [EnemyX+1]
 	ld [hl+], a 
+	ld a, [EnemyY]
+	ld [hl+], a 
+	ld a, [EnemyY+1]
+	ld [hl+], a 
 	ld bc, 7 
 	add hl, bc 
 	ld a, [CurDirection]
-	ld [hl], a 
+	ld [hl+], a 
 	ld [EnemyFlip], a 
+	inc hl 
+	ld a, [EnemyYVel]
+	ld [hl+], a 
+	ld a, [EnemyYVel+1]
+	ld [hl+], a 
+	ld a, [YOffset]
+	ld [hl+], a 
 	
 	ld a, [AnimCounter]		; get anim counter 
 	and $10 
@@ -973,13 +1062,6 @@ Enemy_Update::
 .birdy 
 .shooter 
 .spike 
-.jump_slime
-.bomb_birdy
-.para_shooter
-.black_spike
-.zig_birdy
-	
-	
 	
 .return 
 	ret 

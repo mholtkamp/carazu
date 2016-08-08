@@ -26,10 +26,15 @@ ENEMY_ENTRY_DATA_SIZE EQU 8
 ;===========
 ;== SLIME ==
 ;===========
-; +8 = left boundary 
-; +9 = right boundary
-; +10 = current direction, 0 = left, 1 = right 
-; +11 = anim counter
+; +8 = left boundary 	 [param0]
+; +9 = right boundary	 [param1]
+; +10 = xvel 			 [param2]
+; +11 = jump vel     	 [param3]
+; +12 = option flags 	 [param4]
+; +13 = current direction, 0 = left, 1 = right 
+; +14 = anim counter
+; +15 = yvel 
+; +17 = yoffset 
 
 
 ; Variables 
