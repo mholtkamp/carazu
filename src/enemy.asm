@@ -1042,7 +1042,43 @@ Enemy_Update::
 	ld a, [hl+]
 	ld [YOffset], a 
 	
+	ld a, [BirdyFlags]
+	and BIRDY_FLAG_ONE_WAY
+	jp nz, .birdy_one_way
 	call Enemy_MoveWithBounds
+	jp .birdy_finish 
+	
+.birdy_one_way
+	ld a, [EnemyX]
+	ld h, a 
+	ld a, [EnemyX+1]
+	ld l, a 
+	
+	ld a, [EnemyXVel]
+	ld e, a 
+	bit 7, e 
+	jp nz, .birdy_one_way_neg_vel
+	ld d, 0 
+	ld a, 1 
+	ld [CurDirection], a 
+	jp .birdy_one_way_add_vel
+.birdy_one_way_neg_vel
+	ld d, $ff
+	ld a, 0 
+	ld [CurDirection], a 
+.birdy_one_way_add_vel
+	sla e 
+	rl d 
+	sla e 
+	rl d 
+	sla e 
+	rl d 
+	add hl, de 
+	ld a, h 
+	ld [EnemyX], a 
+	ld a, l 
+	ld [EnemyX+1], a 
+	jp .birdy_finish
 	
 .birdy_finish 
 	ld a, [EnemyStruct]
