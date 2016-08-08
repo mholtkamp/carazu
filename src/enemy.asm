@@ -1046,7 +1046,7 @@ Enemy_Update::
 	and BIRDY_FLAG_ONE_WAY
 	jp nz, .birdy_one_way
 	call Enemy_MoveWithBounds
-	jp .birdy_finish 
+	jp .birdy_zig_zag 
 	
 .birdy_one_way
 	ld a, [EnemyX]
@@ -1078,7 +1078,51 @@ Enemy_Update::
 	ld [EnemyX], a 
 	ld a, l 
 	ld [EnemyX+1], a 
-	jp .birdy_finish
+	jp .birdy_zig_zag
+	
+.birdy_zig_zag
+	ld a, [BirdyFlags]
+	and BIRDY_FLAG_ZIG_ZAG 
+	jp z, .birdy_finish
+	ld a, [YOffset]
+	bit 7, a 		; bit 7 stores moving direction 
+	jp nz, .birdy_zig_zag_up
+	inc a 
+	ld b, a 
+	ld a, [EnemyY]
+	inc a 
+	ld [EnemyY], a 
+	ld a, [BirdyVerticalDistance]
+	cp b 
+	jp z, .birdy_zig_zag_go_up
+	ld a, b 		
+	ld [YOffset] , a ;going down still, dont set bit 7. save y offset 
+	jp .birdy_bomb
+.birdy_zig_zag_go_up 
+	ld a, b 
+	set 7, a 
+	ld [YOffset], a 
+	jp .birdy_bomb
+.birdy_zig_zag_up
+	res 7, a 
+	dec a 
+	ld b, a 
+	ld a, [EnemyY]
+	dec a 
+	ld [EnemyY], a 
+	ld a, b
+	cp 0 
+	jp z, .birdy_zig_zag_go_down 
+	ld a, b 		
+	set 7, a 
+	ld [YOffset] , a ;going up still, set bit 7. save y offset 
+	jp .birdy_bomb
+.birdy_zig_zag_go_down 
+	ld a, b 
+	ld [YOffset], a 	; going down now, dont set bit 7 
+	jp .birdy_bomb
+
+.birdy_bomb 
 	
 .birdy_finish 
 	ld a, [EnemyStruct]
