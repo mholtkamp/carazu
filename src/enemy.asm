@@ -61,8 +61,20 @@ DS 1
 EnemyRectOffsetY:
 DS 1 
 
-EnemyScratch: 
-DS 12
+SlimeScratch: 
+SlimeLeftBound:
+DS 1 
+SlimeRightBound:
+DS 1 
+SlimeXVel:
+DS 1 
+
+CurDirection:
+DS 1 
+AnimCounter:
+DS 1 
+
+
 EnemySpritePattern:
 DS 1 
 EnemyFlip:
@@ -206,14 +218,16 @@ LoadEnemyList::
 	
 .load_slime 
 	ld a, [hl+]
-	ld [de], a 
-	inc de 			; param0 = left boundary 
+	ld [de], a 		; param0 = left boundary 
+	inc de 			
 	ld a, [hl+]
-	ld [de], a 
-	inc de 			; param1 = right boundary
-	inc de 			; no param2
-	inc de 			; no param3 
-	inc de 			; no param4
+	ld [de], a 		; param1 = right boundary
+	inc de 
+	ld a, [hl+]		
+	ld [de], a 		; param2 = xvel 
+	inc de 			
+	inc de 			; param3 = yvel 
+	inc de 			; param4 = option flags 
 	jp .loop
 	
 .load_birdy
@@ -370,13 +384,13 @@ UpdateEnemies::
 	ld a, [ScreenRect]
 	cp d 
 	jp z, .check_y_bounds 
-	add a, 21 					; screen rect width = 22 
+	add a, 23 					; screen rect width = 24 
 	cp d 
 	jp z, .check_y_bounds 
 	ld a, [ScreenRect+1]
 	cp e
 	jp z, .check_x_bounds 
-	add a, 21 					; screen rect height = 22 
+	add a, 23 					; screen rect height = 24 
 	cp e 
 	jp z, .check_x_bounds 
 
@@ -573,7 +587,12 @@ Enemy_Spawn::
 	ld a, [hl+]
 	ld [de], a 				; save right tile boundary 
 	inc de 
+	ld a, [hl+]
+	ld [de], a 
+	inc de 					; save the xvel 
 	ld a, 0 
+	ld [de], a 				; save cur direction as 0 (left)
+	inc de 			
 	ld [de], a				; set anim counter to 0  
 	ld b, SLIME_X_OFFSET
 	ld c, SLIME_Y_OFFSET
@@ -816,22 +835,34 @@ Enemy_Update::
 	ld h, a 		; position hl at scratch 
 	
 	ld a, [hl+]
-	ld [EnemyScratch], a 		; left tile 
+	ld [SlimeLeftBound], a 		; left tile 
 	ld a, [hl+]
-	ld [EnemyScratch+1], a 		; right tile 
+	ld [SlimeRightBound], a 		; right tile 
 	ld a, [hl+]
-	ld [EnemyScratch+2], a 		; cur direction 
+	ld [SlimeXVel], a 			; xvel 
+	ld a, [hl+]
+	ld [CurDirection], a 		; cur direction 
 	ld a, [hl]
-	ld [EnemyScratch+3], a 		; anim counter 
+	ld [AnimCounter], a 		; anim counter 
 	inc a
 	ld [hl], a 					; inc anim counter 
-	ld a, [EnemyScratch+2]		; get cur dir 
+	ld a, [CurDirection]		; get cur dir 
 	cp 0 
 	jp z, .slime_move_left 
-	ld de, SLIME_MOVE_SPEED
+	ld a, [SlimeXVel]
+	ld e, a 
+	ld d, 0 
+	sla e 
+	rl d 
 	jp .slime_move 
 .slime_move_left
-	ld de, 0 - SLIME_MOVE_SPEED
+	ld a, [SlimeXVel]
+	cpl 
+	ld e, a 
+	ld d, $ff 
+	sla e 
+	rl d 
+	inc de 
 .slime_move 
 	ld a, [EnemyX]
 	ld h, a 
@@ -880,7 +911,7 @@ Enemy_Update::
 	; check left boundary 
 	ld a, [MapOriginX]
 	ld c, a 
-	ld a, [EnemyScratch]
+	ld a, [SlimeLeftBound]
 	sub c 					; a = relative left 
 	sub 1 					; move boundary one tile over when going left
 	add a, 32 				; bias by 32 for positive compare 
@@ -888,7 +919,7 @@ Enemy_Update::
 	jp nc, .slime_set_dir_right
 	
 	; check right boundary 
-	ld a, [EnemyScratch+1]
+	ld a, [SlimeRightBound]
 	sub c 
 	inc a 
 	add a, 32 
@@ -898,11 +929,11 @@ Enemy_Update::
 	
 .slime_set_dir_right
 	ld a, 1 
-	ld [EnemyScratch+2], a 
+	ld [CurDirection], a 
 	jp .slime_finish
 .slime_set_dir_left 
 	ld a, 0 
-	ld [EnemyScratch+2], a 
+	ld [CurDirection], a 
 	
 .slime_finish
 	; save updated position
@@ -916,13 +947,13 @@ Enemy_Update::
 	ld [hl+], a 
 	ld a, [EnemyX+1]
 	ld [hl+], a 
-	ld bc, 6 
+	ld bc, 7 
 	add hl, bc 
-	ld a, [EnemyScratch+2]
+	ld a, [CurDirection]
 	ld [hl], a 
 	ld [EnemyFlip], a 
 	
-	ld a, [EnemyScratch+3]		; get anim counter 
+	ld a, [AnimCounter]		; get anim counter 
 	and $10 
 	srl a 
 	srl a 
