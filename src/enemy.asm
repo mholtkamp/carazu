@@ -12,7 +12,7 @@ SLIME_Y_OFFSET EQU 4
 SLIME_WIDTH EQU 12 
 SLIME_HEIGHT EQU 12
 SLIME_MOVE_SPEED EQU $00C0
-SLIME_GRAVITY EQU $0040
+SLIME_GRAVITY EQU $0030
 
 BIRDY_X_OFFSET EQU 1
 BIRDY_Y_OFFSET EQU 4
@@ -154,6 +154,13 @@ ResetEnemies::
 
 	ld a, 0 
 	ld [StarsActive], a		; set stars as inactive  
+	ld hl, LocalOAM + STARS_OBJ_INDEX*4 
+	ld [hl+], a 	; disable star1 sprite 
+	ld [hl+], a 	; disable star2 sprite 
+	inc hl 
+	inc hl 
+	ld [hl+], a 
+	ld [hl+], a 	;disable star2 sprite
 	
 	ld a, 0 			; 0 = ENEMY_NONE 
 	ld b, ENEMY_DATA_SIZE 
@@ -942,8 +949,6 @@ Enemy_Update::
 	jp .slime_finish
 .slime_reset_jump 
 	ld a, [YOffset]
-	cpl 
-	inc a 	; get negative value to zero rect's y position 
 	ld b, a 
 	ld a, [EnemyY]
 	add a, b 
