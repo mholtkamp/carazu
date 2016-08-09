@@ -4,6 +4,7 @@ INCLUDE "include/constants.inc"
 INCLUDE "include/globals.inc"
 INCLUDE "include/item.inc"
 INCLUDE "include/enemy.inc"
+INCLUDE "include/bullet.inc"
 
 ; Level includes 
 INCLUDE "levels/level_items.inc"
@@ -139,6 +140,7 @@ Level_Load::
 	call Reset_Items
 	call ResetEnemies
 	call ResetEnemyList
+	call ResetBullets 
 	
 	; Load special tiles 
 	ld bc, TILE_BANK_1 + 16*SPECIAL_TILES_INDEX

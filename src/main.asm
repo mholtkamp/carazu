@@ -25,6 +25,7 @@
 	INCLUDE "include/stats.inc"
 	INCLUDE "include/item.inc"
 	INCLUDE "include/enemy.inc"
+	INCLUDE "include/bullet.inc"
 	
 ;****************************************************************************************************************************************************
 ;*	user data (constants)
@@ -507,6 +508,7 @@ SwitchState::
 	call Player_LoadGraphics
 	call Load_Item_Graphics
 	call LoadEnemyGraphics
+	call LoadBulletGraphics
 	call Level_Load 
 	call Stats_LoadGraphics 
 	call Stats_Show
