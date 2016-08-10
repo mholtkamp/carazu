@@ -278,6 +278,7 @@ Main_Game_Loop::
 	call Level_Update
 	call Update_Items
 	call UpdateEnemies
+	call UpdateBullets
 	call Stats_Update 
 	
 	; Local OAM Updates 

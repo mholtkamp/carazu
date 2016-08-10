@@ -799,43 +799,49 @@ UpdateBulletSprites::
 	ld a, [EnemyBullet0 + 1]
 	add a, 8 - BULLET_ENEMY_RECT_OFFSET_X
 	ld [hl+], a 
-	add a, 16 - BULLET_ENEMY_RECT_OFFSET_Y
 	ld a, [EnemyBullet0 + 3]
+	add a, 16 - BULLET_ENEMY_RECT_OFFSET_Y
+	ld [hl+], a 
 	inc hl 
 	inc hl 
 	ld a, [EnemyBullet1 + 1]
 	add a, 8 - BULLET_ENEMY_RECT_OFFSET_X
 	ld [hl+], a 
-	add a, 16 - BULLET_ENEMY_RECT_OFFSET_Y
 	ld a, [EnemyBullet1 + 3]
+	add a, 16 - BULLET_ENEMY_RECT_OFFSET_Y
+	ld [hl+], a 
 	inc hl 
 	inc hl 
 	ld a, [EnemyBullet2 + 1]
 	add a, 8 - BULLET_ENEMY_RECT_OFFSET_X 
 	ld [hl+], a 
-	add a, 16 - BULLET_ENEMY_RECT_OFFSET_Y
 	ld a, [EnemyBullet2 + 3]
+	add a, 16 - BULLET_ENEMY_RECT_OFFSET_Y
+	ld [hl+], a 
 	inc hl 
 	inc hl 
 	ld a, [EnemyBullet3 + 1]
 	add a, 8 - BULLET_ENEMY_RECT_OFFSET_X 
 	ld [hl+], a 
-	add a, 16 - BULLET_ENEMY_RECT_OFFSET_Y
 	ld a, [EnemyBullet3 + 3]
+	add a, 16 - BULLET_ENEMY_RECT_OFFSET_Y
+	ld [hl+], a 
 	inc hl 
 	inc hl 
 	ld a, [EnemyBullet4 + 1]
 	add a, 8 - BULLET_ENEMY_RECT_OFFSET_X 
 	ld [hl+], a 
-	add a, 16 - BULLET_ENEMY_RECT_OFFSET_Y
 	ld a, [EnemyBullet4 + 3]
+	add a, 16 - BULLET_ENEMY_RECT_OFFSET_Y
+	ld [hl+], a 
 	inc hl 
 	inc hl 
 	ld a, [PlayerBullet + 1]
 	add a, 8 
 	ld [hl+], a 
-	add a, 16 
 	ld a, [PlayerBullet + 3]
+	add a, 16 
+	ld [hl+], a 
 	inc hl 
 	inc hl 
 	ret 
