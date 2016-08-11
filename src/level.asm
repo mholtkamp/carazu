@@ -906,6 +906,7 @@ _Level_Scroll::
 	; e = yshift
 	call Scroll_Items
 	call ScrollEnemies
+	call ScrollBullets
 
 	ret 
 	

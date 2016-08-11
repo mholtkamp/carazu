@@ -5,6 +5,7 @@ INCLUDE "include/rect.inc"
 INCLUDE "include/level.inc"
 INCLUDE "include/globals.inc"
 INCLUDE "include/player.inc"
+INCLUDE "include/bullet.inc"
 INCLUDE "tiles/enemy_tiles.inc"
 
 SLIME_X_OFFSET EQU 2
@@ -19,6 +20,11 @@ BIRDY_Y_OFFSET EQU 4
 BIRDY_WIDTH EQU 14
 BIRDY_HEIGHT EQU 10 
 BIRDY_Y_JITTER_SPEED EQU $0010
+BIRDY_BOMB_INTERVAL EQU 75
+BIRDY_BOMB_XVEL EQU $0000 
+BIRDY_BOMB_YVEL EQU $0100
+BIRDY_BOMB_GRAV_X EQU $00
+BIRDY_BOMB_GRAV_Y EQU $06
 
 RECALL_RANGE_MIN EQU  192 
 RECALL_RANGE_MAX EQU  224 
@@ -1128,6 +1134,39 @@ Enemy_Update::
 	jp .birdy_bomb
 
 .birdy_bomb 
+	ld a, [BirdyFlags]
+	and BIRDY_FLAG_BOMB 
+	jp z, .birdy_finish
+	
+	ld a, [BulletCounter]
+	cp 0 
+	jp z, .birdy_fire_bullet 
+	dec a 
+	ld [BulletCounter], a 
+	jp .birdy_finish
+.birdy_fire_bullet 
+	ld a, BIRDY_BOMB_INTERVAL
+	ld [BulletCounter], a 		; reset counter 
+	ld a, [EnemyX]
+	add a, BIRDY_WIDTH/2 
+	ld [FireParamX], a 
+	ld a, [EnemyY]
+	add a, BIRDY_HEIGHT/2 
+	ld [FireParamY], a 
+	ld a, 0
+	ld [FireParamXVel], a 
+	ld [FireParamXVel+1], a 
+	ld a, BIRDY_BOMB_YVEL >> 8 
+	ld [FireParamYVel], a 
+	ld a, BIRDY_BOMB_YVEL & $00ff 
+	ld [FireParamYVel+1], a 
+	ld a, BIRDY_BOMB_GRAV_X
+	ld [FireParamGravityX], a 
+	ld a, BIRDY_BOMB_GRAV_Y
+	ld [FireParamGravityY], a 
+	call FireEnemyBullet
+	; jp .birdy_finish 
+
 	
 .birdy_finish 
 	ld a, [EnemyStruct]

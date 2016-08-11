@@ -50,6 +50,9 @@ DS 1
 FireParamGravityY:
 DS 1 
 
+BulletPalette::
+DS 1 
+
 	SECTION "BulletProcs", HOME 
 	
 	
@@ -64,6 +67,26 @@ ResetBullets::
 	dec b 
 	jp nz, .loop 
 
+	; initialize obj1 palette for enemy bullets 
+	ld a, %11100100
+	ld [BulletPalette], a 
+	
+	; Set rect locations to -8,-16 so the graphics are offscreen 
+	ld a, -8 
+	ld [EnemyBullet0 + 1], a 
+	ld [EnemyBullet1 + 1], a 
+	ld [EnemyBullet2 + 1], a 
+	ld [EnemyBullet3 + 1], a 
+	ld [EnemyBullet4 + 1], a 
+	ld [PlayerBullet + 1], a 
+	ld a, -16 
+	ld [EnemyBullet0 + 3], a 
+	ld [EnemyBullet1 + 3], a 
+	ld [EnemyBullet2 + 3], a 
+	ld [EnemyBullet3 + 3], a 
+	ld [EnemyBullet4 + 3], a 
+	ld [PlayerBullet + 3], a 
+	
 	ret 
 	
 LoadBulletGraphics::
@@ -80,7 +103,7 @@ LoadBulletGraphics::
 	
 	dec b 
 	jp nz, .loop 
-	
+		
 	; Second, initialize the local oam
 	ld hl, LocalOAM + BULLET_OBJ_INDEX*4
 	
@@ -146,6 +169,13 @@ UpdateBullets::
 	call Bullet_UpdatePlayer
 	
 	call UpdateBulletSprites
+	
+	; Update obp1 for flashy effect 
+	ld a, [BulletPalette]
+	rlca 
+	rlca 
+	ld [BulletPalette], a 
+	ld [rOBP1], a 
 
 	ret 
 	
@@ -154,7 +184,8 @@ UpdateBullets::
 ; Param1 = FireParamY
 ; Param2 = FireParamXVel
 ; Param3 = FireParamYVel
-; Param4 = FireParamGravity 
+; Param4 = FireParamGravityX 
+; Param5 = FireParamGravityY
 FireEnemyBullet::
 
 	; Iterate through bullets and find an inactive bullet 
@@ -230,7 +261,8 @@ FireEnemyBullet::
 ; Param1 = FireParamY
 ; Param2 = FireParamXVel
 ; Param3 = FireParamYVel
-; Param4 = FireParamGravity 
+; Param4 = FireParamGravityX 
+; Param5 = FireParamGravityY
 FirePlayerBullet::
 
 	; Iterate through bullets and find an inactive bullet 
@@ -349,9 +381,18 @@ Bullet_UpdateEnemy0:
 .check_deactivation
 	ld a, [EnemyBullet0 + 1]
 	cp DEACTIVATION_RANGE_MIN
+	jp c, .check_y_deactivation 
+	cp DEACTIVATION_RANGE_MAX
+	jp nc, .check_y_deactivation 
+	jp .deactivate
+	
+.check_y_deactivation
+	ld a, [EnemyBullet0 + 3]
+	cp DEACTIVATION_RANGE_MIN
 	jp c, .return 
 	cp DEACTIVATION_RANGE_MAX
 	jp nc, .return 
+	;jp .deactivate
 	
 .deactivate
 	ld hl, EnemyBullet0
@@ -431,9 +472,18 @@ Bullet_UpdateEnemy1:
 .check_deactivation
 	ld a, [EnemyBullet1 + 1]
 	cp DEACTIVATION_RANGE_MIN
+	jp c, .check_y_deactivation 
+	cp DEACTIVATION_RANGE_MAX
+	jp nc, .check_y_deactivation 
+	jp .deactivate
+	
+.check_y_deactivation
+	ld a, [EnemyBullet1 + 3]
+	cp DEACTIVATION_RANGE_MIN
 	jp c, .return 
 	cp DEACTIVATION_RANGE_MAX
 	jp nc, .return 
+	;jp .deactivate
 	
 .deactivate
 	ld hl, EnemyBullet1
@@ -513,9 +563,18 @@ Bullet_UpdateEnemy2:
 .check_deactivation
 	ld a, [EnemyBullet2 + 1]
 	cp DEACTIVATION_RANGE_MIN
+	jp c, .check_y_deactivation 
+	cp DEACTIVATION_RANGE_MAX
+	jp nc, .check_y_deactivation 
+	jp .deactivate
+	
+.check_y_deactivation
+	ld a, [EnemyBullet2 + 3]
+	cp DEACTIVATION_RANGE_MIN
 	jp c, .return 
 	cp DEACTIVATION_RANGE_MAX
 	jp nc, .return 
+	;jp .deactivate
 	
 .deactivate
 	ld hl, EnemyBullet2
@@ -595,9 +654,18 @@ Bullet_UpdateEnemy3:
 .check_deactivation
 	ld a, [EnemyBullet3 + 1]
 	cp DEACTIVATION_RANGE_MIN
+	jp c, .check_y_deactivation 
+	cp DEACTIVATION_RANGE_MAX
+	jp nc, .check_y_deactivation 
+	jp .deactivate
+	
+.check_y_deactivation
+	ld a, [EnemyBullet3 + 3]
+	cp DEACTIVATION_RANGE_MIN
 	jp c, .return 
 	cp DEACTIVATION_RANGE_MAX
 	jp nc, .return 
+	;jp .deactivate
 	
 .deactivate
 	ld hl, EnemyBullet3
@@ -677,9 +745,18 @@ Bullet_UpdateEnemy4:
 .check_deactivation
 	ld a, [EnemyBullet4 + 1]
 	cp DEACTIVATION_RANGE_MIN
+	jp c, .check_y_deactivation 
+	cp DEACTIVATION_RANGE_MAX
+	jp nc, .check_y_deactivation 
+	jp .deactivate
+	
+.check_y_deactivation
+	ld a, [EnemyBullet4 + 3]
+	cp DEACTIVATION_RANGE_MIN
 	jp c, .return 
 	cp DEACTIVATION_RANGE_MAX
 	jp nc, .return 
+	;jp .deactivate
 	
 .deactivate
 	ld hl, PlayerBullet
@@ -759,9 +836,18 @@ Bullet_UpdatePlayer:
 .check_deactivation
 	ld a, [PlayerBullet + 1]
 	cp DEACTIVATION_RANGE_MIN
+	jp c, .check_y_deactivation 
+	cp DEACTIVATION_RANGE_MAX
+	jp nc, .check_y_deactivation 
+	jp .deactivate
+	
+.check_y_deactivation
+	ld a, [PlayerBullet + 3]
+	cp DEACTIVATION_RANGE_MIN
 	jp c, .return 
 	cp DEACTIVATION_RANGE_MAX
 	jp nc, .return 
+	;jp .deactivate
 	
 .deactivate
 	ld hl, PlayerBullet
@@ -777,71 +863,148 @@ Bullet_UpdatePlayer:
 Bullet_Deactivate::
 
 	ld a, 0 
-	ld [hl], a 	; set active flag to 0
-	
-	sla b 
-	sla b 		; mult b by 4 to get offset into OAM
-	ld c, b 
-	ld b, 0 	; okay, yea i should have just made c the index var 
-	
-	ld hl, LocalOAM + BULLET_OBJ_INDEX*4 
-	add hl, bc 
-	
-	ld a, 0 
-	ld [hl+], a 	; zeroize x coord
-	ld [hl+], a 	; zeroize y coord 
+	ld [hl+], a 	; set active flag to 0
+	ld a, -8 
+	ld [hl+], a 
+	inc hl 
+	ld a, -16 
+	ld [hl], a 
 	
 	ret 
 	
 UpdateBulletSprites::
 
 	ld hl, LocalOAM + BULLET_OBJ_INDEX*4 
-	ld a, [EnemyBullet0 + 1]
-	add a, 8 - BULLET_ENEMY_RECT_OFFSET_X
-	ld [hl+], a 
 	ld a, [EnemyBullet0 + 3]
 	add a, 16 - BULLET_ENEMY_RECT_OFFSET_Y
 	ld [hl+], a 
-	inc hl 
-	inc hl 
-	ld a, [EnemyBullet1 + 1]
+	ld a, [EnemyBullet0 + 1]
 	add a, 8 - BULLET_ENEMY_RECT_OFFSET_X
 	ld [hl+], a 
+	inc hl 
+	inc hl 
 	ld a, [EnemyBullet1 + 3]
 	add a, 16 - BULLET_ENEMY_RECT_OFFSET_Y
 	ld [hl+], a 
-	inc hl 
-	inc hl 
-	ld a, [EnemyBullet2 + 1]
-	add a, 8 - BULLET_ENEMY_RECT_OFFSET_X 
+	ld a, [EnemyBullet1 + 1]
+	add a, 8 - BULLET_ENEMY_RECT_OFFSET_X
 	ld [hl+], a 
+	inc hl 
+	inc hl 
 	ld a, [EnemyBullet2 + 3]
 	add a, 16 - BULLET_ENEMY_RECT_OFFSET_Y
 	ld [hl+], a 
-	inc hl 
-	inc hl 
-	ld a, [EnemyBullet3 + 1]
+	ld a, [EnemyBullet2 + 1]
 	add a, 8 - BULLET_ENEMY_RECT_OFFSET_X 
 	ld [hl+], a 
+	inc hl 
+	inc hl 
 	ld a, [EnemyBullet3 + 3]
 	add a, 16 - BULLET_ENEMY_RECT_OFFSET_Y
 	ld [hl+], a 
-	inc hl 
-	inc hl 
-	ld a, [EnemyBullet4 + 1]
+	ld a, [EnemyBullet3 + 1]
 	add a, 8 - BULLET_ENEMY_RECT_OFFSET_X 
 	ld [hl+], a 
+	inc hl 
+	inc hl 
 	ld a, [EnemyBullet4 + 3]
 	add a, 16 - BULLET_ENEMY_RECT_OFFSET_Y
 	ld [hl+], a 
-	inc hl 
-	inc hl 
-	ld a, [PlayerBullet + 1]
-	add a, 8 
+	ld a, [EnemyBullet4 + 1]
+	add a, 8 - BULLET_ENEMY_RECT_OFFSET_X 
 	ld [hl+], a 
+	inc hl 
+	inc hl 
 	ld a, [PlayerBullet + 3]
 	add a, 16 
+	ld [hl+], a 
+	ld a, [PlayerBullet + 1]
+	add a, 8 
 	ld [hl+], a 
 	inc hl 
 	inc hl 
 	ret 
+
+; d = shiftx 
+; e = shifty 
+ScrollBullets::
+	
+	ld a, [EnemyBullet0]
+	cp 0
+	jp z, .bullet1
+	ld hl, EnemyBullet0 + 1
+	ld a, [hl]
+	add a, d 
+	ld [hl+], a 
+	inc hl 
+	ld a, [hl]
+	add a, e 
+	ld [hl], a 
+	
+.bullet1	
+	ld a, [EnemyBullet1]
+	cp 0
+	jp z, .bullet2
+	ld hl, EnemyBullet1 + 1
+	ld a, [hl]
+	add a, d 
+	ld [hl+], a 
+	inc hl 
+	ld a, [hl]
+	add a, e 
+	ld [hl], a 
+	
+.bullet2	
+	ld a, [EnemyBullet2]
+	cp 0
+	jp z, .bullet3
+	ld hl, EnemyBullet2 + 1
+	ld a, [hl]
+	add a, d 
+	ld [hl+], a 
+	inc hl 
+	ld a, [hl]
+	add a, e 
+	ld [hl], a 
+	
+.bullet3	
+	ld a, [EnemyBullet3]
+	cp 0
+	jp z, .bullet4
+	ld hl, EnemyBullet3 + 1
+	ld a, [hl]
+	add a, d 
+	ld [hl+], a 
+	inc hl 
+	ld a, [hl]
+	add a, e 
+	ld [hl], a 
+	
+.bullet4	
+	ld a, [EnemyBullet4]
+	cp 0
+	jp z, .bullet5
+	ld hl, EnemyBullet4 + 1
+	ld a, [hl]
+	add a, d 
+	ld [hl+], a 
+	inc hl 
+	ld a, [hl]
+	add a, e 
+	ld [hl], a 
+	
+.bullet5 
+	ld a, [PlayerBullet]
+	cp 0
+	ret z 
+	ld hl, PlayerBullet + 1
+	ld a, [hl]
+	add a, d 
+	ld [hl+], a 
+	inc hl 
+	ld a, [hl]
+	add a, e 
+	ld [hl], a 
+	
+	ret
+	

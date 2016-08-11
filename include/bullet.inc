@@ -28,6 +28,7 @@ GLOBAL UpdateBulletSprites
 GLOBAL FireEnemyBullet
 GLOBAL FirePlayerBullet 
 GLOBAL LoadBulletGraphics 
+GLOBAL ScrollBullets
 
 
 ENDC 

@@ -6,6 +6,7 @@ rLY EQU $ff44
 rLCDC EQU $ff40
 rBGP EQU $ff47
 rOBP0 EQU $ff48
+rOBP1 EQU $ff49
 rP1 EQU $ff00
 rWX EQU $ff4b
 rWY EQU $ff4a 
