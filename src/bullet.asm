@@ -19,6 +19,8 @@ DEACTIVATION_RANGE_MAX EQU  224
 BULLET_ENEMY_OBJ_FLAGS EQU $10 
 BULLET_PLAYER_OBJ_FLAGS EQU $00
 
+BULLET_PALETTE_COUNTER_MAX EQU 8
+
 	SECTION "BulletVars", BSS 
 	
 Bullets:
@@ -50,7 +52,9 @@ DS 1
 FireParamGravityY:
 DS 1 
 
-BulletPalette::
+BulletPalette:
+DS 1 
+BulletPaletteCounter:
 DS 1 
 
 	SECTION "BulletProcs", HOME 
@@ -169,6 +173,15 @@ UpdateBullets::
 	call Bullet_UpdatePlayer
 	
 	call UpdateBulletSprites
+	
+	ld a, [BulletPaletteCounter]
+	inc a 
+	ld [BulletPaletteCounter], a 
+	cp BULLET_PALETTE_COUNTER_MAX
+	ret nz
+	
+	ld a, 0 
+	ld [BulletPaletteCounter], a 
 	
 	; Update obp1 for flashy effect 
 	ld a, [BulletPalette]

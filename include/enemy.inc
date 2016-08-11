@@ -50,6 +50,15 @@ ENEMY_ENTRY_DATA_SIZE EQU 8
 ; +13 = bullet counter
 ; +14 = yoffset 
 
+;=============
+;== SHOOTER ==
+;=============
+; +8 = bullet xvel 
+; +9 - bullet yvel 
+; +10 = bullet interval 
+; +11 = flags 
+; +12 = anim counter 
+; +13 = bullet counter 
 
 ; Variables 
 GLOBAL Enemies

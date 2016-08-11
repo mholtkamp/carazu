@@ -26,6 +26,12 @@ BIRDY_BOMB_YVEL EQU $0100
 BIRDY_BOMB_GRAV_X EQU $00
 BIRDY_BOMB_GRAV_Y EQU $06
 
+SHOOTER_X_OFFSET EQU 0 
+SHOOTER_Y_OFFSET EQU 0 
+SHOOTER_WIDTH EQU 16 
+SHOOTER_HEIGHT EQU 16 
+SHOOTER_BULLET_GRAV EQU $18
+
 RECALL_RANGE_MIN EQU  192 
 RECALL_RANGE_MAX EQU  224 
 
@@ -104,6 +110,14 @@ DS 1
 BulletCounter:
 DS 1 
 
+ShooterBulletXVel:
+DS 1 
+ShooterBulletYVel:
+DS 1 
+ShooterBulletInterval:
+DS 1 
+ShooterFlags:
+DS 1 
 
 
 EnemySpritePattern:
@@ -282,15 +296,17 @@ LoadEnemyList::
 	
 .load_shooter
 	ld a, [hl+]
-	ld [de], a 		; param0 = bullet speed 
+	ld [de], a 		; param0 = bullet xvel 
 	inc de 	
 	ld a, [hl+]
-	ld [de], a 		; param1 = bullet fire interval 
+	ld [de], a 		; param1 = bullet yvel 
 	inc de 	
 	ld a, [hl+]
-	ld [de], a 		; param2 = option flags 
+	ld [de], a 		; param2 = bullet fire interval 
+	inc de 	
+	ld a, [hl+]
+	ld [de], a 		; param3 = option flags 
 	inc de
-	inc de 			; no param3
 	inc de 			; no param4 
 	
 .load_spike
@@ -684,6 +700,32 @@ Enemy_Spawn::
 	jp .apply_rect_offset
 
 .shooter 
+	ld a, SHOOTER_WIDTH
+	ld [de], a
+	inc de 
+	ld a, SHOOTER_HEIGHT 
+	ld [de], a 
+	inc de 
+	ld a, [hl+]
+	ld [de], a				; save bullet xvel 
+	inc de 
+	ld a, [hl+]
+	ld [de], a				; save bullet yvel  
+	inc de
+	ld a, [hl+]
+	ld [de], a 				; save bullet interval 
+	inc de 
+	ld a, [hl+]
+	ld [de], a				; save flags  
+	inc de 
+	ld a, 0 
+	ld [de], a 				; init anim counter 
+	inc de 
+	ld [de], a				; init bullet counter 
+	ld b, SHOOTER_X_OFFSET
+	ld c, SHOOTER_Y_OFFSET 
+	jp .apply_rect_offset
+	
 .spike 
 
 jp .return 
@@ -784,8 +826,9 @@ Enemy_Update::
 	cp ENEMY_SPIKE
 	jp z, .damage_player 
 	cp ENEMY_SHOOTER 
-	jp z, .damage_player 
+	jp z, .generic_check_recall
 	
+.check_damage_cond
 	; Not a spike, so check the relative y position of the player 
 	ld a, [PlayerPrevYLow]
 	ld b, a 			; b = player bottom y pos 
@@ -799,7 +842,7 @@ Enemy_Update::
 	; if the enemy pos is higher (lower y val) than the player pos, damage the player 
 	cp c 
 	jp nc, .damage_player
-	
+
 	; Well, the player was higher than enemy, so now we need to kill this enemy :(
 	ld a, [EnemyStruct]
 	ld h, a 
@@ -1208,7 +1251,151 @@ Enemy_Update::
 	ld [EnemyRectOffsetY], a 
 	call .generic
 	jp .return 
+	
+	
 .shooter 
+	ld a, [EnemyStruct+1]
+	add a, 8 
+	ld l, a 
+	ld a, [EnemyStruct]
+	adc a, 0 
+	ld h, a 			; load enemy struct pointer and offset into scratch region 
+	
+	; Load shooter behavior config 
+	ld a, [hl+]
+	ld [ShooterBulletXVel], a 		; bullet xvel 
+	ld a, [hl+]
+	ld [ShooterBulletYVel], a 		; bullet yvel 
+	ld a, [hl+]
+	ld [ShooterBulletInterval], a 	; bullet interval 
+	ld a, [hl+]
+	ld [ShooterFlags], a 			; option flags
+	
+	; Load shooter variables
+	ld a, [hl]
+	ld [AnimCounter], a 		; anim counter 
+	inc a
+	ld [hl+], a 				; inc anim counter 
+	ld a, [hl+]
+	ld [BulletCounter], a 		; get y vel (int)
+
+	; Check if the shooter should launch a new bullet 
+	ld a, [ShooterBulletInterval]
+	ld b, a 
+	ld a, [BulletCounter]
+	inc a 
+	ld [BulletCounter], a 
+	cp b 	; does the bullet counter == bullet interval?
+	jp nz, .shooter_finish 
+	ld a, 0 
+	ld [BulletCounter], a 		; reset bullet counter 
+	
+	; Prepare to fire bullet, setup the wram params for FireEnemyBullet
+	ld a, [EnemyX]
+	add a, SHOOTER_WIDTH/2 
+	ld [FireParamX], a 
+	ld a, [EnemyY]
+	add a, SHOOTER_HEIGHT/2 
+	ld [FireParamY], a 
+	ld a, [ShooterBulletXVel]
+	bit 7, a 
+	jp nz, .shooter_neg_bullet_xvel
+	ld h, 0 
+	jp .shooter_xvel 
+.shooter_neg_bullet_xvel
+	ld h, $ff 
+.shooter_xvel
+	ld l, a 
+	sla l 
+	rl h 
+	sla l 
+	rl h 
+	sla l 
+	rl h 
+	ld a, h 
+	ld [FireParamXVel], a 
+	ld a, l 
+	ld [FireParamXVel + 1], a 
+	ld a, [ShooterBulletYVel]
+	bit 7, a 
+	jp nz, .shooter_neg_bullet_yvel
+	ld h, 0 
+	jp .shooter_yvel 
+.shooter_neg_bullet_yvel
+	ld h, $ff 
+.shooter_yvel
+	ld l, a 
+	sla l 
+	rl h 
+	sla l 
+	rl h 
+	sla l 
+	rl h 
+	ld a, h 
+	ld [FireParamYVel], a 
+	ld a, l 
+	ld [FireParamYVel + 1], a 
+	ld a, 0
+	ld [FireParamGravityX], a 		; Never any x grav for shooter 
+	
+	ld a, [ShooterFlags]
+	and SHOOTER_FLAG_APPLY_GRAVITY
+	cp 0 
+	jp z, .shooter_no_y_grav
+	ld a, SHOOTER_BULLET_GRAV
+	ld [FireParamGravityY], a 
+	jp .shooter_call_fire
+	
+.shooter_no_y_grav
+	ld a, 0 
+	ld [FireParamGravityY], a 
+	;jp .shooter_call_fire 
+	
+.shooter_call_fire
+	call FireEnemyBullet
+	; jp .shooter_finish
+
+.shooter_finish 
+	ld a, [EnemyStruct]
+	ld h, a 
+	ld a, [EnemyStruct+1]
+	ld l, a 
+	ld bc, 13 
+	add hl, bc 
+	
+	ld a, [AnimCounter]		; get anim counter 
+	and $38 
+	srl a 
+	ld b, a 
+	bit 4, b 
+	jp nz, .shooter_reverse_anim
+	ld a, ENEMY_TILE_SHOOTER
+	add a, b 
+	ld [EnemySpritePattern],  a 
+	jp .shooter_finish_for_real
+.shooter_reverse_anim
+	ld a, b 
+	and $0f 		; chop off bit 4 
+	ld b, a 
+	ld a, ENEMY_TILE_SHOOTER + 12		; load last tile index 
+	sub b 								; subtract instead of add to get looping animation 
+	ld [EnemySpritePattern], a 
+	; jp .shooter_finish_for_real
+	
+.shooter_finish_for_real
+
+	ld a, SHOOTER_X_OFFSET
+	ld [EnemyRectOffsetX],a 
+	ld a, SHOOTER_Y_OFFSET
+	ld [EnemyRectOffsetY], a 
+
+	ld a, [BulletCounter]
+	ld [hl], a 				; save bullet counter. hl should be pointing it from beginning of .shooter_finish 
+	
+	call .generic
+	jp .return 
+
+
 .spike 
 	
 .return 
