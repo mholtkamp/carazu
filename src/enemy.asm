@@ -1486,6 +1486,74 @@ Enemy_Update::
 	jp .spike_finish
 	
 .spike_chase
+	ld a, [PlayerRect]			; move in x direction
+	ld b, a 
+	ld a, [EnemyX]
+	cp b 
+	jp c, .spike_chase_pos_x
+	jp z, .spike_chase_check_y
+	ld a, [SpikeSpeed]
+	ld b, $ff 
+	cpl 
+	inc a 
+	ld c, a 
+	jp .spike_chase_add_x 
+.spike_chase_pos_x
+	ld a, [SpikeSpeed]
+	ld b, $00 
+	ld c, a 
+.spike_chase_add_x 
+	sla c 
+	rl b 
+	sla c 
+	rl b 
+	sla c 
+	rl b 
+	ld a, [EnemyX]
+	ld h, a 
+	ld a, [EnemyX+1]
+	ld l, a 
+	add hl, bc 
+	ld a, h 
+	ld [EnemyX], a 
+	ld a, l 
+	ld [EnemyX+1], a 
+	
+.spike_chase_check_y
+	ld a, [PlayerRect+2]
+	ld b, a 
+	ld a, [EnemyY]
+	cp b 
+	jp c, .spike_chase_pos_y
+	jp z, .spike_finish
+	ld a, [SpikeSpeed]
+	ld b, $ff 
+	cpl 
+	inc a 
+	ld c, a 
+	jp .spike_chase_add_y
+.spike_chase_pos_y
+	ld a, [SpikeSpeed]
+	ld b, $00 
+	ld c, a 
+.spike_chase_add_y 
+	sla c 
+	rl b 
+	sla c 
+	rl b 
+	sla c 
+	rl b 
+	ld a, [EnemyY]
+	ld h, a 
+	ld a, [EnemyY+1]
+	ld l, a 
+	add hl, bc 
+	ld a, h 
+	ld [EnemyY], a 
+	ld a, l 
+	ld [EnemyY+1], a 
+
+	jp .spike_finish 
 	
 .spike_finish 
 	; save updated position
