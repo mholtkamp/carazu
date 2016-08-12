@@ -308,6 +308,7 @@ LoadEnemyList::
 	ld [de], a 		; param3 = option flags 
 	inc de
 	inc de 			; no param4 
+	jp .loop 
 	
 .load_spike
 	ld a, [hl+]
@@ -323,6 +324,7 @@ LoadEnemyList::
 	ld [de], a 		; param3 = option flags 
 	inc de 	
 	inc de 			; no param4 
+	jp .loop 
 
 .return 
 	ret 
