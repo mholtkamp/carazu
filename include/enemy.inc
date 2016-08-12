@@ -60,6 +60,15 @@ ENEMY_ENTRY_DATA_SIZE EQU 8
 ; +12 = anim counter 
 ; +13 = bullet counter 
 
+;===========
+;== SPIKE ==
+;===========
+; +8 = left/top boundary 
+; +9 = right/bottom boundary
+; +10 = speed
+; +11 = flags 
+; +12 = current direction 
+
 ; Variables 
 GLOBAL Enemies
 GLOBAL EnemyList

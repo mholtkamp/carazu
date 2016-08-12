@@ -32,6 +32,12 @@ SHOOTER_WIDTH EQU 16
 SHOOTER_HEIGHT EQU 16 
 SHOOTER_BULLET_GRAV EQU $18
 
+SPIKE_X_OFFSET EQU 2 
+SPIKE_Y_OFFSET EQU 3 
+SPIKE_WIDTH EQU 11 
+SPIKE_HEIGHT EQU 11 
+
+
 RECALL_RANGE_MIN EQU  192 
 RECALL_RANGE_MAX EQU  224 
 
@@ -119,6 +125,15 @@ DS 1
 ShooterFlags:
 DS 1 
 
+SpikeSpeed:
+DS 1 
+SpikeFlags:
+DS 1 
+
+TopBound: 
+DS 1 
+BottomBound:
+DS 1 
 
 EnemySpritePattern:
 DS 1 
@@ -729,6 +744,29 @@ Enemy_Spawn::
 	jp .apply_rect_offset
 	
 .spike 
+	ld a, SPIKE_WIDTH 
+	ld [de], a 
+	inc de 
+	ld a, SPIKE_HEIGHT
+	ld [de], a 
+	inc de 
+	ld a, [hl+]
+	ld [de], a 				; save left boundary
+	inc de 
+	ld a, [hl+]
+	ld [de], a				; save right boundary 
+	inc de 
+	ld a, [hl+]
+	ld [de], a				; save speed  
+	inc de
+	ld a, [hl+]
+	ld [de], a				; save options flags  
+	inc de 
+	ld a, 0 
+	ld [de], a 				; init cur direction 
+	ld b, SPIKE_X_OFFSET
+	ld c, SPIKE_Y_OFFSET
+	jp .apply_rect_offset
 
 jp .return 
 	
@@ -969,7 +1007,7 @@ Enemy_Update::
 	ld a, [hl+]
 	ld [YOffset], a 			; y offset 
 
-	call Enemy_MoveWithBounds
+	call Enemy_MoveWithBoundsX
 	
 .slime_jump
 	ld a, [SlimeFlags]
@@ -1062,9 +1100,7 @@ Enemy_Update::
 	ld a, SLIME_Y_OFFSET
 	ld [EnemyRectOffsetY], a 
 	call .generic
-	
 	jp .return 
-
 
 .birdy 
 	ld a, [EnemyStruct+1]
@@ -1101,7 +1137,7 @@ Enemy_Update::
 	ld a, [BirdyFlags]
 	and BIRDY_FLAG_ONE_WAY
 	jp nz, .birdy_one_way
-	call Enemy_MoveWithBounds
+	call Enemy_MoveWithBoundsX
 	jp .birdy_zig_zag 
 	
 .birdy_one_way
@@ -1399,6 +1435,91 @@ Enemy_Update::
 
 
 .spike 
+	ld a, [EnemyStruct+1]
+	add a, 8 
+	ld l, a 
+	ld a, [EnemyStruct]
+	adc a, 0 
+	ld h, a 			; load enemy struct pointer and offset into scratch region 
+	
+	; Load spike behavior config 
+	ld a, [hl+]
+	ld [LeftBound], a 		; left tile 
+	ld a, [hl+]
+	ld [RightBound], a 	; right tile 
+	ld a, [hl+]
+	ld [SpikeSpeed], a 			; speed 
+	ld a, [hl+]
+	ld [SpikeFlags], a			; flags  
+	ld b, a 					; b = spike flags 
+	
+	; Load spike variables 
+	ld a, [hl+]
+	ld [CurDirection], a 
+	
+	ld a, b  
+	and SPIKE_FLAG_STATIONARY
+	jp nz, .spike_finish 
+	
+	ld a, b 
+	and SPIKE_FLAG_CHASE 
+	jp nz, .spike_chase 
+	
+	ld a, b 
+	and SPIKE_FLAG_VERTICAL  
+	jp nz, .spike_vertical 
+	
+	; If reached this point, spike is to be moved horizontally 
+	ld a, [SpikeSpeed]
+	ld [EnemyXVel], a 
+	call Enemy_MoveWithBoundsX
+	jp .spike_finish
+
+.spike_vertical 
+	ld a, [SpikeSpeed]
+	ld [EnemyYVel], a 
+	ld a, [LeftBound]
+	ld [TopBound], a 
+	ld a, [RightBound]
+	ld [BottomBound], a 
+	call Enemy_MoveWithBoundsY
+	jp .spike_finish
+	
+.spike_chase
+	
+.spike_finish 
+	; save updated position
+	ld a, [EnemyStruct]
+	ld h, a 
+	ld a, [EnemyStruct+1]
+	ld l, a 
+	inc hl 
+	inc hl 
+	ld a, [EnemyX]
+	ld [hl+], a 
+	ld a, [EnemyX+1]
+	ld [hl+], a 
+	ld a, [EnemyY]
+	ld [hl+], a 
+	ld a, [EnemyY+1]
+	ld [hl+], a 
+	ld bc, 6 
+	add hl, bc 
+	ld a, [CurDirection]
+	ld [hl+], a 
+	
+	ld a, [SpikeFlags]
+	and SPIKE_FLAG_BLACK
+	ld b, a 
+	ld a, ENEMY_TILE_SPIKE
+	add a, b 						; offset by four if black spike. 
+	ld [EnemySpritePattern], a 
+	ld a, SPIKE_X_OFFSET
+	ld [EnemyRectOffsetX],a 
+	ld a, SPIKE_Y_OFFSET
+	ld [EnemyRectOffsetY], a 
+	call .generic
+	jp .return 
 	
 .return 
 	ret 
@@ -1559,8 +1680,12 @@ UpdateStars::
 	ld [hl+], a 
 	ret 
 	
-	
-Enemy_MoveWithBounds
+; Params
+; CurDirection
+; EnemyXVel
+; LeftBound
+; RightBound	
+Enemy_MoveWithBoundsX
 
 	ld a, [CurDirection]		; get cur dir 
 	cp 0 
@@ -1648,6 +1773,115 @@ Enemy_MoveWithBounds
 	
 	; check right boundary 
 	ld a, [RightBound]
+	sub c 
+	inc a 
+	add a, 32 
+	cp d 
+	jp c, .set_dir_left
+	ret
+	
+.set_dir_right
+	ld a, 1 
+	ld [CurDirection], a 
+	ret
+.set_dir_left 
+	ld a, 0 
+	ld [CurDirection], a 
+	ret 
+	
+; Params
+; CurDirection
+; EnemyYVel
+; TopBound
+; BottomBound	
+Enemy_MoveWithBoundsY
+
+	ld a, [CurDirection]		; get cur dir 
+	cp 0 
+	jp z, .move_left 
+	ld a, [EnemyYVel]
+	ld e, a 
+	ld d, 0 
+	sla e 
+	rl d 
+	sla e 
+	rl d 
+	sla e 
+	rl d 					; speed is offset by 3 shifts 
+	jp .move 
+.move_left
+	ld a, [EnemyYVel]
+	cpl 
+	ld e, a 
+	ld d, $ff 
+	sla e 
+	rl d 
+	sla e 
+	rl d 
+	sla e 
+	rl d 
+	inc de 
+.move 
+	ld a, [EnemyY]
+	ld h, a 
+	ld a, [EnemyY+1]
+	ld l, a 
+	add hl, de 			; get new enemy position 
+	ld a, l
+	ld [EnemyY+1], a 	
+	ld a, h 
+	ld [EnemyY], a 		; store new x pos 
+	
+	; Check if tile is past left bounds or right bounds 
+	ld b, a 
+	ld a, [BGFocusPixelsY]
+	ld c, a 
+	ld a, b 
+	add a, c 			; add scroll offset to get correct tile 
+	ld b, a 
+	ld a, [EnemyHeight]
+	dec a 
+	ld c, a 
+	ld a, b 
+	add a, c 
+	ld d, a 
+	
+	cp RECALL_RANGE_MAX
+	jp nc, .shift_arith
+	srl b 
+	srl b 
+	srl b
+	srl d 
+	srl d 
+	srl d 
+	jp .add_bias
+.shift_arith
+	sra b 
+	sra b 
+	sra b 
+	sra d 
+	sra d 
+	sra d 
+.add_bias
+	ld a, 32 		; use tile bias for positive compare 
+	add a, b 			; b = cur tile 
+	ld b, a 
+	ld a, 32 
+	add a, d 
+	ld d, a 
+	
+	; check left boundary 
+	ld a, [MapOriginY]
+	ld c, a 
+	ld a, [TopBound]
+	sub c 					; a = relative left 
+	sub 1 					; move boundary one tile over when going left
+	add a, 32 				; bias by 32 for positive compare 
+	cp b
+	jp nc, .set_dir_right
+	
+	; check right boundary 
+	ld a, [BottomBound]
 	sub c 
 	inc a 
 	add a, 32 
