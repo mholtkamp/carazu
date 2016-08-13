@@ -2074,10 +2074,10 @@ Enemy_MoveWithBoundsX
 	sra d 
 	sra d 
 .add_bias
-	ld a, 32 		; use tile bias for positive compare 
+	ld a, 128 		; use tile bias for positive compare 
 	add a, b 			; b = cur tile 
 	ld b, a 
-	ld a, 32 
+	ld a, 128 
 	add a, d 
 	ld d, a 
 	
@@ -2087,7 +2087,7 @@ Enemy_MoveWithBoundsX
 	ld a, [LeftBound]
 	sub c 					; a = relative left 
 	sub 1 					; move boundary one tile over when going left
-	add a, 32 				; bias by 32 for positive compare 
+	add a, 128 				; bias by 32 for positive compare 
 	cp b
 	jp nc, .set_dir_right
 	
@@ -2095,7 +2095,7 @@ Enemy_MoveWithBoundsX
 	ld a, [RightBound]
 	sub c 
 	inc a 
-	add a, 32 
+	add a, 128 
 	cp d 
 	jp c, .set_dir_left
 	ret
@@ -2183,10 +2183,10 @@ Enemy_MoveWithBoundsY
 	sra d 
 	sra d 
 .add_bias
-	ld a, 32 		; use tile bias for positive compare 
+	ld a, 128 		; use tile bias for positive compare 
 	add a, b 			; b = cur tile 
 	ld b, a 
-	ld a, 32 
+	ld a, 128 
 	add a, d 
 	ld d, a 
 	
@@ -2196,7 +2196,7 @@ Enemy_MoveWithBoundsY
 	ld a, [TopBound]
 	sub c 					; a = relative left 
 	sub 1 					; move boundary one tile over when going left
-	add a, 32 				; bias by 32 for positive compare 
+	add a, 128 				; bias by 32 for positive compare 
 	cp b
 	jp nc, .set_dir_right
 	
@@ -2204,7 +2204,7 @@ Enemy_MoveWithBoundsY
 	ld a, [BottomBound]
 	sub c 
 	inc a 
-	add a, 32 
+	add a, 128 
 	cp d 
 	jp c, .set_dir_left
 	ret
