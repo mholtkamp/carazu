@@ -167,6 +167,12 @@ DS 1
 StarsActive:
 DS 1 
 
+EnemyOAMInfo:
+DS MAX_ENEMIES * 4 
+
+EnemyIndex:
+DS 1 
+
 	SECTION "EnemyProcedures", HOME 
 	
 LoadEnemyGraphics::
@@ -205,6 +211,18 @@ ResetEnemies::
 
 	ld a, 0 
 	ld [StarsActive], a		; set stars as inactive  
+	
+	ld a, 0 
+	ld hl, EnemyOAMInfo
+	ld b, MAX_ENEMIES
+.oam_info_loop
+	ld [hl+], a 
+	ld [hl+], a 
+	ld [hl+], a 
+	ld [hl+], a 
+	dec b 
+	jp nz, .oam_info_loop
+	
 	ld hl, LocalOAM + STARS_OBJ_INDEX*4 
 	ld [hl+], a 	; disable star1 sprite 
 	ld [hl+], a 	; disable star2 sprite 
@@ -459,22 +477,27 @@ UpdateEnemies::
 	; Originally, had this as loop, but unwrapping it for minor performance increase 
 	ld hl, Enemy0 
 	ld b, ENEMY_OBJ_INDEX
+	ld c, 0 
 	call Enemy_Update
 	
 	ld hl, Enemy1 
 	ld b, ENEMY_OBJ_INDEX+4
+	ld c, 1 
 	call Enemy_Update
 	
 	ld hl, Enemy2 
 	ld b, ENEMY_OBJ_INDEX+8
+	ld c, 2
 	call Enemy_Update
 	
 	ld hl, Enemy3 
 	ld b, ENEMY_OBJ_INDEX+12
+	ld c, 3 
 	call Enemy_Update
 	
 	ld hl, Enemy4 
 	ld b, ENEMY_OBJ_INDEX+16
+	ld c, 4
 	call Enemy_Update
 	
 	
@@ -874,6 +897,9 @@ Enemy_Update::
 	ld a, b 
 	ld [OBJOffset], a 			; save obj offset 
 	
+	ld a, c 
+	ld [EnemyIndex], a 
+	
 	ld a, [hl+]
 	ld [EnemyType], a 
 	inc hl 
@@ -1026,22 +1052,22 @@ Enemy_Update::
 	ret 
 
 .generic_update_objs
-	ld a, [EnemyStruct]
-	ld h, a 
-	ld a, [EnemyStruct+1]
-	ld l, a 
-	inc hl 
-	inc hl 		; hl points at enemy rect 
-	ld a, [EnemySpritePattern]
-	ld b, a 
-	ld a, [OBJOffset]
+	ld hl, EnemyOAMInfo
+	ld b, 0 
+	ld a, [EnemyIndex]
 	ld c, a 
+	sla c 
+	sla c 
+	add hl, bc 	; point to correct area to store oam data 
+	
+	ld a, [EnemySpritePattern]
+	ld [hl+], a 
 	ld a, [EnemyRectOffsetX]
-	ld d, a 
+	ld [hl+], a 
 	ld a, [EnemyRectOffsetY]
-	ld e, a 
+	ld [hl+], a  
 	ld a, [EnemyFlip]
-	call UpdateOAMFromRect_2x2
+	ld [hl+], a 
 	
 	ld a, 1 
 	ret 
@@ -1675,7 +1701,7 @@ Enemy_Update::
 	adc a, 0 
 	ld h, a 			; load enemy struct pointer and offset into scratch region 
 	
-	; Load spike behavior config 
+	; Load plat behavior config 
 	ld a, [hl+]
 	ld [LeftBound], a 		; left tile 
 	ld a, [hl+]
@@ -1686,7 +1712,7 @@ Enemy_Update::
 	ld [PlatformFlags], a			; flags  
 	ld b, a 					; b = plat flags 
 	
-	; Load spike variables 
+	; Load plat variables 
 	ld a, [hl+]
 	ld [CurDirection], a 
 	ld a, [hl+]
@@ -1720,11 +1746,11 @@ Enemy_Update::
 	ld [PlatformTrigger], a 		; also mark trigger in case it is waiting. 
 
 .platform_behavior 
-	ld a, b 
+	ld a, [PlatformFlags] 
 	cp PLATFORM_FLAG_WAIT 
 	jp z, .platform_wait 
 	
-	ld a, b 
+	ld a, [PlatformFlags]
 	cp PLATFORM_FLAG_VERTICAL 
 	jp z, .platform_vert 
 	
@@ -1750,13 +1776,6 @@ Enemy_Update::
 	cp 1 
 	jp z, .platform_wait_move 
 
-	ld hl, EnemyRect
-	ld de, PlayerRect
-	call RectOverlapsRect_Fixed
-	cp 0  
-	jp z, .platform_update_player_pos		; no overlap, so do nothing 
-	ld a, 1 
-	ld [PlatformTrigger], a 	; else, set the trigger flag so platform will start to move 
 	jp .platform_update_player_pos 
 
 .platform_wait_move	
@@ -2197,4 +2216,63 @@ Enemy_MoveWithBoundsY
 .set_dir_left 
 	ld a, 0 
 	ld [CurDirection], a 
+	ret 
+
+UpdateEnemyOAM:
+
+	;TODO: Determine if it is necessary to zero out EnemyOAMInfo when killing or recalling an enemy.
+	; or when spawning. 
+	ld hl, Enemy0 
+	ld b, 0
+	
+.loop 
+	ld a, [hl]
+	cp ENEMY_NONE  
+	jp z, .continue 
+	push hl 		; save enemy struct addr 
+	push bc 		; save counter  (aka enemy index)
+	call Enemy_UpdateOAM
+	pop bc 
+	pop hl 
+
+.continue
+	ld de, ENEMY_DATA_SIZE
+	add hl, de 
+	inc b 
+	ld a, b 
+	cp MAX_ENEMIES
+	jp nz, .loop 
+	
+	ret 
+	
+Enemy_UpdateOAM:
+
+	sla b
+	sla b 
+	ld c, b 
+		
+	push hl 
+	ld d, 0 
+	ld e, b 
+	ld hl, EnemyOAMInfo
+	add hl, de 
+
+	
+	ld a, ENEMY_OBJ_INDEX
+	add a, c 
+	ld c, a 
+	
+	ld a, [hl+]
+	ld b, a 
+	ld a, [hl+]
+	ld d, a 
+	ld a, [hl+]
+	ld e, a 
+	ld a, [hl+]
+	
+	pop hl 
+	inc hl 
+	inc hl 		; pointing to rect now 
+	call UpdateOAMFromRect_2x2
+	
 	ret 

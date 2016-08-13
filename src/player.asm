@@ -304,7 +304,7 @@ Player_Update::
 	
 	ld a, [PlayerOnPlatform]
 	cp 1 
-	jp z, .check_jump		; if player is marked as on platform, go straight to check_jump. check if on platform still after moving. 
+	jp z, .on_platform		; if player is marked as on platform, go straight to check_jump. check if on platform still after moving. 
 	
 	; player is marked as grounded, but check if grounded 
 	; in case the player has moved off a platform 
@@ -320,6 +320,12 @@ Player_Update::
 	jp z, .check_jump 
 	ld [PlayerGrounded], a 				; save player as not grounded 
 	jp .apply_gravity
+	
+.on_platform
+	ld a, 0
+	ld [fYVelocity], a 
+	ld [fYVelocity+1], a 
+	; jp .check_jump
 
 .check_jump
 	ld a, [InputsHeld]					; player is not grounded, so check for jump

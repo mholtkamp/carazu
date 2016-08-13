@@ -895,7 +895,7 @@ Rect_CheckSpecials::
 	; Find tile in rom 
 	; First duty is to find the tile row we need to examine
 	; so get y coord and divide by 8, then mult by map width 
-	ld a, [RectY]
+	ld a, [fRectY]
 	ld b, a 
 	ld a, [BGFocusPixelsY]
 	add a, b 
@@ -917,7 +917,7 @@ Rect_CheckSpecials::
 
 	; find the number of times to loop in vertical direction 
 	; find the end y tile coords 
-	ld a, [RectY]
+	ld a, [fRectY]
 	ld c, a 
 	ld a, [RectHeight]
 	sub 1 
@@ -931,7 +931,7 @@ Rect_CheckSpecials::
 	srl c 				; c = end y tile coords 
 	
 	; find the start y tile coords 
-	ld a, [RectY]
+	ld a, [fRectY]
 	ld b, a 			; b = start pixel coords
 	ld a, [BGFocusPixelsY]
 	add a, b 
@@ -946,7 +946,7 @@ Rect_CheckSpecials::
 	ld e, a 			; e = number of times to loop per column ((end tile - start tile) + 1)
 	
 	; find the end tile x tile-coords
-	ld a, [RectX]
+	ld a, [fRectX]
 	ld c, a 
 	ld a, [RectWidth]
 	sub 1				
@@ -960,7 +960,7 @@ Rect_CheckSpecials::
 	srl c 				; c = end x tile coord
 	
 	; find first tile coords 
-	ld a, [RectX]
+	ld a, [fRectX]
 	ld b, a 			; b = start pixel coords
 	ld a, [BGFocusPixelsX]
 	add a, b 

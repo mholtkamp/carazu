@@ -95,6 +95,7 @@ GLOBAL ResetEnemyList
 GLOBAL LoadEnemyGraphics
 GLOBAL LoadEnemyList
 GLOBAL ScrollEnemies
+GLOBAL UpdateEnemyOAM
 
 
 ENDC 
