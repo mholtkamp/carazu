@@ -18,10 +18,10 @@ INCLUDE "levels/level3.inc"
 INCLUDE "tiles/special_tiles.inc"
 INCLUDE "tiles/bg_tiles_0.inc"
 
-CameraAnchorLeft EQU 64 
-CameraAnchorRight EQU 80
-CameraAnchorTop EQU 64
-CameraAnchorBottom EQU 80 
+CameraAnchorLeft EQU 70
+CameraAnchorRight EQU 72
+CameraAnchorTop EQU 72
+CameraAnchorBottom EQU 74 
 
 	SECTION "LevelData", BSS 
 	

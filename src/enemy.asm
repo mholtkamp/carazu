@@ -1747,12 +1747,12 @@ Enemy_Update::
 
 .platform_behavior 
 	ld a, [PlatformFlags] 
-	cp PLATFORM_FLAG_WAIT 
-	jp z, .platform_wait 
+	and PLATFORM_FLAG_WAIT 
+	jp nz, .platform_wait 
 	
 	ld a, [PlatformFlags]
-	cp PLATFORM_FLAG_VERTICAL 
-	jp z, .platform_vert 
+	and PLATFORM_FLAG_VERTICAL 
+	jp nz, .platform_vert 
 	
 .platform_hori
 	; intentional fall through from above if no other flags set 

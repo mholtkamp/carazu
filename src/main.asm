@@ -517,6 +517,12 @@ SwitchState::
 	call Stats_Show
 	call Stats_SaveRun
 	
+	; DEBUG 
+	ld a, 1 
+	ld [HasFermata], a 
+	ld [HasBass], a 
+	ld [HasAllegro], a 
+	
 	ld a, STATE_GAME 
 	ld [GameState], a 
 	jp .return 
