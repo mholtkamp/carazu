@@ -4,6 +4,8 @@ PLAYER_INC SET 1
 ; Variables 
 GLOBAL PlayerRect
 GLOBAL PlayerPrevYLow
+GLOBAL PlayerOnPlatform
+GLOBAL PlayerGrounded
 
 ; Procedures 
 

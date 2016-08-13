@@ -71,6 +71,9 @@ DS 1
 PlayerDamagedCounter:
 DS 1 
 
+PlayerOnPlatform:
+DS 1 
+
 	SECTION "PlayerCode", HOME 
 
 Player_Initialize::
@@ -114,6 +117,7 @@ Player_Initialize::
 	ld [PlayerPrevYLow], a 
 	ld [PlayerDamaged], a 
 	ld [PlayerDamagedCounter], a 
+	ld [PlayerOnPlatform], a 
 	ret 
 	
 
@@ -298,6 +302,10 @@ Player_Update::
 	cp 0 
 	jp z, .apply_gravity
 	
+	ld a, [PlayerOnPlatform]
+	cp 1 
+	jp z, .check_jump		; if player is marked as on platform, go straight to check_jump. check if on platform still after moving. 
+	
 	; player is marked as grounded, but check if grounded 
 	; in case the player has moved off a platform 
 	ld hl, PlayerRect
@@ -320,6 +328,10 @@ Player_Update::
 	ld a, [LastADown]
 	cp JUMP_PRESS_WINDOW
 	jp nc, .update_player_animation
+	
+	; Player is gonna jump, so in case he was on a platform, clear that flag 
+	ld a, 0 
+	ld [PlayerOnPlatform], a 
 	
 	; Adjust veloctiy
 	ld hl, JUMP_SPEED

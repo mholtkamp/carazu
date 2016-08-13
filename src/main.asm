@@ -275,11 +275,11 @@ Main_Game_Loop::
 .game 
 	; Game Logic Updates
 	call Player_Update
-	call Level_Update
 	call Update_Items
 	call UpdateEnemies
 	call UpdateBullets
 	call Stats_Update 
+	call Level_Update
 	
 	; Local OAM Updates 
 	call Player_UpdateLocalOAM

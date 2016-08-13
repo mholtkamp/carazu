@@ -69,6 +69,16 @@ ENEMY_ENTRY_DATA_SIZE EQU 8
 ; +11 = flags 
 ; +12 = current direction 
 
+;==============
+;== PLATFORM ==
+;==============
+; +8 = left/top boundary 
+; +9 = right/bottom boundary 
+; +10 = speed 
+; +11 = flags 
+; +12 = current direction
+; +13 = triggered 
+
 ; Variables 
 GLOBAL Enemies
 GLOBAL EnemyList

@@ -772,7 +772,7 @@ Bullet_UpdateEnemy4:
 	;jp .deactivate
 	
 .deactivate
-	ld hl, PlayerBullet
+	ld hl, EnemyBullet4
 	ld b, 4 
 	call Bullet_Deactivate
 	; jp .return 

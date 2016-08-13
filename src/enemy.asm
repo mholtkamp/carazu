@@ -37,6 +37,11 @@ SPIKE_Y_OFFSET EQU 3
 SPIKE_WIDTH EQU 11 
 SPIKE_HEIGHT EQU 11 
 
+PLATFORM_X_OFFSET EQU 0 
+PLATFORM_Y_OFFSET EQU 0 
+PLATFORM_WIDTH EQU 16 
+PLATFORM_HEIGHT EQU 8 
+
 
 RECALL_RANGE_MIN EQU  192 
 RECALL_RANGE_MAX EQU  224 
@@ -82,6 +87,8 @@ EnemyHeight:
 DS 1 
 EnemyPrevY:
 DS 1 
+EnemyPrevX:
+DS  1
 
 EnemyYVel:
 DS 2 
@@ -130,6 +137,15 @@ DS 1
 SpikeFlags:
 DS 1 
 
+PlatformSpeed:
+DS 1
+PlatformFlags:
+DS 1 
+PlatformTrigger:
+DS 1 
+PlatformHasPlayer:
+DS 1 
+
 TopBound: 
 DS 1 
 BottomBound:
@@ -156,7 +172,7 @@ DS 1
 LoadEnemyGraphics::
 
 	ld b, 0			; load sprite tiles 
-	ld c, 40		; tiles to load 
+	ld c, 44		; tiles to load 
 	ld d, EnemyTilesBank
 	ld e, 16 
 	ld hl, EnemyTiles
@@ -262,6 +278,8 @@ LoadEnemyList::
 	jp z, .load_shooter 
 	cp ENEMY_SPIKE 
 	jp z, .load_spike
+	cp ENEMY_PLATFORM 
+	jp z, .load_platform 
 	
 	; Unknown enemy type encountered. Possibly because of mismatch between 
 	; the number of params in list and the expected number of params 
@@ -341,6 +359,22 @@ LoadEnemyList::
 	inc de 			; no param4 
 	jp .loop 
 
+.load_platform 
+	ld a, [hl+]
+	ld [de], a 		; param0 = left/top boundary 
+	inc de 
+	ld a, [hl+]
+	ld [de], a 		; param1 = right/bottom boundary 
+	inc de 
+	ld a, [hl+]
+	ld [de], a 		; param2 = speed 
+	inc de 
+	ld a, [hl+]
+	ld [de], a 		; param3 = flags 
+	inc de 
+	inc de 
+	jp .loop 
+	
 .return 
 	ret 
 	
@@ -415,6 +449,11 @@ UpdateEnemies::
 	
 	;Update Stars 
 	call UpdateStars 
+	
+	; Set player as not on platform. Enemy platforms will reset this flag if 
+	; the player is on a platform. 
+	ld a, 0 
+	ld [PlayerOnPlatform], a 
 	
 	; Update each enemy struct first 
 	; Originally, had this as loop, but unwrapping it for minor performance increase 
@@ -644,6 +683,8 @@ Enemy_Spawn::
 	jp z, .shooter 
 	cp ENEMY_SPIKE
 	jp z, .spike 
+	cp ENEMY_PLATFORM 
+	jp z, .platform 
 	
 .slime 
 	ld a, SLIME_WIDTH
@@ -767,6 +808,33 @@ Enemy_Spawn::
 	ld b, SPIKE_X_OFFSET
 	ld c, SPIKE_Y_OFFSET
 	jp .apply_rect_offset
+	
+.platform 
+	ld a, PLATFORM_WIDTH 
+	ld [de], a 
+	inc de 
+	ld a, PLATFORM_HEIGHT 
+	ld [de], a 
+	inc de 
+	ld a, [hl+]
+	ld [de], a 				; save left boundary 
+	inc de 
+	ld a, [hl+]
+	ld [de], a				; save right boundary  
+	inc de 
+	ld a, [hl+]
+	ld [de], a				; save speed  
+	inc de 
+	ld a, [hl+]
+	ld [de], a				; save flags  
+	inc de 
+	ld a, 0 
+	ld [de], a 				; init cur direction 
+	inc de 
+	ld [de], a				; init trigger flag 
+	ld b, PLATFORM_X_OFFSET
+	ld c, PLATFORM_Y_OFFSET
+	jp .apply_rect_offset
 
 jp .return 
 	
@@ -811,6 +879,7 @@ Enemy_Update::
 	inc hl 
 	ld a, [hl+]
 	ld [EnemyX], a
+	ld [EnemyPrevX], a 
 	ld a, [hl+]
 	ld [EnemyX+1], a 
 	ld a, [hl+]
@@ -827,7 +896,7 @@ Enemy_Update::
 	cp ENEMY_NONE 
 	jp z, .return 
 	
-	; would a jump table be faster? With only 4 enemies probably not 
+	; would a jump table be faster? With only 5 enemies probably not 
 	cp ENEMY_SLIME
 	jp z, .slime 
 	cp ENEMY_BIRDY
@@ -836,6 +905,8 @@ Enemy_Update::
 	jp z, .shooter 
 	cp ENEMY_SPIKE 
 	jp z, .spike 
+	cp ENEMY_PLATFORM 
+	jp z, .platform 
 	
 	; Unknown enemy type... that's a problem
 	jp .return 
@@ -866,6 +937,8 @@ Enemy_Update::
 	cp ENEMY_SPIKE
 	jp z, .damage_player 
 	cp ENEMY_SHOOTER 
+	jp z, .generic_check_recall
+	cp ENEMY_PLATFORM 
 	jp z, .generic_check_recall
 	
 .check_damage_cond
@@ -1430,6 +1503,8 @@ Enemy_Update::
 	ld a, [BulletCounter]
 	ld [hl], a 				; save bullet counter. hl should be pointing it from beginning of .shooter_finish 
 	
+	ld a, 0 
+	ld [EnemyFlip], a 
 	call .generic
 	jp .return 
 
@@ -1586,9 +1661,167 @@ Enemy_Update::
 	ld [EnemyRectOffsetX],a 
 	ld a, SPIKE_Y_OFFSET
 	ld [EnemyRectOffsetY], a 
+	ld a, 0 
+	ld [EnemyFlip], a 
 	call .generic
 	jp .return 
 	
+	
+.platform 
+	ld a, [EnemyStruct+1]
+	add a, 8 
+	ld l, a 
+	ld a, [EnemyStruct]
+	adc a, 0 
+	ld h, a 			; load enemy struct pointer and offset into scratch region 
+	
+	; Load spike behavior config 
+	ld a, [hl+]
+	ld [LeftBound], a 		; left tile 
+	ld a, [hl+]
+	ld [RightBound], a 	; right tile 
+	ld a, [hl+]
+	ld [PlatformSpeed], a 			; speed 
+	ld a, [hl+]
+	ld [PlatformFlags], a			; flags  
+	ld b, a 					; b = plat flags 
+	
+	; Load spike variables 
+	ld a, [hl+]
+	ld [CurDirection], a 
+	ld a, [hl+]
+	ld [PlatformTrigger], a 
+	
+.platform_common 
+	ld a, 0 
+	ld [PlatformHasPlayer], a 	
+	
+	ld hl, EnemyRect
+	ld de, PlayerRect
+	call RectOverlapsRect_Fixed
+	cp 0
+	jp z, .platform_behavior
+	
+	; Player is colliding with moving platform. check if prevylow is 
+	; less than or equal to EnemyY 
+	ld a, [PlayerPrevYLow]
+	ld b, a 
+	ld a, [EnemyPrevY]
+	cp b 
+	jp c, .platform_behavior
+	
+	; Else, player collided with platform and was 
+	; previously above it or at the same height, so now mark
+	; the player as OnPlatform 
+	ld a, 1 
+	ld [PlayerOnPlatform], a 
+	ld [PlayerGrounded], a 			; when player is on platform, consider it grounded
+	ld [PlatformHasPlayer], a 		; to mark that this platform is moving the player 
+	ld [PlatformTrigger], a 		; also mark trigger in case it is waiting. 
+
+.platform_behavior 
+	ld a, b 
+	cp PLATFORM_FLAG_WAIT 
+	jp z, .platform_wait 
+	
+	ld a, b 
+	cp PLATFORM_FLAG_VERTICAL 
+	jp z, .platform_vert 
+	
+.platform_hori
+	; intentional fall through from above if no other flags set 
+	ld a, [PlatformSpeed]
+	ld [EnemyXVel], a 
+	call Enemy_MoveWithBoundsX
+	jp .platform_update_player_pos 
+	
+.platform_vert 
+	ld a, [PlatformSpeed]
+	ld [EnemyYVel], a 
+	ld a, [LeftBound]
+	ld [TopBound], a 
+	ld a, [RightBound]
+	ld [BottomBound], a 
+	call Enemy_MoveWithBoundsY
+	jp .platform_update_player_pos
+
+.platform_wait 
+	ld a, [PlatformTrigger]
+	cp 1 
+	jp z, .platform_wait_move 
+
+	ld hl, EnemyRect
+	ld de, PlayerRect
+	call RectOverlapsRect_Fixed
+	cp 0  
+	jp z, .platform_update_player_pos		; no overlap, so do nothing 
+	ld a, 1 
+	ld [PlatformTrigger], a 	; else, set the trigger flag so platform will start to move 
+	jp .platform_update_player_pos 
+
+.platform_wait_move	
+	
+	ld a, [PlatformFlags]
+	and PLATFORM_FLAG_VERTICAL
+	jp nz, .platform_vert
+	jp .platform_hori 
+	
+.platform_update_player_pos 
+	; Check if platform should be moving player 
+	ld a, [PlatformHasPlayer]
+	cp 0
+	jp z, .platform_finish
+	; Update player position based on movement 
+	ld a, [EnemyPrevX] 
+	ld b, a 
+	ld a, [EnemyX]
+	sub b 
+	ld b, a 
+	ld a, [PlayerRect]
+	add a, b 
+	ld [PlayerRect], a 
+	
+	ld a, PLAYER_HEIGHT - 1
+	ld b, a 
+	ld a, [EnemyY]				; player y pos should be platy + player height 
+	sub b 
+	ld [PlayerRect+2], a 
+	
+.platform_finish
+	; save updated position
+	ld a, [EnemyStruct]
+	ld h, a 
+	ld a, [EnemyStruct+1]
+	ld l, a 
+	inc hl 
+	inc hl 
+	ld a, [EnemyX]
+	ld [hl+], a 
+	ld a, [EnemyX+1]
+	ld [hl+], a 
+	ld a, [EnemyY]
+	ld [hl+], a 
+	ld a, [EnemyY+1]
+	ld [hl+], a 
+	ld bc, 6 
+	add hl, bc 
+	ld a, [CurDirection]
+	ld [hl+], a 
+	ld a, [PlatformTrigger]
+	ld [hl+], a 
+	
+	ld a, 0 
+	ld [EnemyFlip], a 
+	ld a, PLATFORM_X_OFFSET
+	ld [EnemyRectOffsetX],a 
+	ld a, PLATFORM_Y_OFFSET
+	ld [EnemyRectOffsetY], a 
+	ld a, ENEMY_TILE_PLATFORM 
+	ld [EnemySpritePattern], a 
+	
+	call .generic	
+	;jp .return 
+
 .return 
 	ret 
 	
