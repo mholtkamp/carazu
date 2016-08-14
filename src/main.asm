@@ -521,6 +521,7 @@ SwitchState::
 	ld a, 1 
 	ld [HasFermata], a 
 	ld [HasBass], a 
+	ld a, 0 
 	ld [HasAllegro], a 
 	
 	ld a, STATE_GAME 

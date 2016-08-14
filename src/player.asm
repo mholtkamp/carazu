@@ -23,6 +23,9 @@ PLAYER_MIN_HORI_SPEED EQU ($0 - PLAYER_MAX_HORI_SPEED)
 PLAYER_MAX_VERT_SPEED EQU $0300 
 PLAYER_MIN_VERT_SPEED EQU ($0 - PLAYER_MAX_VERT_SPEED)
 
+PLAYER_MAX_HORI_SPEED_ALLEGRO EQU $0180
+PLAYER_MIN_HORI_SPEED_ALLEGRO EQU (0 - PLAYER_MAX_HORI_SPEED_ALLEGRO)
+
 PLAYER_ANIM_AIR_PATTERN EQU 8 
 PLAYER_ANIM_IDLE_PATTERN EQU 12 
 PLAYER_ANIM_WALK0_PATTERN EQU 0
@@ -221,7 +224,7 @@ Player_Update::
 .check_bass
 	ld a, [HasBass]
 	cp 0 
-	jp z, .check_left
+	jp z, .check_allegro
 	
 	ld a, [InputsHeld]
 	and BUTTON_B 
@@ -229,7 +232,7 @@ Player_Update::
 	ld a, [InputsPrev]
 	cpl 
 	and b 
-	jp z, .check_left 
+	jp z, .check_allegro 
 	
 	; If player has bass rune, then just try to fire the bass cannon
 	ld a, [PlayerRect]
@@ -259,7 +262,14 @@ Player_Update::
 	ld [FireParamGravityX], a 
 	ld [FireParamGravityY], a 
 	call FirePlayerBullet
-	;jp .check_left
+	;jp .check_allegro
+	
+.check_allegro
+
+	ld a, [HasAllegro]
+	cp 1 
+	jp z, .check_left_allegro
+	; jp .check_left 
 	
 .check_left			
 	ld a, [InputsHeld]
@@ -290,7 +300,7 @@ Player_Update::
 	ld a, h 
 	cp (PLAYER_MIN_HORI_SPEED & $ff00) >> 8 
 	jp c, .check_left_limit
-	jp nz, .check_right_save
+	jp nz, .check_left_save
 	ld a, l 
 	cp (PLAYER_MIN_HORI_SPEED & $00ff)
 	jp nc, .check_left_save 
@@ -343,6 +353,100 @@ Player_Update::
 .check_right_limit
 	ld hl, PLAYER_MAX_HORI_SPEED
 .check_right_save
+	ld b, h 
+	ld c, l 		; bc = new hori speed 
+	ld a, b
+	ld [fXVelocity], a 
+	ld a, c 
+	ld [fXVelocity + 1], a ; save new x velocity 
+	ld a, 0 
+	ld [PlayerFlipX], a 
+	jp .check_grounded
+	
+	
+; TODO: Consider the duplicated code here
+.check_left_allegro	
+	ld a, [InputsHeld]
+	and BUTTON_LEFT
+	jp z, .check_right_allegro
+	ld a, [fXVelocity]
+	ld h, a 
+	ld a, [fXVelocity + 1]
+	ld l, a 
+	bit 7, h 
+	jp z, .check_left_allegro_add_input_vel
+	
+	;if xvel is less than PLAYER_MIN_HORI_SPEED_ALLEGRO, don't do anything!
+	ld a, h 
+	cp (PLAYER_MIN_HORI_SPEED_ALLEGRO & $ff00) >> 8  
+	jp c, .apply_drag 		; higher byte is already above max. do nothing 
+	jp nz, .check_left_allegro_add_input_vel 
+	ld a, l
+	cp (PLAYER_MIN_HORI_SPEED_ALLEGRO & $00ff) 
+	jp c, .apply_drag 		; lower byte is above max low byte and high bytes are equal. do nothing 
+	
+.check_left_allegro_add_input_vel
+	ld bc, $0 - PLAYER_HORI_ACCEL
+	add hl, bc 		; subtract hori accel
+	;limit speed 
+	bit 7, h
+	jp z, .check_left_allegro_save
+	ld a, h 
+	cp (PLAYER_MIN_HORI_SPEED_ALLEGRO & $ff00) >> 8 
+	jp c, .check_left_allegro_limit
+	jp nz, .check_left_allegro_save
+	ld a, l 
+	cp (PLAYER_MIN_HORI_SPEED_ALLEGRO & $00ff)
+	jp nc, .check_left_allegro_save 
+.check_left_allegro_limit
+	ld hl, PLAYER_MIN_HORI_SPEED_ALLEGRO
+.check_left_allegro_save
+	ld b, h 
+	ld c, l 		; bc = new hori speed 
+	ld a, b
+	ld [fXVelocity], a 
+	ld a, c 
+	ld [fXVelocity + 1], a ; save new x velocity 
+	ld a, 1
+	ld [PlayerFlipX], a 
+	jp .check_grounded
+	
+.check_right_allegro
+	ld a, [InputsHeld]
+	and BUTTON_RIGHT
+	jp z, .apply_drag 
+	ld a, [fXVelocity]
+	ld h, a 
+	ld a, [fXVelocity + 1]
+	ld l, a 
+	bit 7, h 
+	jp nz, .check_right_allegro_add_input_vel	
+	
+	;if xvel is greater than MAX_HORI_SPEED, don't do anything!
+	ld a, (PLAYER_MAX_HORI_SPEED_ALLEGRO & $ff00) >> 8 
+	cp h 
+	jp c, .apply_drag 		; higher byte is already above max. do nothing 
+	jp nz, .check_right_allegro_add_input_vel 
+	ld a, (PLAYER_MAX_HORI_SPEED_ALLEGRO & $00ff)
+	cp l 
+	jp c, .apply_drag 		; lower byte is above max low byte and high bytes are equal. do nothing 
+	
+.check_right_allegro_add_input_vel
+	ld bc, PLAYER_HORI_ACCEL
+	add hl, bc 		; bc = new hori speed 
+	;limit speed 
+	bit 7, h
+	jp nz, .check_right_allegro_save
+	ld a, (PLAYER_MAX_HORI_SPEED_ALLEGRO & $ff00) >> 8 
+	cp h 
+	jp c, .check_right_allegro_limit
+	jp nz, .check_right_allegro_save
+	ld a, (PLAYER_MAX_HORI_SPEED_ALLEGRO & $00ff)
+	cp l 
+	jp nc, .check_right_allegro_save 
+.check_right_allegro_limit
+	ld hl, PLAYER_MAX_HORI_SPEED_ALLEGRO
+.check_right_allegro_save
 	ld b, h 
 	ld c, l 		; bc = new hori speed 
 	ld a, b
