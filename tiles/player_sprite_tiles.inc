@@ -22,7 +22,7 @@
 
 
 ; Bank of tiles.
-PlayerSpriteTilesBank EQU 0
+PlayerSpriteTilesBank EQU 1
 
 ; Start of tile array.
  GLOBAL PlayerSpriteTiles

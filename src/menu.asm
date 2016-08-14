@@ -16,7 +16,7 @@ MenuCursor:
 DS 1 
 
 
-	SECTION "MenuGraphics", HOME 
+	SECTION "MenuGraphics", DATA, BANK[1]
 	
 MenuBGMapWidth  EQU 20
 MenuBGMapHeight EQU 18
@@ -25,6 +25,8 @@ MenuBGMapBank   EQU 0
 MenuTilesBank EQU 0
 MenuBGTileCount EQU 24 
 MenuSpriteTileCount EQU 1 
+
+MENU_GRAPHICS_BANK EQU 1 
 
 Str_NewGame:
 DB "NEW GAME",0
@@ -172,14 +174,14 @@ Menu_Load::
 	ld hl, MenuSpriteTiles
 	ld b, 0 	; load sprite tiles 
 	ld c,	MenuSpriteTileCount
-	ld d, 0 	; Home bank
+	ld d, MENU_GRAPHICS_BANK 	;  bank 1
 	ld e, 0 	; tile index 
 	call LoadTiles
 	
 	ld hl, MenuBGTiles
 	ld b, 1 	; load bg tiles 
 	ld c, MenuBGTileCount 
-	ld d, 0 	; Home bank 
+	ld d, MENU_GRAPHICS_BANK 	;  bank 1
 	ld e, 0 	; tile index 
 	call LoadTiles 
 	
@@ -191,10 +193,13 @@ Menu_Load::
 	ld hl, MenuBGMap 
 	ld b, 0 	; x offset 
 	ld c, 0     ; y offset 
-	ld d, 0 	; rom bank 0 
+	ld d, MENU_GRAPHICS_BANK 	; rom bank 1 
 	ld e, 0 	; BG map, not window 
 	call LoadMap
 
+	ld a, MENU_GRAPHICS_BANK
+	ld [ROM_BANK_WRITE_ADDR], a 
+	
 	ld hl, Str_NewGame
 	ld b, 6		; x coord
 	ld c, 10	; y coord  

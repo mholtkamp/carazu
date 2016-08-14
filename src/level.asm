@@ -143,6 +143,8 @@ Level_Load::
 	call ResetBullets 
 	
 	; Load special tiles 
+	ld a, SpecialTilesBank
+	ld [ROM_BANK_WRITE_ADDR], a 		; switch to proper rom bank 
 	ld bc, TILE_BANK_1 + 16*SPECIAL_TILES_INDEX
 	ld hl, SpecialTiles
 	ld de, NUM_SPECIAL_TILES*16 ; 64 characters, 16 bytes each

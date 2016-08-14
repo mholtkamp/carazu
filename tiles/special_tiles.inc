@@ -22,7 +22,7 @@
 
 
 ; Bank of tiles.
-SpecialTilesBank EQU 0
+SpecialTilesBank EQU 1
 
 ; Start of tile array.
  GLOBAL SpecialTiles

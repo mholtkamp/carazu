@@ -11,7 +11,7 @@ INCLUDE "tiles/item_tiles.inc"
 
 
 
-ITEM_DATA_SIZE EQU 8
+ITEM_DATA_SIZE EQU 8 
 ITEM_INACTIVE EQU 0 
 ITEM_ACTIVE EQU 1 
 
@@ -230,7 +230,7 @@ Load_Item_Graphics::
 	ld hl, ItemTiles
 	ld b, 0 			; sprite tiles 
 	ld c, 32    
-	ld d, 0
+	ld d, ItemTilesBank
 	ld e, ITEM_TILES
 	call LoadTiles
 	ret 

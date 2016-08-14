@@ -25,7 +25,7 @@ BG_TILES_0_INC SET 1
 
 
 ; Bank of tiles.
-BGTiles0Bank EQU 0
+BGTiles0Bank EQU 1
 BGTiles0Size EQU 46*16
 BGTiles0ColThresh EQU 24
 
