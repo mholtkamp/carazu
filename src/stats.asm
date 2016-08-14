@@ -405,8 +405,16 @@ Stats_Update::
 	ld a, RAM_DISABLE
 	ld [RAM_ENABLE_WRITE_ADDR], a
 	
-	ld b, STATE_GAME 
-	call SwitchState
+	ld a, STATE_DEATH 
+	ld [GameState], a 
+	ld a, DEATH_STATE_COUNTER_MAX
+	ld [DeathStateCounter], a 
+	; load death state palettes 
+	ld a, %00011011
+	ld [rBGP], a 
+	ld a, %00000000
+	ld [rOBP0], a 
+	; jp .update_debug_ly
 	
 .update_debug_ly
 	ld hl, DebugLYEntries

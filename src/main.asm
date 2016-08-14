@@ -58,6 +58,9 @@ DS 1
 GameState:
 DS 1 
 
+DeathStateCounter:
+DS 1 
+
 
 ;****************************************************************************************************************************************************
 ;*	cartridge header
@@ -250,10 +253,8 @@ Main_Game_Loop::
 	jp z, .game 
 	cp STATE_FINALE
 	jp z, .finale 
-	cp STATE_TRANSITION_OUT
-	jp z, .trans_out
-	cp STATE_TRANSITION_IN 
-	jp z, .trans_in 
+	cp STATE_DEATH
+	jp z, .death 
 	cp STATE_PAUSE
 	jp z, .pause 
 	cp STATE_SPLASH
@@ -272,6 +273,16 @@ Main_Game_Loop::
 	
 	jp Main_Game_Loop
 	
+.death 
+	ld a, [DeathStateCounter]
+	dec a
+	ld [DeathStateCounter], a 
+	ld b, STATE_GAME
+	call z, SwitchState
+	
+	call WaitVBLANK_Flag
+	jp Main_Game_Loop
+
 .game 
 	; Game Logic Updates
 	call Player_Update
@@ -371,8 +382,6 @@ Main_Game_Loop::
 	jp Main_Game_Loop
 	
 .finale
-.trans_out 
-.trans_in 
 .pause 
 .splash 
 	jp Main_Game_Loop
@@ -516,6 +525,11 @@ SwitchState::
 	call Stats_LoadGraphics 
 	call Stats_Show
 	call Stats_SaveRun
+	
+	; load default palettes 
+	ld a, %11100100 
+	ld [rBGP], a 
+	ld [rOBP0], a 
 	
 	; DEBUG 
 	ld a, 1 
