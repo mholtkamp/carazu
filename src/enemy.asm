@@ -167,6 +167,9 @@ DS 1
 StarsActive:
 DS 1 
 
+EnemyJumped:
+DS 1 
+
 EnemyOAMInfo:
 DS MAX_ENEMIES * 4 
 
@@ -989,6 +992,7 @@ Enemy_Update::
 	ld l, a 
 	ld a, [OBJOffset]
 	ld b, a 
+	ld c, 1 
 	call Enemy_Kill 
 	call SpawnStars
 	ld a, 0 
@@ -1847,7 +1851,11 @@ Enemy_Update::
 	
 ; hl = enemy struct 
 ; b = obj index 
+; c = jumped 
 Enemy_Kill::
+	ld a, c 
+	ld [EnemyJumped], a 
+	
 	inc hl
 	ld a, [hl]
 	dec hl 
@@ -1866,6 +1874,9 @@ Enemy_Kill::
 	ld [hl], a 	; clear the enemy entry 
 	pop hl 			; restore enemy struct 
 	call Enemy_Recall  	; to remove enemy from Enemies array and to hide sprites 
+	ld a, [EnemyJumped] 
+	cp 0 
+	ret z 
 	call Player_Bounce
 	ret 
 	
@@ -1921,6 +1932,42 @@ SpawnStars::
 	ld [Star2X], a 
 	ld a, [PlayerRect+2]
 	add a, PLAYER_HEIGHT + 4
+	ld c, a 
+	ld [StarsY], a 
+	ld a, STAR_COUNTER_MAX 
+	ld [StarsCounter], a 
+	
+	; setup star obj attributes 
+	ld hl, LocalOAM + STARS_OBJ_INDEX*4 
+	ld de, LocalOAM + STARS_OBJ_INDEX*4 + 4 
+	ld a, c 
+	add a, 16 
+	ld [hl+], a 
+	ld [de], a 
+	inc de 
+	ld a, b 
+	add a, 8 
+	ld [hl+], a 
+	ld [de], a 
+	inc de 
+	ld a, ITEM_TILE_STAR
+	ld [hl+], a
+	ld [de], a 
+	inc de 
+	ld a, 0 
+	ld [hl], a 
+	ld [de], a 
+	
+	ret 
+	
+SpawnStars_Bass::
+	ld a, 1 
+	ld [StarsActive], a 
+	ld a, [PlayerBullet+1]
+	ld b,a
+	ld [Star1X], a 
+	ld [Star2X], a 
+	ld a, [PlayerBullet+3]
 	ld c, a 
 	ld [StarsY], a 
 	ld a, STAR_COUNTER_MAX 

@@ -8,6 +8,7 @@ INCLUDE "include/level.inc"
 INCLUDE "include/sound.inc"
 INCLUDE "include/util.inc"
 INCLUDE "include/stats.inc"
+INCLUDE "include/bullet.inc"
 INCLUDE "tiles/player_sprite_tiles.inc"
 
 ; Constants
@@ -178,15 +179,15 @@ Player_Update::
 .check_fermata_activation
 	ld a, [HasFermata]
 	cp 0 
-	jp z, .check_left 
+	jp z, .check_bass 
 	
 	ld a, [PlayerGrounded]
 	cp 1
-	jp z, .check_left
+	jp z, .check_bass
 	
 	ld a, [FermataCharge]
 	cp 0 
-	jp z, .check_left
+	jp z, .check_bass
 	
 	ld a, [InputsHeld]
 	and BUTTON_A 
@@ -195,7 +196,7 @@ Player_Update::
 	and BUTTON_A 
 	cpl 
 	and b 
-	jp z, .check_left
+	jp z, .check_bass
 	
 	; All conditions met to start fermata dash 
 	ld a, 0 
@@ -215,8 +216,50 @@ Player_Update::
 	ld [fYVelocity + 1], a 				; set the y velocity to the jump velocity 
 	ld a, 0 
 	ld [PlayerGrounded], a 				; set grounded to 0 so player cant jump again
-	; jp .check_left
+	; jp .check_bass
 
+.check_bass
+	ld a, [HasBass]
+	cp 0 
+	jp z, .check_left
+	
+	ld a, [InputsHeld]
+	and BUTTON_B 
+	ld b, a 
+	ld a, [InputsPrev]
+	cpl 
+	and b 
+	jp z, .check_left 
+	
+	; If player has bass rune, then just try to fire the bass cannon
+	ld a, [PlayerRect]
+	add a, (PLAYER_WIDTH/2) + 2 
+	ld [FireParamX], a 
+	ld a, [PlayerRect+2]
+	add a, (PLAYER_HEIGHT/3)
+	ld [FireParamY], a 
+	
+	ld a, [PlayerFlipX]
+	cp 0 
+	jp z, .bass_pos_xvel
+	ld a, (0 - BASS_CANNON_SPEED) >> 8
+	ld [FireParamXVel], a 
+	ld a, (0 - BASS_CANNON_SPEED) & $00ff
+	ld [FireParamXVel+1], a 
+	jp .bass_yvel
+.bass_pos_xvel
+	ld a, BASS_CANNON_SPEED >> 8 
+	ld [FireParamXVel], a 
+	ld a, BASS_CANNON_SPEED & $00ff
+	ld [FireParamXVel+1], a 
+.bass_yvel
+	ld a, 0 
+	ld [FireParamYVel], a 
+	ld [FireParamYVel+1], a
+	ld [FireParamGravityX], a 
+	ld [FireParamGravityY], a 
+	call FirePlayerBullet
+	;jp .check_left
 	
 .check_left			
 	ld a, [InputsHeld]

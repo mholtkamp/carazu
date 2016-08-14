@@ -81,6 +81,11 @@ ENEMY_ENTRY_DATA_SIZE EQU 8
 
 ; Variables 
 GLOBAL Enemies
+GLOBAL Enemy0 
+GLOBAL Enemy1 
+GLOBAL Enemy2 
+GLOBAL Enemy3 
+GLOBAL Enemy4
 GLOBAL EnemyList
 
 ; Procedures
@@ -96,6 +101,6 @@ GLOBAL LoadEnemyGraphics
 GLOBAL LoadEnemyList
 GLOBAL ScrollEnemies
 GLOBAL UpdateEnemyOAM
-
+GLOBAL SpawnStars_Bass
 
 ENDC 

@@ -3,6 +3,7 @@ INCLUDE "include/constants.inc"
 INCLUDE "include/player.inc"
 INCLUDE "include/rect.inc"
 INCLUDE "include/globals.inc"
+INCLUDE "include/enemy.inc"
 
 INCLUDE "tiles/bullet_tiles.inc"
 
@@ -20,6 +21,7 @@ BULLET_ENEMY_OBJ_FLAGS EQU $10
 BULLET_PLAYER_OBJ_FLAGS EQU $00
 
 BULLET_PALETTE_COUNTER_MAX EQU 8
+BASS_CANNON_MAX_COUNT EQU 18 
 
 	SECTION "BulletVars", BSS 
 	
@@ -55,6 +57,9 @@ DS 1
 BulletPalette:
 DS 1 
 BulletPaletteCounter:
+DS 1 
+
+BassCounter:
 DS 1 
 
 	SECTION "BulletProcs", HOME 
@@ -319,6 +324,9 @@ FirePlayerBullet::
 	ld [hl+], a 
 	ld a, [FireParamGravityY]
 	ld [hl+], a 
+	
+	ld a, 0 
+	ld [BassCounter], a 		; Reset the bass counter 
 	
 	; Bullet is all set now, and will be updated / rendered in the Update proc
 	; But consider adding code below to update the graphics for the current frame.
@@ -832,19 +840,87 @@ Bullet_UpdatePlayer:
 	ld a, l 
 	ld [PlayerBullet + 4], a 	; save new y pos 
 	
-	ld hl, PlayerRect 
-	ld de, PlayerBullet + 1 
+	ld a, [BassCounter]
+	inc a 
+	ld [BassCounter], a 		; inc counter 
+	cp BASS_CANNON_MAX_COUNT
+	jp z, .deactivate
+	
+	
+	ld a, [Enemy0]
+	cp 0 
+	jp z, .enemy1
+	
+	ld hl, PlayerBullet+1
+	ld de, Enemy0+2 
 	call RectOverlapsRect_Fixed
-	cp 0
+	cp 0 
+	jp z, .enemy1 
+	
+	ld hl, Enemy0
+	ld b, ENEMY_OBJ_INDEX + 0
+	jp .enemy_contact 
+	
+	
+.enemy1 
+	ld a, [Enemy1]
+	cp 0 
+	jp z, .enemy2
+	
+	ld hl, PlayerBullet+1
+	ld de, Enemy1+2 
+	call RectOverlapsRect_Fixed
+	cp 0 
+	jp z, .enemy2 
+	
+	ld hl, Enemy1
+	ld b, ENEMY_OBJ_INDEX + 4
+	jp .enemy_contact 
+	
+.enemy2 
+	ld a, [Enemy2]
+	cp 0 
+	jp z, .enemy3
+	
+	ld hl, PlayerBullet+1
+	ld de, Enemy2+2 
+	call RectOverlapsRect_Fixed
+	cp 0 
+	jp z, .enemy3 
+	
+	ld hl, Enemy2
+	ld b, ENEMY_OBJ_INDEX + 8
+	jp .enemy_contact 
+	
+.enemy3 
+	ld a, [Enemy3]
+	cp 0 
+	jp z, .enemy4
+	
+	ld hl, PlayerBullet+1
+	ld de, Enemy3+2 
+	call RectOverlapsRect_Fixed
+	cp 0 
+	jp z, .enemy4 
+	
+	ld hl, Enemy3
+	ld b, ENEMY_OBJ_INDEX + 12
+	jp .enemy_contact 
+	
+.enemy4 
+	ld a, [Enemy4]
+	cp 0 
 	jp z, .check_deactivation
 	
-	ld a, [PlayerBullet + 1]		; get x 
-	add a, BULLET_ENEMY_WIDTH/2 	; get center x coord 
-	call Player_Damage 				; attempt to damage player 
-	ld hl, PlayerBullet
-	ld b, 5 						; PlayerBullet index 
-	call Bullet_Deactivate			; deactivate it
-	jp .return 
+	ld hl, PlayerBullet+1
+	ld de, Enemy4+2 
+	call RectOverlapsRect_Fixed
+	cp 0 
+	jp z, .check_deactivation 
+	
+	ld hl, Enemy4
+	ld b, ENEMY_OBJ_INDEX + 16 
+	jp .enemy_contact 
 	
 .check_deactivation
 	ld a, [PlayerBullet + 1]
@@ -860,6 +936,36 @@ Bullet_UpdatePlayer:
 	jp c, .return 
 	cp DEACTIVATION_RANGE_MAX
 	jp nc, .return 
+	jp .deactivate
+	
+.enemy_contact
+	; hl should point to enemy struct 
+	ld a, [hl]
+	cp ENEMY_SHOOTER 
+	jp z, .deactivate
+	cp ENEMY_PLATFORM
+	jp z, .deactivate
+	cp ENEMY_SPIKE
+	jp z, .spike 
+	
+.kill
+	; kill the enemy
+	; hl should contain enemy struct pointer 
+	;  b should contain enemy index 
+	ld c, 0 
+	call Enemy_Kill 
+	call SpawnStars_Bass
+	jp .deactivate
+	
+.spike 
+	push hl 
+	ld de, 11 
+	add hl, de 
+	ld a, [hl]
+	and SPIKE_FLAG_BLACK 
+	pop hl 
+	
+	jp nz, .kill 
 	;jp .deactivate
 	
 .deactivate

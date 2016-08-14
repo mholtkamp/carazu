@@ -19,6 +19,8 @@ GLOBAL FireParamYVel
 GLOBAL FireParamGravityX 
 GLOBAL FireParamGravityY
 
+GLOBAL PlayerBullet
+
 
 ; Bullet Procs 
 GLOBAL ResetBullets
