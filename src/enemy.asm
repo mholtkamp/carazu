@@ -1742,6 +1742,7 @@ Enemy_Update::
 	ld a, 1 
 	ld [PlayerOnPlatform], a 
 	ld [PlayerGrounded], a 			; when player is on platform, consider it grounded
+	ld [FermataCharge], a 
 	ld [PlatformHasPlayer], a 		; to mark that this platform is moving the player 
 	ld [PlatformTrigger], a 		; also mark trigger in case it is waiting. 
 

@@ -6,6 +6,7 @@ GLOBAL PlayerRect
 GLOBAL PlayerPrevYLow
 GLOBAL PlayerOnPlatform
 GLOBAL PlayerGrounded
+GLOBAL FermataCharge
 
 ; Procedures 
 

@@ -34,6 +34,9 @@ PLAYER_BOUNCE_SPEED EQU $0 - $0280
 PLAYER_DAMAGE_COUNTER_MAX EQU 60
 PLAYER_DAMAGE_XVEL EQU $0240
 
+FERMATA_COUNTER_MAX EQU 10
+FERMATA_DASH_SPEED EQU $0300
+
 	SECTION "PlayerData", BSS 
 
 PlayerRect:
@@ -73,6 +76,10 @@ DS 1
 
 PlayerOnPlatform:
 DS 1 
+
+FermataCharge:
+DS 1 
+
 
 	SECTION "PlayerCode", HOME 
 
@@ -118,6 +125,9 @@ Player_Initialize::
 	ld [PlayerDamaged], a 
 	ld [PlayerDamagedCounter], a 
 	ld [PlayerOnPlatform], a 
+	
+	ld a, 1 
+	ld [FermataCharge], a 
 	ret 
 	
 
@@ -155,15 +165,58 @@ Player_Update::
 	jp z, .inc_a_down_counter 
 	ld a, 0 
 	ld [LastADown], a 
-	jp .check_left
+	jp .check_fermata_activation
 .inc_a_down_counter
 	ld a, [LastADown]
 	inc a 
 	ld [LastADown], a 
 	cp 0 
-	jp nz, .check_left 
+	jp nz, .check_fermata_activation 
 	ld a, $ff 
 	ld [LastADown], a 	; cap counter at 255 
+	
+.check_fermata_activation
+	ld a, [HasFermata]
+	cp 0 
+	jp z, .check_left 
+	
+	ld a, [PlayerGrounded]
+	cp 1
+	jp z, .check_left
+	
+	ld a, [FermataCharge]
+	cp 0 
+	jp z, .check_left
+	
+	ld a, [InputsHeld]
+	and BUTTON_A 
+	ld b, a 
+	ld a, [InputsPrev]
+	and BUTTON_A 
+	cpl 
+	and b 
+	jp z, .check_left
+	
+	; All conditions met to start fermata dash 
+	ld a, 0 
+	ld [FermataCharge], a 		; deplete charge 
+	
+	; Player is gonna jump, so in case he was on a platform, clear that flag 
+	ld a, 0 
+	ld [PlayerOnPlatform], a 
+	
+	; Adjust veloctiy
+	ld hl, JUMP_SPEED
+	ld d, h
+	ld e, l 							; set yvel param for move rect subroutine call 
+	ld a, h
+	ld [fYVelocity], a 
+	ld a, l 
+	ld [fYVelocity + 1], a 				; set the y velocity to the jump velocity 
+	ld a, 0 
+	ld [PlayerGrounded], a 				; set grounded to 0 so player cant jump again
+	; jp .check_left
+
 	
 .check_left			
 	ld a, [InputsHeld]
@@ -306,6 +359,7 @@ Player_Update::
 	cp 1 
 	jp z, .on_platform		; if player is marked as on platform, go straight to check_jump. check if on platform still after moving. 
 	
+.rect_move
 	; player is marked as grounded, but check if grounded 
 	; in case the player has moved off a platform 
 	ld hl, PlayerRect
@@ -452,6 +506,7 @@ Player_Update::
 	; player hit something moving down, mark as grounded 
 	ld a, 1 
 	ld [PlayerGrounded], a 			; player collided downward so load grounded = 1 
+	ld [FermataCharge], a 
 	ld a, 0 
 	ld [PlayerSprung], a 
 	
