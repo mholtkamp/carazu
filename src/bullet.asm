@@ -965,7 +965,7 @@ Bullet_UpdatePlayer:
 	and SPIKE_FLAG_BLACK 
 	pop hl 
 	
-	jp nz, .kill 
+	jp z, .kill 
 	;jp .deactivate
 	
 .deactivate
