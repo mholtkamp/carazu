@@ -24,10 +24,8 @@ obj/player_sprite_tiles.obj
 
 obj/level_items.obj 
 obj/level_enemies.obj 
-obj/level0.obj
-obj/level1.obj 
-obj/level2.obj 
-obj/level3.obj 
+obj/level_maps.obj 
+obj/level_properties.obj 
 
 obj/song0.obj 
 

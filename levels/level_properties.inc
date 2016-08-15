@@ -1,0 +1,7 @@
+IF !DEF(LEVEL_PROPERTIES_INC)
+LEVEL_PROPERTIES_INC SET  1 
+
+; Variables 
+GLOBAL LevelProperties 
+
+ENDC

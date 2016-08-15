@@ -9,10 +9,8 @@ INCLUDE "include/bullet.inc"
 ; Level includes 
 INCLUDE "levels/level_items.inc"
 INCLUDE "levels/level_enemies.inc"
-INCLUDE "levels/level0.inc"
-INCLUDE "levels/level1.inc"
-INCLUDE "levels/level2.inc"
-INCLUDE "levels/level3.inc"
+INCLUDE "levels/level_maps.inc"
+INCLUDE "levels/level_properties.inc"
 
 ; Tile Set includes
 INCLUDE "tiles/special_tiles.inc"
@@ -94,6 +92,21 @@ DS 1
 LastLoad:
 DS 1 
 
+MapTileSet:
+DS 1 
+
+PlayerSpawnX:
+DS 1 
+PlayerSpawnY:
+DS 1 
+
+EnemyListPointer:
+DS 2 
+ItemListPointer:
+DS 2 
+MapDataPointer:
+DS 2 
+
 Scratch:
 DS 1 
 
@@ -161,191 +174,188 @@ Level_Load::
 	; Load the level 
 	ld a, [LevelNum]
 	sla a 
-	sla a 			; mult by four to get jump table offset 
+	sla a 			
+	sla a 
+	sla a 				; multiply level num by 16 to get offset into level properties data array 
 	ld c, a 
-	ld b, 0 		; bc = jump table offset 
+	ld b, 0 		; bc = offset from LevelProperties label 
 	
-	ld hl, .jump_table
-	add hl, bc 		; hl = address to jump 
+	ld hl, LevelProperties
+	add hl, bc 				; hl points to properties structure needed 
 	
-	jp [hl]
+	; Load all level properties first 
+	ld a, [hl+]
+	ld [MapWidth], a 
+	ld a, [hl+]
+	ld [MapHeight], a 
+	ld a, [hl+]
+	ld [MapBank], a 
+	ld a, [hl+]
+	ld [MapTileSet], a 
 	
-.jump_table 
-	jp .load_0
-	nop 
-	jp .load_1 
-	nop 
-	jp .load_2
-	nop 
-	jp .load_3 
-	nop 
+	ld a, [hl+]
+	ld [MapOriginX], a 
+	ld a, [hl+]
+	ld [MapOriginY], a 
+	ld a, [hl+]
+	ld [PlayerSpawnX], a 
+	ld a, [hl+]
+	ld [PlayerSpawnY], a 
 	
-	ret 
+	; Store pointers in big endian (convert from RGBDS little endian)
+	ld a, [hl+]
+	ld [ItemListPointer+1], a 
+	ld a, [hl+]
+	ld [ItemListPointer], a 
 	
-.load_0 
-	ld b, Level0MapWidth
-	ld c, Level0MapHeight
-	ld d, Level0MapOriginX 
-	ld e, Level0MapOriginY
-	ld h, Level0MapBank
-	call _Level_LoadAttributes0
+	ld a, [hl+]
+	ld [EnemyListPointer+1], a 
+	ld a, [hl+]
+	ld [EnemyListPointer], a 
 	
-	ld de, Level0MapOriginIndex
-	ld hl, Level0MapOriginIndex + Level0MapWidth * VRAM_MAP_HEIGHT
-	call _Level_LoadAttributes1
+	ld a, [hl+]
+	ld [MapDataPointer+1], a 
+	ld a, [hl+]
+	ld [MapDataPointer], a 
 	
-	ld a, Level0TileSet
-	call _Level_LoadTileSet
+	; All properties loaded. Now calculate other information needed.
+	; MapOriginIndex = MapOriginX + MapOriginY * MapWidth 
+	ld h, 0 
+	ld a, [MapOriginY]
+	ld l, a 			; hl = map origin Y
 	
-	ld hl, Level0Map
-	call _Level_LoadMap
+	ld b, h 
+	ld c, l 			; bc = map origin y
 	
-	ld hl, Level0Items
-	call Load_Items
+	ld a, [MapWidth]
+	cp 32 
+	jp z, .mult_32 
+	cp 64 
+	jp z, .mult_64 
+	cp 128 
+	jp z, .mult_128
 	
-	ld hl, Level0Enemies
-	call LoadEnemyList
-	
-	ld b, Level0SpawnX
-	ld c, Level0SpawnY 
-	call Player_SetPositionFromTiles
-	jp .return 
-	
-.load_1 
-	ld b, Level1MapWidth
-	ld c, Level1MapHeight
-	ld d, Level1MapOriginX 
-	ld e, Level1MapOriginY
-	ld h, Level1MapBank
-	call _Level_LoadAttributes0
-	
-	ld de, Level1MapOriginIndex
-	ld hl, Level1MapOriginIndex + Level1MapWidth * VRAM_MAP_HEIGHT
-	call _Level_LoadAttributes1
-	
-	ld a, Level1TileSet
-	call _Level_LoadTileSet
-	
-	ld hl, Level1Map
-	call _Level_LoadMap
-	
-	ld hl, Level1Items
-	call Load_Items
-	
-	ld hl, Level1Enemies
-	call LoadEnemyList
-	
-	ld b, Level1SpawnX
-	ld c, Level1SpawnY 
-	call Player_SetPositionFromTiles
-	jp .return 
-	
-.load_2
-	ld b, Level2MapWidth
-	ld c, Level2MapHeight
-	ld d, Level2MapOriginX 
-	ld e, Level2MapOriginY
-	ld h, Level2MapBank
-	call _Level_LoadAttributes0
-	
-	ld de, Level2MapOriginIndex
-	ld hl, Level2MapOriginIndex + Level2MapWidth * VRAM_MAP_HEIGHT
-	call _Level_LoadAttributes1
-	
-	ld a, Level2TileSet
-	call _Level_LoadTileSet
-	
-	ld hl, Level2Map
-	call _Level_LoadMap
-	
-	ld hl, Level2Items
-	call Load_Items
-	
-	ld hl, Level2Enemies
-	call LoadEnemyList
-	
-	ld b, Level2SpawnX
-	ld c, Level2SpawnY 
-	call Player_SetPositionFromTiles
-	jp .return 
-	
-.load_3
-	ld b, Level3MapWidth
-	ld c, Level3MapHeight
-	ld d, Level3MapOriginX 
-	ld e, Level3MapOriginY
-	ld h, Level3MapBank
-	call _Level_LoadAttributes0
-	
-	ld de, Level3MapOriginIndex
-	ld hl, Level3MapOriginIndex + Level3MapWidth * VRAM_MAP_HEIGHT
-	call _Level_LoadAttributes1
-	
-	ld a, Level3TileSet
-	call _Level_LoadTileSet
-	
-	ld hl, Level3Map
-	call _Level_LoadMap
-	
-	ld hl, Level3Items
-	call Load_Items
-	
-	ld hl, Level3Enemies
-	call LoadEnemyList
-	
-	ld b, Level3SpawnX
-	ld c, Level3SpawnY 
-	call Player_SetPositionFromTiles
+	; Improper map width. must be 32/64/128 
 	jp .return 
 
+.mult_32
+	sla l 
+	rl h 
+	sla l 
+	rl h 
+	sla l 
+	rl h 
+	sla l 
+	rl h 
+	sla l 
+	rl h 			; shift left five times to mult by 32 
+	jp .add_origin_x
 	
+.mult_64 
+	sla l 
+	rl h 
+	sla l 
+	rl h 
+	sla l 
+	rl h 
+	sla l 
+	rl h 
+	sla l 
+	rl h
+	sla l 
+	rl h 			; shift left six times to mult by 64 	
+	jp .add_origin_x
+	
+.mult_128 
+	sla l 
+	rl h 
+	sla l 
+	rl h 
+	sla l 
+	rl h 
+	sla l 
+	rl h 
+	sla l 
+	rl h
+	sla l 
+	rl h 
+	sla l 
+	rl h 			; shift left seven times to mult by 128	
+	jp .add_origin_x
+	
+.add_origin_x
+	ld a, [MapOriginX]
+	ld c, a 
+	ld b, 0 
+	add hl, bc 			; add the MapOriginX to get the correct MapOriginIndex (into map data array)
+	
+	ld a, h 
+	ld [MapOriginIndex], a 
+	ld a, l 
+	ld [MapOriginIndex+1], a 	; save map origin index 
+	
+	; MapOriginIndexPlus = MapOriginIndex + VRAM_MAP_HEIGHT*MapWidth 
+	ld a, [MapWidth]
+	ld c, a 
+	ld b, 0 			; bc  = map width 
+	
+	sla c 
+	rl b 
+	sla c 
+	rl b 
+	sla c 
+	rl b 
+	sla c 
+	rl b 			; mult by 16 
+	
+	add hl, bc 		
+	ld a, [MapWidth]
+	ld c, a 
+	ld b, 0 
+	
+	add hl, bc 
+	add hl, bc 		; add the width twice more to finish the mult by VRAM_MAP_HEIGHT
+	
+	ld a, h 
+	ld [MapOriginIndexPlus], a 
+	ld a, l 
+	ld [MapOriginIndexPlus+1], a 
+	
+	; Load tile set 
+	ld a, [MapTileSet]
+	call _Level_LoadTileSet
+	
+	ld a, [MapDataPointer]
+	ld h, a 
+	ld a, [MapDataPointer+1]
+	ld l, a 
+	call _Level_LoadMap 
+	
+	ld a, [ItemListPointer]
+	ld h, a 
+	ld a, [ItemListPointer+1]
+	ld l, a 
+	call Load_Items
+	
+	ld a, [EnemyListPointer]
+	ld h, a 
+	ld a, [EnemyListPointer+1]
+	ld l, a 
+	call LoadEnemyList
+	
+	ld a, [PlayerSpawnX]
+	ld b, a 
+	ld a, [PlayerSpawnY]
+	ld c, a 
+	call Player_SetPositionFromTiles
+	;jp .return 
+
 .return
 	call Player_UpdateLocalOAM
 	call _Level_LoadBorders
 	call _Level_CalcScreenRect
 	ret 
 	
-
-; _Level_LoadAttributes
-;  b = map width 
-;  c = map height
-;  d = map origin X
-;  e = map origin Y
-;  h = map width shift
-_Level_LoadAttributes0::
-
-	ld a, b 
-	ld [MapWidth], a 			; save map width 
-	ld a, c 
-	ld [MapHeight], a 			; save map height 
-	
-	ld a, d 
-	ld [MapOriginX], a 			; save origin x-coord 
-	ld a, e 
-	ld [MapOriginY], a 			; save origin y-coord 
-	
-	ld a, h 
-	ld [MapBank], a 			; save map bank 
-	
-	ret 
-	
-	
-; _Level_LoadAttributes1
-; de = origin index 
-; hl = origin plus index (for loading bottom row)
-_Level_LoadAttributes1::
-
-	ld a, d
-	ld [MapOriginIndex], a 
-	ld a, e 
-	ld [MapOriginIndex + 1], a 
-	
-	ld a, h 
-	ld [MapOriginIndexPlus], a 
-	ld a, l 
-	ld [MapOriginIndexPlus + 1], a
-	
-	ret 
 	
 ; _Level_LoadMap 
 ; hl = map data address (beginning of entire map)

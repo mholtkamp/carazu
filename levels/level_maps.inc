@@ -1,0 +1,9 @@
+IF !DEF(LEVEL_MAPS)
+LEVEL_MAPS SET 1 
+
+GLOBAL Level0Map 
+GLOBAL Level1Map
+GLOBAL Level2Map 
+GLOBAL Level3Map 
+
+ENDC 
