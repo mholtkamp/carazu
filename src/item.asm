@@ -6,6 +6,7 @@ INCLUDE "include/level.inc"
 INCLUDE "include/stats.inc"
 INCLUDE "include/rect.inc"
 INCLUDE "include/player.inc"
+INCLUDE "include/splash.inc"
 
 INCLUDE "tiles/item_tiles.inc"
 
@@ -535,6 +536,12 @@ Item_Consume::
 	jp z, .exe_heart
 	cp ITEM_BUBBLE
 	jp z, .exe_bubble 
+	cp ITEM_FERMATA_RUNE
+	jp z, .exe_fermata 
+	cp ITEM_BASS_RUNE
+	jp z, .exe_bass 
+	cp ITEM_ALLEGRO_RUNE
+	jp z, .exe_allegro 
 	
 	; Rest of items not implemented yet 
 	jp .return 
@@ -557,7 +564,33 @@ Item_Consume::
 .exe_bubble_no_clamp
 	ld [PlayerBubbles], a 
 	jp .return 
-
+	
+.exe_fermata
+	ld a, 1 
+	ld [HasFermata], a 		
+	ld a, SPLASH_FERMATA 
+	ld [SplashType], a 
+	ld b, STATE_SPLASH 
+	call SwitchState 
+	jp .return 
+	
+.exe_bass 
+	ld a, 1 
+	ld [HasBass], a 
+	ld a, SPLASH_BASS 
+	ld [SplashType], a 
+	ld b, STATE_SPLASH
+	call SwitchState
+	jp .return 
+	
+.exe_allegro 
+	ld a, 1 
+	ld [HasAllegro], a 
+	ld a, SPLASH_ALLEGRO
+	ld [SplashType], a 
+	ld b, STATE_SPLASH
+	call SwitchState
+	jp .return 
 
 .return
 	ret 

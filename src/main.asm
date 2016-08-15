@@ -26,6 +26,7 @@
 	INCLUDE "include/item.inc"
 	INCLUDE "include/enemy.inc"
 	INCLUDE "include/bullet.inc"
+	INCLUDE "include/splash.inc"
 	
 ;****************************************************************************************************************************************************
 ;*	user data (constants)
@@ -192,7 +193,6 @@ Start::
 	ldh [rLCDC], a ;turn off LCD
 	
 	; Initialize graphics
-	call CLEAR_MAP
 	call ClearOAM
 	
 	; Load Save file 
@@ -282,6 +282,12 @@ Main_Game_Loop::
 	
 	call WaitVBLANK_Flag
 	jp Main_Game_Loop
+	
+.splash 
+	call Splash_Update
+	
+	call WaitVBLANK_Flag
+	jp Main_Game_Loop
 
 .game 
 	; Game Logic Updates
@@ -306,6 +312,10 @@ Main_Game_Loop::
 	; switch to correct rom bank for vblank routine 
 	ld a, [MapBank]
 	ld [ROM_BANK_WRITE_ADDR], a 
+	
+	ld a, [GameState]
+	cp STATE_SPLASH
+	jp z, Main_Game_Loop		; skip vblank routine if not in game state anymore 
 	
 	; Wait for VBLANK interval 
 	call WaitVBLANK_Flag
@@ -383,7 +393,6 @@ Main_Game_Loop::
 	
 .finale
 .pause 
-.splash 
 	jp Main_Game_Loop
 	
 WaitVBLANK_Flag::
@@ -448,9 +457,6 @@ ClearOAM::
 	jr nz, .loop_1
 	
 	ret
-	
-CLEAR_MAP::
-	ret
 
 DrawLY::
 	ld hl, $9831 
@@ -506,12 +512,20 @@ SwitchState::
 	jp z, .switch_menu
 	cp STATE_GAME 
 	jp z, .switch_game
+	cp STATE_SPLASH 
+	jp z, .switch_splash 
 
 .switch_menu 
 	call Menu_Load
 	ld c, 0 
 	call LoadSong
 	ld a, STATE_MENU
+	ld [GameState], a 
+	jp .return 
+	
+.switch_splash 
+	call Splash_Load 
+	ld a, STATE_SPLASH 
 	ld [GameState], a 
 	jp .return 
 	
@@ -532,11 +546,11 @@ SwitchState::
 	ld [rOBP0], a 
 	
 	; DEBUG 
-	ld a, 1 
-	ld [HasFermata], a 
-	ld [HasBass], a 
-	ld a, 0 
-	ld [HasAllegro], a 
+	;ld a, 1 
+	;ld [HasFermata], a 
+	;ld [HasBass], a 
+	;ld a, 0 
+	;ld [HasAllegro], a 
 	
 	ld a, STATE_GAME 
 	ld [GameState], a 

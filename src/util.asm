@@ -15,7 +15,7 @@ DS 2
 	SECTION "UtilProcedures", HOME 
 	
 ; hl = ROM tile address
-; b  = 0: Sprite Tiles   1: BG Tiles 
+; b  = 0: Sprite Tiles   1: BG Tiles 2: Shared 
 ; c  = Number of tiles to load 
 ; d  = rom bank 
 ; e  = tile index offset in vram 
@@ -42,6 +42,11 @@ LoadTiles::
 	ld a, b 
 	cp 0 
 	jp z, .use_sprite_tile_address
+	cp 1
+	jr z, .use_bg_tile_address
+	ld hl, TILE_BANK_SHARED
+	jr .get_final_vram_addr
+.use_bg_tile_address 
 	ld hl, TILE_BANK_1
 	jp .get_final_vram_addr 
 .use_sprite_tile_address
@@ -203,7 +208,32 @@ WriteText::
 	ret z 
 	
 	add a, 32 			; map entry =  ascii val - ' ' + 64 
+	add a, -128			; offset from negative start of full font 
 	ld [hl+], a 
 	inc de 
 	jp .loop 
 	
+	
+; b = vram map number. 0 = MAP_0     1 = MAP_1
+ClearMap::
+
+	ld a, b 
+	cp 0 
+	jp z, .map0
+	ld hl, MAP_1 
+	jp .clear 
+.map0 
+	ld hl, MAP_0 
+.clear 
+	ld bc, 32*32
+	
+.loop 
+	ld a, 0 
+	ld [hl+], a 
+	dec bc 
+	
+	ld a, b 
+	or c 
+	jp nz, .loop 
+	
+	ret 

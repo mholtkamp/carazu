@@ -24,4 +24,7 @@ GLOBAL LoadMap
 ; d = 0: BG, 1: Window 
 GLOBAL WriteText
 
+; b = vram map number. 0 = MAP_0     1 = MAP_1
+GLOBAL ClearMap
+
 ENDC 

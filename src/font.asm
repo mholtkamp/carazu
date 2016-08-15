@@ -3,7 +3,7 @@ INCLUDE "include/constants.inc"
 
 	SECTION "FontTiles", DATA, BANK[1]
 
-FullFontVRAMAddress EQU $9400		; 64 characters 
+FullFontVRAMAddress EQU $8c00		; 64 characters 
 NumbersFontVRAMAddress EQU $9600	; 16 characters
 FontTilesBank EQU 1 
 

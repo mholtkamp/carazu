@@ -13,6 +13,7 @@ obj/stats.obj
 obj/item.obj 
 obj/enemy.obj
 obj/bullet.obj 
+obj/splash.obj 
 
 obj/special_tiles.obj 
 obj/item_tiles.obj 

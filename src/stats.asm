@@ -452,6 +452,10 @@ Stats_Show::
 	ld a, STATS_WINDOW_X_POS 
 	ld [rWX], a 
 	
+	; Put the bubble map entry in because that will never change 
+	ld a, BUBBLE_TILE_INDEX
+	ld [MAP_1 + BUBBLE_ENTRY_X], a 
+	
 	; Enable window in lcdc 
 	ld hl, rLCDC
 	set 6, [hl]
