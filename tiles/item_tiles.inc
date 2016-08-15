@@ -22,7 +22,7 @@
 
 
 ; Bank of tiles.
-ItemTilesBank EQU 1
+ItemTilesBank EQU 0
 
 ; Start of tile array.
  GLOBAL ItemTiles

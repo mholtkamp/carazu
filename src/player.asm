@@ -41,6 +41,8 @@ PLAYER_DAMAGE_XVEL EQU $0240
 FERMATA_COUNTER_MAX EQU 10
 FERMATA_DASH_SPEED EQU $0300
 
+FERMATA_PULSE_COUNTER_MAX EQU 6
+
 	SECTION "PlayerData", BSS 
 
 PlayerRect:
@@ -84,6 +86,13 @@ DS 1
 FermataCharge:
 DS 1 
 
+FermataPulseCounter:
+DS 1 
+
+FermataPulseX:
+DS 1 
+FermataPulseY:
+DS 1 
 
 	SECTION "PlayerCode", HOME 
 
@@ -129,6 +138,7 @@ Player_Initialize::
 	ld [PlayerDamaged], a 
 	ld [PlayerDamagedCounter], a 
 	ld [PlayerOnPlatform], a 
+	ld [FermataPulseCounter], a 
 	
 	ld a, 1 
 	ld [FermataCharge], a 
@@ -219,6 +229,15 @@ Player_Update::
 	ld [fYVelocity + 1], a 				; set the y velocity to the jump velocity 
 	ld a, 0 
 	ld [PlayerGrounded], a 				; set grounded to 0 so player cant jump again
+	
+	; set pulse counter for visual effect. and init pulse location 
+	ld a, FERMATA_PULSE_COUNTER_MAX
+	ld [FermataPulseCounter], a 
+	ld a, [PlayerRect]
+	ld [FermataPulseX], a 
+	ld a, [PlayerRect+2]
+	add a, PLAYER_HEIGHT 
+	ld [FermataPulseY], a 
 	; jp .check_bass
 
 .check_bass
@@ -724,6 +743,41 @@ Player_Update::
 	
 Player_UpdateLocalOAM::
 
+	; Update fermata pulse visual 
+	ld a, [FermataPulseCounter]
+	cp 0 
+	jp z, .no_pulse 
+	
+	; Dec counter 
+	dec a 
+	ld [FermataPulseCounter], a 		; save new counter val 
+	ld a, [FermataPulseY] 
+	inc a 
+	ld [FermataPulseY], a 
+	
+	ld hl, LocalOAM + PULSE_OBJ_INDEX*4
+	add a, 16 
+	ld [hl+], a 
+	ld a, [FermataPulseX]
+	add a, 8 
+	ld [hl+], a 
+	ld a, ITEM_TILE_FERMATA_PULSE 
+	ld [hl+], a 
+	ld a, 0 
+	ld [hl+], a 
+	jp .update_player_oam
+	
+.no_pulse 
+	ld a, 0 
+	ld hl, LocalOAM + PULSE_OBJ_INDEX*4 
+	ld [hl+], a 
+	ld [hl+], a 
+	;jp .update_player_oam
+
+	
+	
+	
+.update_player_oam
 	; Update player OAM 
 	ld hl, PlayerRect			
 	ld a, [PlayerSpritePattern]

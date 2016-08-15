@@ -914,6 +914,13 @@ _Level_Scroll::
 	add a, b 
 	ld [PlayerPrevYLow], a 
 	
+	ld a, [FermataPulseX]
+	add a, d 
+	ld [FermataPulseX], a 
+	ld a, [FermataPulseY]
+	add a, e 
+	ld [FermataPulseY], a 
+	
 	; d = xshift 
 	; e = yshift
 	call Scroll_Items

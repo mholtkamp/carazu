@@ -7,6 +7,8 @@ GLOBAL PlayerPrevYLow
 GLOBAL PlayerOnPlatform
 GLOBAL PlayerGrounded
 GLOBAL FermataCharge
+GLOBAL FermataPulseX
+GLOBAL FermataPulseY
 
 ; Procedures 
 
