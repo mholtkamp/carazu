@@ -1,18 +1,16 @@
-INCLUDE "tiles/bg_tiles_0.inc"
-
-; BG_TILES_0.Z80
+; BG_TILES_0_EXP.Z80
 ;
 ; Tile Source File.
 ;
 ; Info:
 ;   Section              : BGTiles0
-;   Bank                 : 0
+;   Bank                 : 1
 ;   Form                 : All tiles as one unit.
 ;   Format               : Gameboy 4 color.
 ;   Compression          : None.
 ;   Counter              : None.
 ;   Tile size            : 8 x 8
-;   Tiles                : 0 to 45
+;   Tiles                : 0 to 57
 ;
 ;   Palette colors       : None.
 ;   SGB Palette          : None.
@@ -143,4 +141,4 @@ DB $56,$00,$6A,$00,$56,$00,$6A,$00
 DB $00,$00,$00,$00,$00,$00,$00,$00
 DB $00,$00,$00,$00,$00,$00,$00,$00
 
-; End of BG_TILES_0.Z80
+; End of BG_TILES_0_EXP.Z80

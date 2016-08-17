@@ -1,4 +1,4 @@
-; BG_TILES_0.INC
+; BG_TILES_0_EXP.INC
 ;
 ; Include File.
 ;
@@ -23,10 +23,8 @@
 
 ; Bank of tiles.
 BGTiles0Bank EQU 1
-BGTiles0Size EQU 57*16
-BGTiles0ColThresh EQU 24
 
 ; Start of tile array.
  GLOBAL BGTiles0
 
-; End of BG_TILES_0.INC
+; End of BG_TILES_0_EXP.INC

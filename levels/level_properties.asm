@@ -9,15 +9,15 @@ INCLUDE "levels/level_maps.inc"
 LevelProperties:
 
 Level0Props:
-DB 64			; Map Width 
+DB 32			; Map Width 
 DB 32 			; Map Height 
 DB 1 			; Map Bank 
 DB 0 			; Tileset 
 
 DB 0 			; Map Origin X
-DB 12 			; Map Origin Y
+DB 14 			; Map Origin Y
 DB 2 			; Player Spawn X
-DB 22 			; Player Spawn Y
+DB 28 			; Player Spawn Y
 
 DW Level0Items			; Item List Pointer
 DW Level0Enemies		; Enemy List Pointer 
@@ -26,13 +26,13 @@ DB 0,0 					; 2 extra bytes to make 16-bytes long
 
 
 Level1Props:
-DB 32			; Map Width 
+DB 64			; Map Width 
 DB 32 			; Map Height 
 DB 1 			; Map Bank 
 DB 0 			; Tileset 
 
 DB 0 			; Map Origin X
-DB 12 			; Map Origin Y
+DB 14 			; Map Origin Y
 DB 2 			; Player Spawn X
 DB 28 			; Player Spawn Y
 
@@ -43,15 +43,15 @@ DB 0,0 					; 2 extra bytes to make 16-bytes long
 
 
 Level2Props:
-DB 32			; Map Width 
-DB 128 			; Map Height 
-DB 1 			; Map Bank 
+DB 64			; Map Width 
+DB 32 			; Map Height 
+DB 2 			; Map Bank 
 DB 0 			; Tileset 
 
 DB 0 			; Map Origin X
 DB 0 			; Map Origin Y
 DB 2 			; Player Spawn X
-DB 8 			; Player Spawn Y
+DB 7 			; Player Spawn Y
 
 DW Level2Items			; Item List Pointer
 DW Level2Enemies		; Enemy List Pointer 

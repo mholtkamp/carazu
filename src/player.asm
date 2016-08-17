@@ -32,7 +32,12 @@ PLAYER_ANIM_WALK0_PATTERN EQU 0
 PLAYER_ANIM_WALK1_PATTERN EQU 4 
 
 JUMP_PRESS_WINDOW EQU 5 
+
 SPRING_UP_SPEED EQU $0 - $0500 
+SPRING_DOWN_SPEED EQU $0300 
+SPRING_RIGHT_SPEED EQU $0500 
+SPRING_LEFT_SPEED EQU $0 - $0500
+
 PLAYER_SPRUNG_UP EQU 1
 PLAYER_BOUNCE_SPEED EQU $0 - $0280
 PLAYER_DAMAGE_COUNTER_MAX EQU 60
@@ -707,6 +712,12 @@ Player_Update::
 	jp nz, .resolve_spikes
 	bit BIT_SPRING_UP, b 
 	jp nz, .resolve_spring_up
+	bit BIT_SPRING_RIGHT, b
+	jp nz, .resolve_spring_right 
+	bit BIT_SPRING_LEFT, b
+	jp nz, .resolve_spring_left 
+	bit BIT_SPRING_DOWN, b
+	jp nz, .resolve_spring_down 
 	bit BIT_DOOR, b 
 	jp nz, .resolve_door 
 	jp .return 
@@ -725,6 +736,30 @@ Player_Update::
 	ld [PlayerGrounded], a 
 	ld a, PLAYER_SPRUNG_UP 
 	ld [PlayerSprung], a 
+	jp .return 
+	
+.resolve_spring_down 
+	ld a, (SPRING_DOWN_SPEED >> 8)
+	ld [fYVelocity], a 
+	ld a, (SPRING_DOWN_SPEED & $00ff)
+	ld [fYVelocity + 1], a 
+	ld a, 0 
+	jp .return 
+	
+.resolve_spring_right 
+	ld a, (SPRING_RIGHT_SPEED >> 8)
+	ld [fXVelocity], a 
+	ld a, (SPRING_RIGHT_SPEED & $00ff)
+	ld [fXVelocity + 1], a 
+	ld a, 0 
+	jp .return 
+	
+.resolve_spring_left
+	ld a, (SPRING_LEFT_SPEED >> 8)
+	ld [fXVelocity], a 
+	ld a, (SPRING_LEFT_SPEED & $00ff)
+	ld [fXVelocity + 1], a 
+	ld a, 0 
 	jp .return 
 	
 .resolve_door 
