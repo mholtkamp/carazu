@@ -1278,7 +1278,7 @@ Enemy_Update::
 .birdy_zig_zag
 	ld a, [BirdyFlags]
 	and BIRDY_FLAG_ZIG_ZAG 
-	jp z, .birdy_finish
+	jp z, .birdy_bomb
 	ld a, [YOffset]
 	bit 7, a 		; bit 7 stores moving direction 
 	jp nz, .birdy_zig_zag_up

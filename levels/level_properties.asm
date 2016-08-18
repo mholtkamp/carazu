@@ -60,15 +60,15 @@ DB 0,0 					; 2 extra bytes to make 16-bytes long
 
 
 Level3Props:
-DB 128			; Map Width 
-DB 128 			; Map Height 
+DB 64			; Map Width 
+DB 64 			; Map Height 
 DB 2 			; Map Bank 
 DB 0 			; Tileset 
 
-DB 104 			; Map Origin X
-DB 0 			; Map Origin Y
-DB 114 			; Player Spawn X
-DB 8 			; Player Spawn Y
+DB 0 			; Map Origin X
+DB 38 			; Map Origin Y
+DB 4 			; Player Spawn X
+DB 47 			; Player Spawn Y
 
 DW Level3Items			; Item List Pointer
 DW Level3Enemies		; Enemy List Pointer 
