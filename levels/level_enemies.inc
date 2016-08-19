@@ -5,6 +5,8 @@ GLOBAL Level0Enemies
 GLOBAL Level1Enemies
 GLOBAL Level2Enemies
 GLOBAL Level3Enemies
+GLOBAL Level4Enemies
+
 
 
 ENDC 

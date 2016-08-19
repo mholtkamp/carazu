@@ -5,5 +5,6 @@ GLOBAL Level0Map
 GLOBAL Level1Map
 GLOBAL Level2Map 
 GLOBAL Level3Map 
+GLOBAL Level4Map
 
 ENDC 
