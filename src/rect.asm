@@ -1002,6 +1002,17 @@ Rect_CheckSpecials::
 	cp SPECIAL_TILE_SPRING_RIGHT_2
 	jp z, .set_spring_right 
 	
+	cp SPECIAL_TILE_SPRING_LEFT_1
+	jp z, .set_spring_left
+	cp SPECIAL_TILE_SPRING_LEFT_2
+	jp z, .set_spring_left 
+	
+	cp SPECIAL_TILE_SPRING_DOWN_1
+	jp z, .set_spring_down
+	cp SPECIAL_TILE_SPRING_DOWN_2
+	jp z, .set_spring_down 
+	
+	
 	cp SPECIAL_TILE_DOOR_2  
 	jp z, .set_door 
 	
@@ -1020,6 +1031,14 @@ Rect_CheckSpecials::
 
 .set_spring_right
 	set BIT_SPRING_RIGHT, b 
+	jp .continue 
+	
+.set_spring_left 
+	set BIT_SPRING_LEFT, b 
+	jp .continue 
+	
+.set_spring_down 
+	set BIT_SPRING_DOWN, b 
 	jp .continue 
 	
 .set_door 
