@@ -10,5 +10,7 @@ GLOBAL Level5Map
 GLOBAL Level6Map
 GLOBAL Level7Map
 GLOBAL Level8Map
+GLOBAL Level9Map
+
 
 ENDC 

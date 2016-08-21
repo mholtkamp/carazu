@@ -69,3 +69,6 @@ Level8Items:
 	DB ITEM_HEART, 53, 50 
 	DB ITEM_HEART, 99, 32 
 	DB ITEM_NONE 
+	
+Level9Items:
+	DB ITEM_NONE 
