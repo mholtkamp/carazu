@@ -170,3 +170,19 @@ DW Level9Items			; Item List Pointer
 DW Level9Enemies		; Enemy List Pointer 
 DW Level9Map 			; Pointer to map data 
 DB 0,0 					; 2 extra bytes to make 16-bytes long 
+
+Level10Props:
+DB 32			; Map Width 
+DB 128 			; Map Height 
+DB 4 			; Map Bank 
+DB 0 			; Tileset 
+
+DB 0 			; Map Origin X
+DB 0 			; Map Origin Y
+DB 5 			; Player Spawn X
+DB 1 			; Player Spawn Y
+
+DW Level10Items			; Item List Pointer
+DW Level10Enemies		; Enemy List Pointer 
+DW Level10Map 			; Pointer to map data 
+DB 0,0 					; 2 extra bytes to make 16-bytes long 
