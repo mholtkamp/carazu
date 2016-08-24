@@ -175,7 +175,7 @@ Level10Props:
 DB 32			; Map Width 
 DB 128 			; Map Height 
 DB 4 			; Map Bank 
-DB 0 			; Tileset 
+DB 1 			; Tileset 
 
 DB 0 			; Map Origin X
 DB 0 			; Map Origin Y

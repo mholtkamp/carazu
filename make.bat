@@ -22,6 +22,7 @@ rgbasm -oobj/item_tiles.obj tiles/item_tiles.asm
 rgbasm -oobj/enemy_tiles.obj tiles/enemy_tiles.asm 
 rgbasm -oobj/bullet_tiles.obj tiles/bullet_tiles.asm 
 rgbasm -oobj/bg_tiles_0.obj tiles/bg_tiles_0.asm
+rgbasm -oobj/bg_tiles_1.obj tiles/bg_tiles_1.asm 
 rgbasm -oobj/player_sprite_tiles.obj tiles/player_sprite_tiles.asm
 
 rgbasm -oobj/level_items.obj levels/level_items.asm
