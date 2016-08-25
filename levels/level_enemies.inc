@@ -12,5 +12,6 @@ GLOBAL Level7Enemies
 GLOBAL Level8Enemies
 GLOBAL Level9Enemies
 GLOBAL Level10Enemies
+GLOBAL Level11Enemies 
 
 ENDC 

@@ -12,6 +12,7 @@ GLOBAL Level7Items
 GLOBAL Level8Items
 GLOBAL Level9Items
 GLOBAL Level10Items
+GLOBAL Level11Items 
 
 
 ENDC 
