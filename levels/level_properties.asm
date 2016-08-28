@@ -275,7 +275,7 @@ DB 1 			; Tileset
 
 DB 2 			; Map Origin X
 DB 109 			; Map Origin Y
-DB 12 			; Player Spawn X
+DB 6 			; Player Spawn X
 DB 124 			; Player Spawn Y
 
 DW Level16Items			; Item List Pointer

@@ -174,12 +174,17 @@ Level_Load::
 	
 	; Load the level 
 	ld a, [LevelNum]
-	sla a 
-	sla a 			
-	sla a 
-	sla a 				; multiply level num by 16 to get offset into level properties data array 
 	ld c, a 
-	ld b, 0 		; bc = offset from LevelProperties label 
+	ld b, 0 
+	
+	sla c 
+	rl b 
+	sla c 
+	rl b 
+	sla c 
+	rl b 
+	sla c 
+	rl b 
 	
 	ld hl, LevelProperties
 	add hl, bc 				; hl points to properties structure needed 

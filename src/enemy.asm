@@ -2326,3 +2326,4 @@ Enemy_UpdateOAM:
 	call UpdateOAMFromRect_2x2
 	
 	ret 
+	
