@@ -202,3 +202,83 @@ DW Level11Items			; Item List Pointer
 DW Level11Enemies		; Enemy List Pointer 
 DW Level11Map 			; Pointer to map data 
 DB 0,0 					; 2 extra bytes to make 16-bytes long 
+
+Level12Props:
+DB 128			; Map Width 
+DB 32 			; Map Height 
+DB 5 			; Map Bank 
+DB 1 			; Tileset 
+
+DB 0 			; Map Origin X
+DB 14 			; Map Origin Y
+DB 2 			; Player Spawn X
+DB 28 			; Player Spawn Y
+
+DW Level12Items			; Item List Pointer
+DW Level12Enemies		; Enemy List Pointer 
+DW Level12Map 			; Pointer to map data 
+DB 0,0 					; 2 extra bytes to make 16-bytes long 
+
+Level13Props:
+DB 32			; Map Width 
+DB 32 			; Map Height 
+DB 5 			; Map Bank 
+DB 1 			; Tileset 
+
+DB 0 			; Map Origin X
+DB 14 			; Map Origin Y
+DB 2 			; Player Spawn X
+DB 25 			; Player Spawn Y
+
+DW Level13Items			; Item List Pointer
+DW Level13Enemies		; Enemy List Pointer 
+DW Level13Map 			; Pointer to map data 
+DB 0,0 					; 2 extra bytes to make 16-bytes long 
+
+Level14Props:
+DB 128			; Map Width 
+DB 128 			; Map Height 
+DB 6 			; Map Bank 
+DB 1 			; Tileset 
+
+DB 53 			; Map Origin X
+DB 1 			; Map Origin Y
+DB 64 			; Player Spawn X
+DB 10 			; Player Spawn Y
+
+DW Level14Items			; Item List Pointer
+DW Level14Enemies		; Enemy List Pointer 
+DW Level14Map 			; Pointer to map data 
+DB 0,0 					; 2 extra bytes to make 16-bytes long 
+
+Level15Props:
+DB 64			; Map Width 
+DB 64 			; Map Height 
+DB 5 			; Map Bank 
+DB 1 			; Tileset 
+
+DB 41 			; Map Origin X
+DB 45 			; Map Origin Y
+DB 59 			; Player Spawn X
+DB 60 			; Player Spawn Y
+
+DW Level15Items			; Item List Pointer
+DW Level15Enemies		; Enemy List Pointer 
+DW Level15Map 			; Pointer to map data 
+DB 0,0 					; 2 extra bytes to make 16-bytes long 
+
+Level16Props:
+DB 32			; Map Width 
+DB 128 			; Map Height 
+DB 7 			; Map Bank 
+DB 1 			; Tileset 
+
+DB 2 			; Map Origin X
+DB 109 			; Map Origin Y
+DB 12 			; Player Spawn X
+DB 124 			; Player Spawn Y
+
+DW Level16Items			; Item List Pointer
+DW Level16Enemies		; Enemy List Pointer 
+DW Level16Map 			; Pointer to map data 
+DB 0,0 					; 2 extra bytes to make 16-bytes long 

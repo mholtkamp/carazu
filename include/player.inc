@@ -9,6 +9,7 @@ GLOBAL PlayerGrounded
 GLOBAL FermataCharge
 GLOBAL FermataPulseX
 GLOBAL FermataPulseY
+GLOBAL PlayerSprung
 
 ; Procedures 
 

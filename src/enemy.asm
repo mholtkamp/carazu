@@ -1749,6 +1749,8 @@ Enemy_Update::
 	ld [FermataCharge], a 
 	ld [PlatformHasPlayer], a 		; to mark that this platform is moving the player 
 	ld [PlatformTrigger], a 		; also mark trigger in case it is waiting. 
+	ld a, 0 
+	ld [PlayerSprung], a 
 
 .platform_behavior 
 	ld a, [PlatformFlags] 
