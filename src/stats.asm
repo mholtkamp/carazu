@@ -4,6 +4,7 @@ INCLUDE "include/font.inc"
 INCLUDE "include/constants.inc"
 INCLUDE "include/level.inc"
 INCLUDE "include/globals.inc"
+INCLUDE "include/util.inc"
 
 STATS_WINDOW_Y_POS EQU 136 
 STATS_WINDOW_X_POS EQU WINDOW_X_OFFSET
@@ -525,23 +526,52 @@ Stats_LoadFinale::
 	ld b, 1 
 	call ClearMap 
 	
-	; Write Text 
-	ld b, 4
-	ld c, HEADER_Y 
+	ld a, 1 
+	ld [ROM_BANK_WRITE_ADDR], a 
+	
+	; "The End" 
+	ld b, 6
+	ld c, 2 
 	ld d, 1 
-	ld hl, FermataHeaderText0
+	ld hl, StringTheEnd
 	call WriteText 
 	
+	; "Bubbles: " 
+	ld b, 2
+	ld c, 6 
+	ld d, 1 
+	ld hl, StringBubbles
+	call WriteText 
+	
+	; "Time: "
+	ld b, 2
+	ld c, 9 
+	ld d, 1 
+	ld hl, StringTime
+	call WriteText 
+	
+	; "Created by"
+	ld b, 1
+	ld c, 14
+	ld d, 1 
+	ld hl, StringCredit0
+	call WriteText 
+	
+	; "Martin Holtkamp"
+	ld b, 4 
+	ld c, 16 
+	ld d, 1 
+	ld hl, StringCredit1
+	call WriteText 
 	
 	; Set window x/y
-	ld a, SPLASH_WINDOW_Y_POS
+	ld a, FINALE_WINDOW_Y_POS
 	ld [rWY], a 
-	ld a, SPLASH_WINDOW_X_POS 
+	ld a, FINALE_WINDOW_X_POS 
 	ld [rWX], a 
 	
 	; Disable sprites 
 	ld hl, rLCDC 
 	res 1, [hl]
 	
-
 	ret 

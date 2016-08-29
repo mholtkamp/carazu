@@ -187,6 +187,22 @@ Menu_Load::
 	
 	call Font_LoadFull 
 
+	ld b, 0 
+	call ClearMap
+	
+	; disable window 
+	ld hl, rLCDC 
+	res 5, [hl] 
+	
+	; reset scroll 
+	ld a, 0 
+	ld [$ff43], a 
+	ld [$ff42], a
+	
+	; enable sprites
+	ld hl, rLCDC 
+	set 1, [hl]
+	
 	ld b, MenuBGMapWidth
 	ld c, MenuBGMapHeight
 	push bc 

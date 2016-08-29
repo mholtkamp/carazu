@@ -290,9 +290,6 @@ Main_Game_Loop::
 	jp z, Main_Game_Loop 
 	ld b, STATE_MENU
 	call SwitchState
-	; Disable sprites 
-	ld hl, rLCDC 
-	set 1, [hl]
 	jp Main_Game_Loop
 	
 .splash 
@@ -328,6 +325,8 @@ Main_Game_Loop::
 	ld a, [GameState]
 	cp STATE_SPLASH
 	jp z, Main_Game_Loop		; skip vblank routine if not in game state anymore 
+	cp STATE_FINALE
+	jp z, Main_Game_Loop
 	
 	; Wait for VBLANK interval 
 	call WaitVBLANK_Flag
@@ -403,7 +402,6 @@ Main_Game_Loop::
 
 	jp Main_Game_Loop
 	
-.finale
 .pause 
 	jp Main_Game_Loop
 	
@@ -530,6 +528,7 @@ SwitchState::
 	jp z, .switch_finale 
 
 .switch_menu 
+	call ClearOAM
 	call Menu_Load
 	ld c, 0 
 	call LoadSong
@@ -545,6 +544,8 @@ SwitchState::
 	
 .switch_finale
 	call Stats_LoadFinale
+	ld a, STATE_FINALE
+	ld [GameState], a 
 	jp .return 
 	
 .switch_game

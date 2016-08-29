@@ -720,6 +720,8 @@ Player_Update::
 	jp nz, .resolve_spring_down 
 	bit BIT_DOOR, b 
 	jp nz, .resolve_door 
+	bit BIT_SECRET_DOOR, b 
+	jp nz, .resolve_secret_door
 	jp .return 
 	
 .resolve_spikes
@@ -767,12 +769,77 @@ Player_Update::
 	and BUTTON_UP
 	jp z, .return
 	ld a, [LevelNum]
+	cp 22
+	jp nc, .resolve_door_bonus
 	inc a
 	ld [LevelNum], a 
 	ld b, STATE_GAME 
 	call SwitchState
 	jp .return 
+.resolve_door_bonus 
+	cp 22 
+	jp nz, .resolve_door_bonus_w2
+	ld a, 5 
+	ld [LevelNum], a 
+	ld b, STATE_GAME
+	call SwitchState
+	jp .return 
+.resolve_door_bonus_w2
+	cp 23 
+	jp nz, .resolve_door_bonus_w3
+	ld a, 12 
+	ld [LevelNum], a 
+	ld b, STATE_GAME
+	call SwitchState
+	jp .return 
+.resolve_door_bonus_w3
+	cp 24 
+	jp nz, .return 
+	ld a, 20 
+	ld [LevelNum], a 
+	ld b, STATE_GAME
+	call SwitchState
+	jp .return 
 	
+.resolve_secret_door 
+	ld a, [InputsHeld]
+	and BUTTON_UP 
+	jp z, .return 
+	
+	ld a, [LevelNum]
+	cp 21 
+	jp nz, .resolve_secret_door_check1
+	ld b, STATE_FINALE 
+	call SwitchState
+
+.resolve_secret_door_check1
+	cp 5
+	jp nz, .resolve_secret_door_check2
+	ld a, 22
+	ld [LevelNum], a 
+	ld b, STATE_GAME 
+	call SwitchState 
+	jp .return 
+	
+.resolve_secret_door_check2 
+	cp 12 
+	jp nz, .resolve_secret_door_check3 
+	ld a, 23 
+	ld [LevelNum], a 
+	ld b, STATE_GAME 
+	call SwitchState
+	jp .return 
+	
+
+.resolve_secret_door_check3
+	cp 20 
+	jp nz, .return 
+	ld a, 24
+	ld [LevelNum], a 
+	ld b, STATE_GAME
+	call SwitchState
+	jp .return 
+
 .return
 	ret
 	

@@ -22,9 +22,11 @@
 
 
 ; Bank of tiles.
-TileLabelBank EQU 1
+BGTiles2Bank EQU 1
+BGTiles2Size EQU 92*16
+BGTiles2ColThresh EQU 32
 
 ; Start of tile array.
- GLOBAL TileLabel
+ GLOBAL BGTiles2
 
 ; End of BG_TILES_2.INC
