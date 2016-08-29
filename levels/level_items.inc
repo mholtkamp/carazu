@@ -18,5 +18,13 @@ GLOBAL Level13Items
 GLOBAL Level14Items 
 GLOBAL Level15Items 
 GLOBAL Level16Items 
+GLOBAL Level17Items
+GLOBAL Level18Items
+GLOBAL Level19Items
+GLOBAL Level20Items
+GLOBAL Level21Items
+GLOBAL Level22Items
+GLOBAL Level23Items
+GLOBAL Level24Items
 
 ENDC 

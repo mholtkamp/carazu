@@ -273,7 +273,7 @@ DB 128 			; Map Height
 DB 7 			; Map Bank 
 DB 1 			; Tileset 
 
-DB 2 			; Map Origin X
+DB 0 			; Map Origin X
 DB 109 			; Map Origin Y
 DB 6 			; Player Spawn X
 DB 124 			; Player Spawn Y
@@ -281,4 +281,136 @@ DB 124 			; Player Spawn Y
 DW Level16Items			; Item List Pointer
 DW Level16Enemies		; Enemy List Pointer 
 DW Level16Map 			; Pointer to map data 
+DB 0,0 					; 2 extra bytes to make 16-bytes long 
+
+Level17Props:
+DB 64			; Map Width 
+DB 128 			; Map Height 
+DB 7 			; Map Bank 
+DB 2 			; Tileset 
+
+DB 43 			; Map Origin X
+DB 110 			; Map Origin Y
+DB 60 			; Player Spawn X
+DB 125 			; Player Spawn Y
+
+DW Level17Items			; Item List Pointer
+DW Level17Enemies		; Enemy List Pointer 
+DW Level17Map 			; Pointer to map data 
+DB 0,0 					; 2 extra bytes to make 16-bytes long 
+
+
+Level18Props:
+DB 64			; Map Width 
+DB 32 			; Map Height 
+DB 8 			; Map Bank 
+DB 2 			; Tileset 
+
+DB 0 			; Map Origin X
+DB 14 			; Map Origin Y
+DB 2 			; Player Spawn X
+DB 28 			; Player Spawn Y
+
+DW Level18Items			; Item List Pointer
+DW Level18Enemies		; Enemy List Pointer 
+DW Level18Map 			; Pointer to map data 
+DB 0,0 					; 2 extra bytes to make 16-bytes long 
+
+
+Level19Props:
+DB 64			; Map Width 
+DB 64 			; Map Height 
+DB 8 			; Map Bank 
+DB 2 			; Tileset 
+
+DB 0 			; Map Origin X
+DB 36 			; Map Origin Y
+DB 2 			; Player Spawn X
+DB 46 			; Player Spawn Y
+
+DW Level19Items			; Item List Pointer
+DW Level19Enemies		; Enemy List Pointer 
+DW Level19Map 			; Pointer to map data 
+DB 0,0 					; 2 extra bytes to make 16-bytes long 
+
+
+Level20Props:
+DB 128			; Map Width 
+DB 32 			; Map Height 
+DB 7 			; Map Bank 
+DB 2 			; Tileset 
+
+DB 0 			; Map Origin X
+DB 6 			; Map Origin Y
+DB 2 			; Player Spawn X
+DB 14 			; Player Spawn Y
+
+DW Level20Items			; Item List Pointer
+DW Level20Enemies		; Enemy List Pointer 
+DW Level20Map 			; Pointer to map data 
+DB 0,0 					; 2 extra bytes to make 16-bytes long 
+
+
+Level21Props:
+DB 32			; Map Width 
+DB 32			; Map Height 
+DB 8  			; Map Bank 
+DB 2 			; Tileset 
+
+DB 0 			; Map Origin X
+DB 14 			; Map Origin Y
+DB 2 			; Player Spawn X
+DB 28  			; Player Spawn Y
+
+DW Level21Items			; Item List Pointer
+DW Level21Enemies		; Enemy List Pointer 
+DW Level21Map 			; Pointer to map data 
+DB 0,0 					; 2 extra bytes to make 16-bytes long 
+
+Level22Props:
+DB 32			; Map Width 
+DB 32			; Map Height 
+DB 8  			; Map Bank 
+DB 0 			; Tileset 
+
+DB 0 			; Map Origin X
+DB 9 			; Map Origin Y
+DB 2 			; Player Spawn X
+DB 18  			; Player Spawn Y
+
+DW Level22Items			; Item List Pointer
+DW Level22Enemies		; Enemy List Pointer 
+DW Level22Map 			; Pointer to map data 
+DB 0,0 					; 2 extra bytes to make 16-bytes long 
+
+Level23Props:
+DB 32			; Map Width 
+DB 32			; Map Height 
+DB 8  			; Map Bank 
+DB 1 			; Tileset 
+
+DB 0 			; Map Origin X
+DB 9 			; Map Origin Y
+DB 2 			; Player Spawn X
+DB 18  			; Player Spawn Y
+
+DW Level23Items			; Item List Pointer
+DW Level23Enemies		; Enemy List Pointer 
+DW Level23Map 			; Pointer to map data 
+DB 0,0 					; 2 extra bytes to make 16-bytes long 
+
+Level24Props:
+DB 32			; Map Width 
+DB 32			; Map Height 
+DB 8  			; Map Bank 
+DB 2 			; Tileset 
+
+DB 0 			; Map Origin X
+DB 9 			; Map Origin Y
+DB 2 			; Player Spawn X
+DB 18  			; Player Spawn Y
+
+DW Level24Items			; Item List Pointer
+DW Level24Enemies		; Enemy List Pointer 
+DW Level24Map 			; Pointer to map data 
 DB 0,0 					; 2 extra bytes to make 16-bytes long 

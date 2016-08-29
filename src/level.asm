@@ -16,6 +16,7 @@ INCLUDE "levels/level_properties.inc"
 INCLUDE "tiles/special_tiles.inc"
 INCLUDE "tiles/bg_tiles_0.inc"
 INCLUDE "tiles/bg_tiles_1.inc"
+INCLUDE "tiles/bg_tiles_2.inc"
 
 CameraAnchorLeft EQU 70
 CameraAnchorRight EQU 72
@@ -441,6 +442,8 @@ _Level_LoadTileSet::
 	nop 
 	jp .load_1 
 	nop 
+	jp .load_2 
+	nop 
 	
 	
 .load_0
@@ -465,6 +468,18 @@ _Level_LoadTileSet::
 	ld de, TILE_BANK_1
 	ld hl, BGTiles1
 	ld bc, BGTiles1Size
+	jp .copy 
+	
+.load_2 
+	ld a, BGTiles2Bank
+	ld [ROM_BANK_WRITE_ADDR], a  
+	
+	ld a, BGTiles2ColThresh
+	ld [LevelColThresh], a 
+	
+	ld de, TILE_BANK_1
+	ld hl, BGTiles2
+	ld bc, BGTiles2Size
 	jp .copy 
 	
 .copy 

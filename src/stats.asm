@@ -10,6 +10,9 @@ STATS_WINDOW_X_POS EQU WINDOW_X_OFFSET
 BUBBLE_TILE_INDEX EQU (SPECIAL_TILES_INDEX + 10)
 HEART_TILE_INDEX EQU (SPECIAL_TILES_INDEX + 11) 
 
+FINALE_WINDOW_X_POS EQU 7 
+FINALE_WINDOW_Y_POS EQU 0 
+
 	SECTION "StatsVariables", BSS 
 
 ; Run Stats 
@@ -44,6 +47,12 @@ DS 1
 DebugLY:
 DS 1 
 
+; New Record Flags 
+NewRecBubbles:
+DS 1 
+NewRecTime:
+DS 1 
+
 ; Stat Bar Window Data 
 HeartEntries:
 DS 3
@@ -66,6 +75,26 @@ SaveRecordBubbles EQU $A00E
 SaveSecret1 EQU $A00F
 SaveSecret2 EQU $A010
 SaveSecret3 EQU $A011
+
+	SECTION "StatsVars", DATA, BANK[1]
+
+StringTheEnd:
+DB "THE END", 0 
+
+StringCredit0:
+DB "CREATED BY", 0 
+StringCredit1:
+DB "MARTIN HOLTKAMP", 0
+
+StringBubbles:
+DB "BUBBLES: ", 0 
+StringTime:
+DB "TIME: ", 0 
+
+StringNewRec:
+DB "NEW RECORD!!", 0  
+
+
 
 	SECTION "StatsProcs", HOME 
 	
@@ -256,6 +285,9 @@ Stats_SaveRecords::
 	ld a, [RecordTime+1]
 	ld [SaveRecordTime+1], a 
 	
+	ld a, 1 
+	ld [NewRecTime], a 
+	
 .check_bubbles 
 	ld a, [PlayerBubbles]
 	ld b, a 
@@ -271,6 +303,10 @@ Stats_SaveRecords::
 	
 	; save on cart ram 
 	ld [SaveRecordBubbles], a 
+	
+	ld a, 1 
+	ld [NewRecBubbles], a 
+	
 	jp .return  
 	
 .return 
@@ -473,4 +509,39 @@ Stats_RecordLY:
 .record_new_ly
 	ld a, b 
 	ld [DebugLY], a 
+	ret 
+
+; Call this when switching states to save any new records and to
+; also set the window data for the finale state
+Stats_LoadFinale::
+
+	ld a, 0 
+	ld [NewRecBubbles], a 
+	ld [NewRecTime], a 		; init these bss vars as 0 for no new record 
+	
+	call Stats_SaveRecords
+	
+	; clear window 
+	ld b, 1 
+	call ClearMap 
+	
+	; Write Text 
+	ld b, 4
+	ld c, HEADER_Y 
+	ld d, 1 
+	ld hl, FermataHeaderText0
+	call WriteText 
+	
+	
+	; Set window x/y
+	ld a, SPLASH_WINDOW_Y_POS
+	ld [rWY], a 
+	ld a, SPLASH_WINDOW_X_POS 
+	ld [rWX], a 
+	
+	; Disable sprites 
+	ld hl, rLCDC 
+	res 1, [hl]
+	
+
 	ret 

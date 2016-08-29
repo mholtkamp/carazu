@@ -21,6 +21,7 @@ obj/enemy_tiles.obj
 obj/bullet_tiles.obj 
 obj/bg_tiles_0.obj
 obj/bg_tiles_1.obj 
+obj/bg_tiles_2.obj 
 obj/player_sprite_tiles.obj
 
 obj/level_items.obj 

@@ -283,6 +283,18 @@ Main_Game_Loop::
 	call WaitVBLANK_Flag
 	jp Main_Game_Loop
 	
+.finale 
+	ld a, [InputsHeld]
+	and BUTTON_START 
+	cp 0 
+	jp z, Main_Game_Loop 
+	ld b, STATE_MENU
+	call SwitchState
+	; Disable sprites 
+	ld hl, rLCDC 
+	set 1, [hl]
+	jp Main_Game_Loop
+	
 .splash 
 	call Splash_Update
 	
@@ -514,6 +526,8 @@ SwitchState::
 	jp z, .switch_game
 	cp STATE_SPLASH 
 	jp z, .switch_splash 
+	cp STATE_FINALE 
+	jp z, .switch_finale 
 
 .switch_menu 
 	call Menu_Load
@@ -527,6 +541,10 @@ SwitchState::
 	call Splash_Load 
 	ld a, STATE_SPLASH 
 	ld [GameState], a 
+	jp .return 
+	
+.switch_finale
+	call Stats_LoadFinale
 	jp .return 
 	
 .switch_game
@@ -544,13 +562,6 @@ SwitchState::
 	ld a, %11100100 
 	ld [rBGP], a 
 	ld [rOBP0], a 
-	
-	; DEBUG 
-	;ld a, 1 
-	;ld [HasFermata], a 
-	;ld [HasBass], a 
-	;ld a, 0 
-	;ld [HasAllegro], a 
 	
 	ld a, STATE_GAME 
 	ld [GameState], a 
