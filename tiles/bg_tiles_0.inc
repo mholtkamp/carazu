@@ -23,7 +23,7 @@
 
 ; Bank of tiles.
 BGTiles0Bank EQU 1
-BGTiles0Size EQU 57*16
+BGTiles0Size EQU 58*16
 BGTiles0ColThresh EQU 24
 
 ; Start of tile array.
