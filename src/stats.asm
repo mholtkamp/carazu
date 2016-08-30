@@ -460,7 +460,7 @@ Stats_Update::
 	ld a, [PlayerHearts]
 	cp 0 
 	jp nz, .update_debug_ly
-	ld a, 1 
+	ld a, 2 
 	ld [PlayerHearts], a 
 	
 	ld a, RAM_ENABLE
