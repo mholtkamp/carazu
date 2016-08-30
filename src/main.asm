@@ -367,15 +367,16 @@ Main_Game_Loop::
 	ld a, [hl]
 	ld [de], a 
 	
-	ld hl, DebugLYEntries
-	ld de, MAP_1 + DEBUG_LY_ENTRY_X
-	; digit 1 
-	ld a, [hl+]
-	ld [de], a 
-	inc de 
-	; digit 2 
-	ld a, [hl]
-	ld [de], a 
+	;;;; UNCOMMENT FOR PERFORMANCE DEBUG PRINT IN STATS WINDOW
+	;ld hl, DebugLYEntries
+	;ld de, MAP_1 + DEBUG_LY_ENTRY_X
+	;; digit 1 
+	;ld a, [hl+]
+	;ld [de], a 
+	;inc de 
+	;; digit 2 
+	;ld a, [hl]
+	;ld [de], a 
 	
 	; stream new tiles 
 	ld a, [MapStreamDir]

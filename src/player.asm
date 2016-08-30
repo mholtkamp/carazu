@@ -971,13 +971,6 @@ Player_Damage::
 	cp 1 
 	jp z, .return 
 	
-	; Play sound effect 
-	ld b, $80
-	ld c, $f8 
-	ld d, $6a
-	ld e, $40 
-	call PlaySound_4
-	
 	ld a, 1 
 	ld [PlayerDamaged], a 			; set damaged flag for correct logic in player-update 
 	ld a, PLAYER_DAMAGE_COUNTER_MAX
@@ -1004,5 +997,13 @@ Player_Damage::
 	ld a, ((0 - PLAYER_DAMAGE_XVEL) & $00ff)
 	ld [fXVelocity+1], a
 	; jp .return 
+	
 .return 
+	; Play sound effect 
+	ld b, $80
+	ld c, $f8 
+	ld d, $6a
+	ld e, $40 
+	call PlaySound_4
+	
 	ret 
