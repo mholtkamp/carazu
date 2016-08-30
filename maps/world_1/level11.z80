@@ -4,7 +4,7 @@
 ;
 ; Info:
 ;   Section       : Level11
-;   Bank          : 4
+;   Bank          : 1
 ;   Map size      : 64 x 64
 ;   Tile set      : C:\projects\carazu\tiles\bg_tiles_1.gbr
 ;   Plane count   : 1 plane (8 bits)
@@ -16,9 +16,9 @@
 
 Level11MapWidth  EQU 64
 Level11MapHeight EQU 64
-Level11MapBank   EQU 4
+Level11MapBank   EQU 1
 
- SECTION "Level11", DATA, BANK[4]
+ SECTION "Level11", DATA, BANK[1]
 
 Level11Map::
 DB $0A,$0A,$0A,$0A,$0A,$0A,$0A,$0A,$0A,$0A
@@ -287,7 +287,7 @@ DB $4C,$4C,$03,$0A,$0A,$0A,$0A,$0A,$0A,$0A
 DB $0A,$0A,$0A,$0A,$0A,$0A,$0A,$0A,$0A,$0A
 DB $0A,$0A,$0A,$0A,$0A,$0A,$0A,$0A,$0A,$0A
 DB $0A,$0A,$0A,$0A,$04,$4C,$4C,$4C,$4C,$4C
-DB $4C,$4C,$4C,$19,$18,$1A,$4C,$4C,$34,$32
+DB $4C,$4C,$4C,$4C,$4C,$4C,$4C,$4C,$34,$32
 DB $32,$35,$4C,$4C,$4C,$4C,$4C,$4C,$4C,$4C
 DB $4C,$4C,$4C,$4C,$4C,$4C,$03,$0A,$0A,$0A
 DB $0A,$0A,$0A,$0A,$0A,$0A,$0A,$0A,$0A,$0A
@@ -322,8 +322,8 @@ DB $02,$02,$02,$02,$08,$4C,$4C,$4C,$4C,$4C
 DB $4C,$4C,$4C,$4C,$4C,$4C,$4C,$4C,$4C,$4C
 DB $4C,$4C,$4C,$4C,$4C,$4C,$4C,$4C,$4C,$4C
 DB $4C,$4C,$4C,$4C,$4C,$4C,$03,$0A,$0A,$04
-DB $4C,$4C,$4C,$4C,$4C,$4C,$4C,$4C,$4C,$71
-DB $71,$71,$71,$71,$71,$71,$4C,$4C,$4C,$4C
+DB $4C,$4C,$4C,$4C,$4C,$4C,$4C,$4C,$4C,$4C
+DB $4C,$4C,$4C,$4C,$4C,$4C,$4C,$4C,$4C,$4C
 DB $4C,$4C,$4C,$4C,$4C,$4C,$4C,$4C,$4C,$4C
 DB $4C,$4C,$4C,$4C,$4C,$4C,$4C,$4C,$4C,$4C
 DB $4C,$4C,$4C,$4C,$4C,$4C,$4C,$4C,$4C,$4C

@@ -4,7 +4,7 @@
 ;
 ; Info:
 ;   Section       : Level11
-;   Bank          : 4
+;   Bank          : 1
 ;   Map size      : 64 x 64
 ;   Tile set      : C:\projects\carazu\tiles\bg_tiles_1.gbr
 ;   Plane count   : 1 plane (8 bits)
@@ -16,7 +16,7 @@
 
 Level11MapWidth  EQU 64
 Level11MapHeight EQU 64
-Level11MapBank   EQU 4
+Level11MapBank   EQU 1
 
  GLOBAL Level11Map
 

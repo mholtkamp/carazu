@@ -22,7 +22,7 @@ Level16MapBank   EQU 7
 
 Level16Map::
 DB $0A,$0A,$0A,$0A,$0A,$0A,$0A,$0A,$0A,$0A
-DB $0A,$0A,$0A,$0A,$04,$4C,$4C,$03,$0A,$0A
+DB $0A,$0A,$0A,$0A,$0A,$02,$02,$0A,$0A,$0A
 DB $0A,$0A,$0A,$0A,$0A,$0A,$0A,$0A,$0A,$0A
 DB $0A,$0A,$0A,$0A,$0A,$0A,$0A,$0A,$0A,$0A
 DB $0A,$0A,$0A,$0A,$0A,$0A,$04,$4C,$4C,$03
