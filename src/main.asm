@@ -300,6 +300,7 @@ Main_Game_Loop::
 
 .game 
 	; Game Logic Updates
+	call Stats_IncrementTimer
 	call Player_Update
 	call UpdateEnemies
 	call Level_Update
@@ -558,6 +559,7 @@ SwitchState::
 	call Stats_LoadGraphics 
 	call Stats_Show
 	call Stats_SaveRun
+	call StopSong
 	
 	; load default palettes 
 	ld a, %11100100 

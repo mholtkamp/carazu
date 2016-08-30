@@ -36,6 +36,7 @@ GLOBAL Stats_Update
 GLOBAL Stats_Hide
 GLOBAL Stats_Show
 GLOBAL Stats_LoadFinale 
+GLOBAL Stats_IncrementTimer
 
 GLOBAL Stats_RecordLY
 

@@ -145,7 +145,7 @@ StopSound_3::
 	ld [rNR34], a 
 	ret 
 	
-StopSound_4
+StopSound_4:
 
 	ld a, $00 
 	ld [rNR42], a 
@@ -154,4 +154,9 @@ StopSound_4
 	ret 
 	
 	
-	
+StopAllSound:
+	call StopSound_1
+	call StopSound_2
+	call StopSound_3
+	call StopSound_4
+	ret 

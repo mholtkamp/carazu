@@ -82,6 +82,12 @@ InitializeMusic::
 
 	ret 
 	
+StopSong:
+	ld a, SONG_PAUSE
+	ld [PlayStatus], a 
+	call StopAllSound
+	ret 
+	
 ; LoadSong
 ; c = song number, max song # = 31 
 LoadSong::

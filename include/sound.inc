@@ -43,4 +43,6 @@ GLOBAL StopSound_2
 GLOBAL StopSound_3 
 GLOBAL StopSound_4 
 
+GLOBAL StopAllSound
+
 ENDC 

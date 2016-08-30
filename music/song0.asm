@@ -7,12 +7,12 @@ INCLUDE "include/music.inc" ; Include for note equates
 Song0_Instrument1:
 	DB $00			; sweep 
 	DB $80			; duty/length
-	DB $f0			; volume
+	DB $80			; volume
 	DB $80			; loop/count
 	
 Song0_Instrument2:
 	DB $80 			; duty/length
-	DB $f0			; volume 
+	DB $80			; volume 
 	DB $80 			; loop/count
 	
 Song0_Instrument3:

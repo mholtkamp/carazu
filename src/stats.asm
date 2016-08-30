@@ -63,6 +63,9 @@ DS 2
 DebugLYEntries:
 DS 2
 
+TickTimer:
+DS 1 
+
 SaveSignature EQU $A000
 SaveLevel EQU $A004
 SaveHearts EQU $A005
@@ -112,6 +115,7 @@ Stats_ResetRun::
 	ld [HasFermata], a 
 	ld [HasBass], a 
 	ld [HasAllegro], a 
+	ld [TickTimer], a 
 	
 	ld a, 0 
 	ld [DebugLY], a 
@@ -175,6 +179,9 @@ Stats_LoadFromSave::
 	ld a, [SaveSecret3]
 	ld [Secret3], a 
 	
+	ld a, 0 
+	ld [TickTimer], a 
+	
 	; save loaded successfully, ret 
 	ld a, RAM_DISABLE
 	ld [RAM_ENABLE_WRITE_ADDR], a
@@ -207,6 +214,8 @@ Stats_InitNoSave
 	ld a, $ff
 	ld [RecordTime], a 
 	ld [RecordTime+1], a 
+	ld a, 0 
+	ld [TickTimer], a 
 	
 	call Stats_SaveRun
 	call Stats_SaveDefaultRecords
@@ -365,6 +374,30 @@ Stats_LoadGraphics::
 	ld a, BUBBLE_TILE_INDEX
 	ld [MAP_1 + BUBBLE_ENTRY_X], a 
 	
+	ret 
+	
+Stats_IncrementTimer
+	
+	ld a, [TickTimer]
+	inc a 
+	ld [TickTimer], a 
+	cp 60 
+	jp nz, .return 
+	
+	ld a, 0 
+	ld [TickTimer], a ; Reset tick timer 
+	
+	ld a, [PlayTime]
+	ld h, a 
+	ld a, [PlayTime+1]
+	ld l, a 
+	inc hl 
+	ld a, h 
+	ld [PlayTime], a 
+	ld a, l 
+	ld [PlayTime+1], a 
+	
+.return 
 	ret 
 	
 Stats_Update::
@@ -579,6 +612,34 @@ Stats_LoadFinale::
 	ld a, NUMBER_TILES_INDEX
 	add a, d 
 	ld [$9CCC], a 
+	
+	; Write Time 
+	ld a, [PlayTime]
+	and $f0 
+	swap a 
+	ld d, a 
+	ld a, NUMBER_TILES_INDEX
+	add a, d 
+	ld [$9D28], a 
+	ld a, [PlayTime]
+	and $0f  
+	ld d, a 
+	ld a, NUMBER_TILES_INDEX
+	add a, d 
+	ld [$9D29], a 
+	ld a, [PlayTime+1]
+	and $f0 
+	swap a 
+	ld d, a 
+	ld a, NUMBER_TILES_INDEX
+	add a, d 
+	ld [$9D2A], a 
+	ld a, [PlayTime+1]
+	and $0f  
+	ld d, a 
+	ld a, NUMBER_TILES_INDEX
+	add a, d 
+	ld [$9D2B], a 
 	
 	; Set window x/y
 	ld a, FINALE_WINDOW_Y_POS
