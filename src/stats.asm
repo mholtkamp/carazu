@@ -564,6 +564,22 @@ Stats_LoadFinale::
 	ld hl, StringCredit1
 	call WriteText 
 	
+	; Write Bubbles 
+	ld a, [PlayerBubbles]
+	and $f0 
+	swap a 
+	ld d, a 
+	ld a, NUMBER_TILES_INDEX
+	add a, d 
+	ld [$9CCB], a 
+	
+	ld a, [PlayerBubbles]
+	and $0f
+	ld d, a 
+	ld a, NUMBER_TILES_INDEX
+	add a, d 
+	ld [$9CCC], a 
+	
 	; Set window x/y
 	ld a, FINALE_WINDOW_Y_POS
 	ld [rWY], a 
