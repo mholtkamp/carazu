@@ -6,6 +6,7 @@ INCLUDE "include/input.inc"
 INCLUDE "include/constants.inc"
 INCLUDE "include/level.inc"
 INCLUDE "include/stats.inc"
+INCLUDE "tiles/item_tiles.inc"
 
 	SECTION "MenuVars", BSS 
 	
@@ -185,6 +186,13 @@ Menu_Load::
 	ld e, 0 	; tile index 
 	call LoadTiles 
 	
+	ld hl, ItemTiles
+	ld b, 0 			; sprite tiles 
+	ld c, 32    
+	ld d, ItemTilesBank
+	ld e, 128
+	call LoadTiles
+	
 	call Font_LoadFull 
 
 	ld b, 0 
@@ -228,6 +236,45 @@ Menu_Load::
 	ld d, 0 
 	call WriteText
 	
+	ld a, [Secret1]
+	cp 0 
+	jp z, .check_sec_2
+	ld a, $84 				; load the secret 1 symbol. yes i know this is terribly hardcoded... :x. This is my last day to finish the project before FIEA's RPP class begins.
+	ld [$99e6], a 
+	ld a, $85
+	ld [$9a06], a 
+	ld a, $86 
+	ld [$99e7], a 
+	ld a, $87 
+	ld [$9a07], a 
+	
+.check_sec_2
+	ld a, [Secret2]
+	cp 0 
+	jp z, .check_sec_3 
+	ld a, $88 
+	ld [$99e9], a 
+	ld a, $89
+	ld [$9a09], a 
+	ld a, $8a 
+	ld [$99ea], a 
+	ld a, $8b 
+	ld [$9a0a], a 
+	
+.check_sec_3
+	ld a, [Secret3]
+	cp 0 
+	jp z, .return 
+	ld a, $8c
+	ld [$99ec], a 
+	ld a, $8d
+	ld [$9a0c], a 
+	ld a, $8e 
+	ld [$99ed], a 
+	ld a, $8f 
+	ld [$9a0d], a 
+
+.return 
 	ret
 	
 Menu_Update::

@@ -542,8 +542,14 @@ Item_Consume::
 	jp z, .exe_bass 
 	cp ITEM_ALLEGRO_RUNE
 	jp z, .exe_allegro 
-	
-	; Rest of items not implemented yet 
+	cp ITEM_SECRET_1
+	jp z, .exe_secret_1 
+	cp ITEM_SECRET_2 
+	jp z, .exe_secret_2
+	cp ITEM_SECRET_3 
+	jp z, .exe_secret_3
+
+	; Unknown item?? 
 	jp .return 
 	
 .exe_heart
@@ -592,6 +598,24 @@ Item_Consume::
 	call SwitchState
 	jp .return 
 
+.exe_secret_1
+	ld a, 1 
+	ld [Secret1], a 
+	call Stats_SaveSecrets
+	jp .return 
+	
+.exe_secret_2
+	ld a, 1 
+	ld [Secret2], a 
+	call Stats_SaveSecrets
+	jp .return 
+	
+.exe_secret_3
+	ld a, 1 
+	ld [Secret3], a 
+	call Stats_SaveSecrets
+	jp .return 
+	
 .return
 	ret 
 
