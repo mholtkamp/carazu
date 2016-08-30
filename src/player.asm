@@ -960,14 +960,6 @@ Player_Bounce::
 	ld a, (PLAYER_BOUNCE_SPEED & $00ff)
 	ld [fYVelocity + 1], a 
 	
-	; Play jump sound 
-	ld a, $5A
-	ld b, $80
-	ld c, $f8
-	ld de, 1602
-	ld h, $40 
-	call PlaySound_1
-	
 	ret 
 	
 Player_Damage::

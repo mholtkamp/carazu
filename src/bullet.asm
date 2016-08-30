@@ -4,7 +4,7 @@ INCLUDE "include/player.inc"
 INCLUDE "include/rect.inc"
 INCLUDE "include/globals.inc"
 INCLUDE "include/enemy.inc"
-
+INCLUDE "include/sound.inc"
 INCLUDE "tiles/bullet_tiles.inc"
 
 BULLET_ENEMY_RECT_OFFSET_X EQU 1 
@@ -290,8 +290,9 @@ FirePlayerBullet::
 	jp z, .fire 
 	
 	ret		; player already has an active bullet
-	
+		
 .fire
+	
 	ld a, 1 
 	ld [hl+], a 	; Mark bullet as active 
 	
@@ -331,6 +332,15 @@ FirePlayerBullet::
 	; Bullet is all set now, and will be updated / rendered in the Update proc
 	; But consider adding code below to update the graphics for the current frame.
 	; Probably not worth it
+	
+	; Play Fire Sound 
+	ld a, $29
+	ld b, $80
+	ld c, $f8
+	ld de, 1000
+	ld h, $40 
+	call PlaySound_1
+	
 	ret 
 	
 ; hl = bullet struct 

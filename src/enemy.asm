@@ -6,6 +6,7 @@ INCLUDE "include/level.inc"
 INCLUDE "include/globals.inc"
 INCLUDE "include/player.inc"
 INCLUDE "include/bullet.inc"
+INCLUDE "include/sound.inc"
 INCLUDE "tiles/enemy_tiles.inc"
 
 SLIME_X_OFFSET EQU 2
@@ -1878,8 +1879,18 @@ Enemy_Kill::
 	call Enemy_Recall  	; to remove enemy from Enemies array and to hide sprites 
 	ld a, [EnemyJumped] 
 	cp 0 
-	ret z 
+	jp z, .return  
 	call Player_Bounce
+	jp .return  
+	
+.return 
+	; Play jump sound 
+	ld a, $5A
+	ld b, $80
+	ld c, $f8
+	ld de, 1602
+	ld h, $40 
+	call PlaySound_1
 	ret 
 	
 	
