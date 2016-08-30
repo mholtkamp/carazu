@@ -7,6 +7,7 @@ INCLUDE "include/stats.inc"
 INCLUDE "include/rect.inc"
 INCLUDE "include/player.inc"
 INCLUDE "include/splash.inc"
+INCLUDE "include/sound.inc"
 
 INCLUDE "tiles/item_tiles.inc"
 
@@ -494,7 +495,6 @@ Item_Consume::
 	ld [hl], a 		; set item type as none.
 	
 	; zero out objs 
-	
 	sla e 
 	sla e 	; mult item number by 4 to get oam offset 
 	ld d, 0 
@@ -617,6 +617,14 @@ Item_Consume::
 	jp .return 
 	
 .return
+	; Play item pickup sound 
+	ld a, $57
+	ld b, $80
+	ld c, $f8
+	ld de, 1899
+	ld h, $40 
+	call PlaySound_1
+	
 	ret 
 
 ; hl = item 
